@@ -1,166 +1,436 @@
 {
+  "id": "0",
+  "name": "travel_mgr",
+  "createdAt": "2025-08-06T14:39:02.655Z",
+  "updatedAt": "2025-08-06T14:39:02.655Z",
+  "databaseType": "generic",
   "tables": [
     {
-      "id": "29",
+      "id": "1",
+      "name": "languages",
+      "x": -1200,
+      "y": -400,
+      "fields": [
+        {
+          "id": "1001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903700000
+        },
+        {
+          "id": "1002",
+          "name": "code",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903701000
+        },
+        {
+          "id": "1003",
+          "name": "name",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903702000
+        }
+      ],
+      "indexes": [],
+      "color": "#e74c3c",
+      "createdAt": 1753903700000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 220
+    },
+    {
+      "id": "2",
+      "name": "translations",
+      "x": -900,
+      "y": -400,
+      "fields": [
+        {
+          "id": "2001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903710000
+        },
+        {
+          "id": "2002",
+          "name": "languageId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903711000
+        },
+        {
+          "id": "2003",
+          "name": "entityType",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903712000
+        },
+        {
+          "id": "2004",
+          "name": "entityId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903713000
+        },
+        {
+          "id": "2005",
+          "name": "fieldName",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903714000
+        },
+        {
+          "id": "2006",
+          "name": "translatedText",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903715000
+        }
+      ],
+      "indexes": [],
+      "color": "#e74c3c",
+      "createdAt": 1753903710000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 280
+    },
+    {
+      "id": "3",
+      "name": "trips",
+      "x": -109,
+      "y": -273,
+      "fields": [
+        {
+          "id": "3001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753893740883
+        },
+        {
+          "id": "3002",
+          "name": "name",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753893830866
+        },
+        {
+          "id": "3003",
+          "name": "description",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753893845146
+        },
+        {
+          "id": "3004",
+          "name": "startDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753893865650
+        },
+        {
+          "id": "3005",
+          "name": "endDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753893879434
+        },
+        {
+          "id": "3006",
+          "name": "budget",
+          "type": {"id": "decimal", "name": "decimal"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903720000
+        },
+        {
+          "id": "3007",
+          "name": "currency",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903721000
+        }
+      ],
+      "indexes": [],
+      "color": "#8a61f5",
+      "createdAt": 1753893740883,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 337
+    },
+    {
+      "id": "4",
+      "name": "stages",
+      "x": -597,
+      "y": 117,
+      "fields": [
+        {
+          "id": "4001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753897470570
+        },
+        {
+          "id": "4002",
+          "name": "tripId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753897924274
+        },
+        {
+          "id": "4003",
+          "name": "countryId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753902502000
+        },
+        {
+          "id": "4004",
+          "name": "name",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903730000
+        },
+        {
+          "id": "4005",
+          "name": "startDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903731000
+        },
+        {
+          "id": "4006",
+          "name": "endDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903732000
+        }
+      ],
+      "indexes": [],
+      "color": "#ff6363",
+      "createdAt": 1753897470570,
+      "isView": false,
+      "width": 337,
+      "diagramId": "k1zkpgz3eos2"
+    },
+    {
+      "id": "5",
+      "name": "countries",
+      "x": -970,
+      "y": -40,
+      "fields": [
+        {
+          "id": "5001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753902500000
+        },
+        {
+          "id": "5002",
+          "name": "name",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753902501000
+        },
+        {
+          "id": "5003",
+          "name": "code",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903740000
+        }
+      ],
+      "indexes": [],
+      "color": "#ff9f43",
+      "createdAt": 1753902500000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 224
+    },
+    {
+      "id": "6",
       "name": "activities",
       "x": -250,
       "y": 350,
       "fields": [
         {
-          "id": "30",
+          "id": "6001",
           "name": "id",
-          "type": {
-            "id": "bigint",
-            "name": "bigint"
-          },
+          "type": {"id": "bigint", "name": "bigint"},
           "unique": true,
           "nullable": false,
           "primaryKey": true,
           "createdAt": 1753903500000
         },
         {
-          "id": "31",
+          "id": "6002",
           "name": "stageId",
-          "type": {
-            "id": "bigint",
-            "name": "bigint"
-          },
+          "type": {"id": "bigint", "name": "bigint"},
           "unique": false,
           "nullable": false,
           "primaryKey": false,
           "createdAt": 1753903501000
         },
         {
-          "id": "41",
+          "id": "6003",
           "name": "activityTypeId",
-          "type": {
-            "id": "bigint",
-            "name": "bigint"
-          },
+          "type": {"id": "bigint", "name": "bigint"},
           "unique": false,
           "nullable": false,
           "primaryKey": false,
           "createdAt": 1753903603000
         },
         {
-          "id": "33",
+          "id": "6004",
           "name": "name",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903503000
         },
         {
-          "id": "34",
+          "id": "6005",
           "name": "bookingCode",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903504000
         },
         {
-          "id": "35",
+          "id": "6006",
           "name": "startDateTime",
-          "type": {
-            "id": "datetime",
-            "name": "datetime"
-          },
+          "type": {"id": "datetime", "name": "datetime"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903505000
         },
         {
-          "id": "36",
+          "id": "6007",
           "name": "endDateTime",
-          "type": {
-            "id": "datetime",
-            "name": "datetime"
-          },
+          "type": {"id": "datetime", "name": "datetime"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903506000
         },
         {
-          "id": "42",
+          "id": "6008",
           "name": "addressLine",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903604000
         },
         {
-          "id": "43",
+          "id": "6009",
           "name": "postalCode",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903605000
         },
         {
-          "id": "44",
+          "id": "6010",
           "name": "city",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903606000
         },
         {
-          "id": "45",
+          "id": "6011",
           "name": "country",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903607000
         },
         {
-          "id": "46",
+          "id": "6012",
           "name": "comments",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903608000
         },
         {
-          "id": "47",
+          "id": "6013",
           "name": "notes",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": false,
           "nullable": true,
           "primaryKey": false,
           "createdAt": 1753903609000
+        },
+        {
+          "id": "6014",
+          "name": "cost",
+          "type": {"id": "decimal", "name": "decimal"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903750000
         }
       ],
       "indexes": [],
@@ -171,30 +441,24 @@
       "width": 320
     },
     {
-      "id": "38",
+      "id": "7",
       "name": "activityTypes",
       "x": -600,
       "y": 550,
       "fields": [
         {
-          "id": "39",
+          "id": "7001",
           "name": "id",
-          "type": {
-            "id": "bigint",
-            "name": "bigint"
-          },
+          "type": {"id": "bigint", "name": "bigint"},
           "unique": true,
           "nullable": false,
           "primaryKey": true,
           "createdAt": 1753903600000
         },
         {
-          "id": "40",
+          "id": "7002",
           "name": "label",
-          "type": {
-            "id": "text",
-            "name": "text"
-          },
+          "type": {"id": "text", "name": "text"},
           "unique": true,
           "nullable": false,
           "primaryKey": false,
@@ -207,30 +471,837 @@
       "isView": false,
       "diagramId": "k1zkpgz3eos2",
       "width": 220
+    },
+    {
+      "id": "8",
+      "name": "transports",
+      "x": 100,
+      "y": 350,
+      "fields": [
+        {
+          "id": "8001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903760000
+        },
+        {
+          "id": "8002",
+          "name": "stageId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903761000
+        },
+        {
+          "id": "8003",
+          "name": "transportTypeId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903762000
+        },
+        {
+          "id": "8004",
+          "name": "departureLocation",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903763000
+        },
+        {
+          "id": "8005",
+          "name": "arrivalLocation",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903764000
+        },
+        {
+          "id": "8006",
+          "name": "departureDateTime",
+          "type": {"id": "datetime", "name": "datetime"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903765000
+        },
+        {
+          "id": "8007",
+          "name": "arrivalDateTime",
+          "type": {"id": "datetime", "name": "datetime"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903766000
+        },
+        {
+          "id": "8008",
+          "name": "bookingReference",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903767000
+        },
+        {
+          "id": "8009",
+          "name": "cost",
+          "type": {"id": "decimal", "name": "decimal"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903768000
+        },
+        {
+          "id": "8010",
+          "name": "notes",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903769000
+        }
+      ],
+      "indexes": [],
+      "color": "#26de81",
+      "createdAt": 1753903760000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 320
+    },
+    {
+      "id": "9",
+      "name": "transportTypes",
+      "x": 450,
+      "y": 550,
+      "fields": [
+        {
+          "id": "9001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903770000
+        },
+        {
+          "id": "9002",
+          "name": "label",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903771000
+        }
+      ],
+      "indexes": [],
+      "color": "#26de81",
+      "createdAt": 1753903770000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 220
+    },
+    {
+      "id": "10",
+      "name": "accommodations",
+      "x": 500,
+      "y": 100,
+      "fields": [
+        {
+          "id": "10001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903780000
+        },
+        {
+          "id": "10002",
+          "name": "stageId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903781000
+        },
+        {
+          "id": "10003",
+          "name": "accommodationTypeId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903782000
+        },
+        {
+          "id": "10004",
+          "name": "name",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903783000
+        },
+        {
+          "id": "10005",
+          "name": "addressLine",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903784000
+        },
+        {
+          "id": "10006",
+          "name": "city",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903785000
+        },
+        {
+          "id": "10007",
+          "name": "checkInDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903786000
+        },
+        {
+          "id": "10008",
+          "name": "checkOutDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903787000
+        },
+        {
+          "id": "10009",
+          "name": "bookingReference",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903788000
+        },
+        {
+          "id": "10010",
+          "name": "costPerNight",
+          "type": {"id": "decimal", "name": "decimal"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903789000
+        },
+        {
+          "id": "10011",
+          "name": "totalCost",
+          "type": {"id": "decimal", "name": "decimal"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903790000
+        },
+        {
+          "id": "10012",
+          "name": "notes",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903791000
+        }
+      ],
+      "indexes": [],
+      "color": "#fd79a8",
+      "createdAt": 1753903780000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 320
+    },
+    {
+      "id": "11",
+      "name": "accommodationTypes",
+      "x": 850,
+      "y": 300,
+      "fields": [
+        {
+          "id": "11001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903800000
+        },
+        {
+          "id": "11002",
+          "name": "label",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903801000
+        }
+      ],
+      "indexes": [],
+      "color": "#fd79a8",
+      "createdAt": 1753903800000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 220
+    },
+    {
+      "id": "12",
+      "name": "expenses",
+      "x": 200,
+      "y": -100,
+      "fields": [
+        {
+          "id": "12001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903810000
+        },
+        {
+          "id": "12002",
+          "name": "tripId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903811000
+        },
+        {
+          "id": "12003",
+          "name": "expenseCategoryId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903812000
+        },
+        {
+          "id": "12004",
+          "name": "description",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903813000
+        },
+        {
+          "id": "12005",
+          "name": "amount",
+          "type": {"id": "decimal", "name": "decimal"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903814000
+        },
+        {
+          "id": "12006",
+          "name": "currency",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903815000
+        },
+        {
+          "id": "12007",
+          "name": "expenseDate",
+          "type": {"id": "date", "name": "date"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903816000
+        },
+        {
+          "id": "12008",
+          "name": "receiptUrl",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903817000
+        }
+      ],
+      "indexes": [],
+      "color": "#f39c12",
+      "createdAt": 1753903810000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 320
+    },
+    {
+      "id": "13",
+      "name": "expenseCategories",
+      "x": 550,
+      "y": -100,
+      "fields": [
+        {
+          "id": "13001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903820000
+        },
+        {
+          "id": "13002",
+          "name": "label",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903821000
+        }
+      ],
+      "indexes": [],
+      "color": "#f39c12",
+      "createdAt": 1753903820000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 220
+    },
+    {
+      "id": "14",
+      "name": "notifications",
+      "x": -400,
+      "y": -500,
+      "fields": [
+        {
+          "id": "14001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903830000
+        },
+        {
+          "id": "14002",
+          "name": "userId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903831000
+        },
+        {
+          "id": "14003",
+          "name": "notificationTypeId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903832000
+        },
+        {
+          "id": "14004",
+          "name": "title",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903833000
+        },
+        {
+          "id": "14005",
+          "name": "message",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903834000
+        },
+        {
+          "id": "14006",
+          "name": "isRead",
+          "type": {"id": "boolean", "name": "boolean"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903835000
+        },
+        {
+          "id": "14007",
+          "name": "scheduledFor",
+          "type": {"id": "datetime", "name": "datetime"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903836000
+        },
+        {
+          "id": "14008",
+          "name": "sentAt",
+          "type": {"id": "datetime", "name": "datetime"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903837000
+        },
+        {
+          "id": "14009",
+          "name": "createdAt",
+          "type": {"id": "datetime", "name": "datetime"},
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903838000
+        }
+      ],
+      "indexes": [],
+      "color": "#9b59b6",
+      "createdAt": 1753903830000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 320
+    },
+    {
+      "id": "15",
+      "name": "notificationTypes",
+      "x": -100,
+      "y": -500,
+      "fields": [
+        {
+          "id": "15001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903840000
+        },
+        {
+          "id": "15002",
+          "name": "label",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903841000
+        }
+      ],
+      "indexes": [],
+      "color": "#9b59b6",
+      "createdAt": 1753903840000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 220
+    },
+    {
+      "id": "16",
+      "name": "tripLists",
+      "x": 376,
+      "y": 91,
+      "fields": [
+        {
+          "id": "16001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753897617866
+        },
+        {
+          "id": "16002",
+          "name": "tripId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753897678577
+        },
+        {
+          "id": "16003",
+          "name": "userId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753897667282
+        }
+      ],
+      "indexes": [],
+      "color": "#42e0c0",
+      "createdAt": 1753897617866,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 224
+    },
+    {
+      "id": "17",
+      "name": "users",
+      "x": 806,
+      "y": 414,
+      "fields": [
+        {
+          "id": "17001",
+          "name": "id",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753897496434
+        },
+        {
+          "id": "17002",
+          "name": "username",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753897520986
+        },
+        {
+          "id": "17003",
+          "name": "name",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753897535073
+        },
+        {
+          "id": "17004",
+          "name": "passwordHash",
+          "type": {"id": "text", "name": "text"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753897550579
+        },
+        {
+          "id": "17005",
+          "name": "disabled",
+          "type": {"id": "boolean", "name": "boolean"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753897568010
+        },
+        {
+          "id": "17006",
+          "name": "preferredLanguageId",
+          "type": {"id": "bigint", "name": "bigint"},
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903850000
+        },
+        {
+          "id": "17007",
+          "name": "email",
+          "type": {"id": "text", "name": "text"},
+          "unique": true,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903851000
+        }
+      ],
+      "indexes": [],
+      "color": "#8a61f5",
+      "createdAt": 1753897496434,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 280
     }
   ],
   "relationships": [
     {
-      "id": "37",
-      "name": "activities_stageId_fk",
-      "sourceTableId": "29",
+      "id": "r1",
+      "name": "translations_languageId_fk",
+      "sourceTableId": "2",
       "targetTableId": "1",
-      "sourceFieldId": "31",
-      "targetFieldId": "2",
+      "sourceFieldId": "2002",
+      "targetFieldId": "1001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903860000
+    },
+    {
+      "id": "r2",
+      "name": "stages_tripId_fk",
+      "sourceTableId": "4",
+      "targetTableId": "3",
+      "sourceFieldId": "4002",
+      "targetFieldId": "3001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753902091082
+    },
+    {
+      "id": "r3",
+      "name": "stages_countryId_fk",
+      "sourceTableId": "4",
+      "targetTableId": "5",
+      "sourceFieldId": "4003",
+      "targetFieldId": "5001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753902503000
+    },
+    {
+      "id": "r4",
+      "name": "activities_stageId_fk",
+      "sourceTableId": "6",
+      "targetTableId": "4",
+      "sourceFieldId": "6002",
+      "targetFieldId": "4001",
       "sourceCardinality": "many",
       "targetCardinality": "one",
       "createdAt": 1753903510000
     },
     {
-      "id": "48",
+      "id": "r5",
       "name": "activities_activityTypeId_fk",
-      "sourceTableId": "29",
-      "targetTableId": "38",
-      "sourceFieldId": "41",
-      "targetFieldId": "39",
+      "sourceTableId": "6",
+      "targetTableId": "7",
+      "sourceFieldId": "6003",
+      "targetFieldId": "7001",
       "sourceCardinality": "many",
       "targetCardinality": "one",
       "createdAt": 1753903610000
+    },
+    {
+      "id": "r6",
+      "name": "transports_stageId_fk",
+      "sourceTableId": "8",
+      "targetTableId": "4",
+      "sourceFieldId": "8002",
+      "targetFieldId": "4001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903870000
+    },
+    {
+      "id": "r7",
+      "name": "transports_transportTypeId_fk",
+      "sourceTableId": "8",
+      "targetTableId": "9",
+      "sourceFieldId": "8003",
+      "targetFieldId": "9001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903871000
+    },
+    {
+      "id": "r8",
+      "name": "accommodations_stageId_fk",
+      "sourceTableId": "10",
+      "targetTableId": "4",
+      "sourceFieldId": "10002",
+      "targetFieldId": "4001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903872000
+    },
+    {
+      "id": "r9",
+      "name": "accommodations_accommodationTypeId_fk",
+      "sourceTableId": "10",
+      "targetTableId": "11",
+      "sourceFieldId": "10003",
+      "targetFieldId": "11001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903873000
+    },
+    {
+      "id": "r10",
+      "name": "expenses_tripId_fk",
+      "sourceTableId": "12",
+      "targetTableId": "3",
+      "sourceFieldId": "12002",
+      "targetFieldId": "3001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903874000
+    },
+    {
+      "id": "r11",
+      "name": "expenses_expenseCategoryId_fk",
+      "sourceTableId": "12",
+      "targetTableId": "13",
+      "sourceFieldId": "12003",
+      "targetFieldId": "13001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903875000
+    },
+    {
+      "id": "r12",
+      "name": "notifications_userId_fk",
+      "sourceTableId": "14",
+      "targetTableId": "17",
+      "sourceFieldId": "14002",
+      "targetFieldId": "17001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903876000
+    },
+    {
+      "id": "r13",
+      "name": "notifications_notificationTypeId_fk",
+      "sourceTableId": "14",
+      "targetTableId": "15",
+      "sourceFieldId": "14003",
+      "targetFieldId": "15001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903877000
+    },
+    {
+      "id": "r14",
+      "name": "tripLists_tripId_fk",
+      "sourceTableId": "16",
+      "targetTableId": "3",
+      "sourceFieldId": "16002",
+      "targetFieldId": "3001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753902151617
+    },
+    {
+      "id": "r15",
+      "name": "tripLists_userId_fk",
+      "sourceTableId": "16",
+      "targetTableId": "17",
+      "sourceFieldId": "16003",
+      "targetFieldId": "17001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753902308449
+    },
+    {
+      "id": "r16",
+      "name": "users_preferredLanguageId_fk",
+      "sourceTableId": "17",
+      "targetTableId": "1",
+      "sourceFieldId": "17006",
+      "targetFieldId": "1001",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903878000
     }
   ]
 }
