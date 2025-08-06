@@ -1,0 +1,236 @@
+{
+  "tables": [
+    {
+      "id": "29",
+      "name": "activities",
+      "x": -250,
+      "y": 350,
+      "fields": [
+        {
+          "id": "30",
+          "name": "id",
+          "type": {
+            "id": "bigint",
+            "name": "bigint"
+          },
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903500000
+        },
+        {
+          "id": "31",
+          "name": "stageId",
+          "type": {
+            "id": "bigint",
+            "name": "bigint"
+          },
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903501000
+        },
+        {
+          "id": "41",
+          "name": "activityTypeId",
+          "type": {
+            "id": "bigint",
+            "name": "bigint"
+          },
+          "unique": false,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903603000
+        },
+        {
+          "id": "33",
+          "name": "name",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903503000
+        },
+        {
+          "id": "34",
+          "name": "bookingCode",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903504000
+        },
+        {
+          "id": "35",
+          "name": "startDateTime",
+          "type": {
+            "id": "datetime",
+            "name": "datetime"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903505000
+        },
+        {
+          "id": "36",
+          "name": "endDateTime",
+          "type": {
+            "id": "datetime",
+            "name": "datetime"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903506000
+        },
+        {
+          "id": "42",
+          "name": "addressLine",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903604000
+        },
+        {
+          "id": "43",
+          "name": "postalCode",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903605000
+        },
+        {
+          "id": "44",
+          "name": "city",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903606000
+        },
+        {
+          "id": "45",
+          "name": "country",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903607000
+        },
+        {
+          "id": "46",
+          "name": "comments",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903608000
+        },
+        {
+          "id": "47",
+          "name": "notes",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": false,
+          "nullable": true,
+          "primaryKey": false,
+          "createdAt": 1753903609000
+        }
+      ],
+      "indexes": [],
+      "color": "#ffd166",
+      "createdAt": 1753903500000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 320
+    },
+    {
+      "id": "38",
+      "name": "activityTypes",
+      "x": -600,
+      "y": 550,
+      "fields": [
+        {
+          "id": "39",
+          "name": "id",
+          "type": {
+            "id": "bigint",
+            "name": "bigint"
+          },
+          "unique": true,
+          "nullable": false,
+          "primaryKey": true,
+          "createdAt": 1753903600000
+        },
+        {
+          "id": "40",
+          "name": "label",
+          "type": {
+            "id": "text",
+            "name": "text"
+          },
+          "unique": true,
+          "nullable": false,
+          "primaryKey": false,
+          "createdAt": 1753903601000
+        }
+      ],
+      "indexes": [],
+      "color": "#90caf9",
+      "createdAt": 1753903600000,
+      "isView": false,
+      "diagramId": "k1zkpgz3eos2",
+      "width": 220
+    }
+  ],
+  "relationships": [
+    {
+      "id": "37",
+      "name": "activities_stageId_fk",
+      "sourceTableId": "29",
+      "targetTableId": "1",
+      "sourceFieldId": "31",
+      "targetFieldId": "2",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903510000
+    },
+    {
+      "id": "48",
+      "name": "activities_activityTypeId_fk",
+      "sourceTableId": "29",
+      "targetTableId": "38",
+      "sourceFieldId": "41",
+      "targetFieldId": "39",
+      "sourceCardinality": "many",
+      "targetCardinality": "one",
+      "createdAt": 1753903610000
+    }
+  ]
+}

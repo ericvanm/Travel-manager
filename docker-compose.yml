@@ -1,0 +1,30 @@
+services:
+  backend:
+    image: patientor-back
+    build:
+      context: ./Patientor backend # The context will pick this directory as the "build context"
+      dockerfile: Dockerfile # This will simply tell which dockerfile to read
+    container_name: patientor-back # This will name the container patientor-back
+  
+  app:
+    image: patientor-front
+    build:
+      context: ./Patientor frontend # The context will pick this directory as the "build context"
+      dockerfile: ./Dockerfile # This will simply tell which dockerfile to read
+    environment:
+      VITE_BACKEND_URL: http://localhost:8080/api/
+    
+
+    container_name: patientor-front # This will name the container patientor-front-dev
+  nginx:
+    image: nginx:1.20.1
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 8080:80
+    container_name: reverse-proxy
+    depends_on:
+      - app # wait for the frontend container to be started
+      - backend # wait also for backend container to be started
+  debug-helper:    
+    image: busybox
