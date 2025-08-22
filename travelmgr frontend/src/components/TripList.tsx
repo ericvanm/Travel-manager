@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Button, Card, CardContent, Typography, Grid, Fab, Dialog,
   DialogTitle, DialogContent, TextField, DialogActions, AppBar,
-  Toolbar, IconButton
+  Toolbar, IconButton, Menu, MenuItem
 } from '@mui/material';
-import { Add, Logout } from '@mui/icons-material';
+import { Add, Logout, MoreVert } from '@mui/icons-material';
 import { Trip } from '../types';
-import { getTrips, createTrip } from '../services/trips';
+import { getTrips, createTrip, updateTrip, deleteTrip } from '../services/trips';
 import { logout } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,6 +19,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [open, setOpen] = useState(false);
   const [newTrip, setNewTrip] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(false);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const { user, setUser } = useAuth();
 
   useEffect(() => {
@@ -39,14 +42,29 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     
     setLoading(true);
     try {
-      const trip = await createTrip(newTrip);
-      setTrips([...trips, trip]);
+      if (editingTrip) {
+        const updatedTrip = await updateTrip(editingTrip.id, newTrip);
+        setTrips(trips.map(t => t.id === editingTrip.id ? updatedTrip : t));
+      } else {
+        const trip = await createTrip(newTrip);
+        setTrips([...trips, trip]);
+      }
       setNewTrip({ name: '', description: '' });
+      setEditingTrip(null);
       setOpen(false);
     } catch (error) {
-      console.error('Failed to create trip:', error);
+      console.error('Failed to save trip:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTrip = async (tripId: number) => {
+    try {
+      await deleteTrip(tripId);
+      setTrips(trips.filter(t => t.id !== tripId));
+    } catch (error) {
+      console.error('Failed to delete trip:', error);
     }
   };
 
@@ -57,6 +75,36 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleICSImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const content = await file.text();
+      const response = await fetch('http://localhost:8080/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ icsContent: content, userId: user?.id })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Import successful:', result);
+        await loadTrips();
+      } else {
+        const errorText = await response.text();
+        console.error('Import failed:', response.status, errorText);
+        alert(`Import failed: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+    }
+    
+    // Reset file input
+    event.target.value = '';
   };
 
   return (
@@ -73,18 +121,39 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
       </AppBar>
 
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          My Trips
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4">
+            My Trips
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => document.getElementById('ics-file-input').click()}
+            >
+              Import ICS
+            </Button>
+            <input
+              id="ics-file-input"
+              type="file"
+              accept=".ics"
+              style={{ display: 'none' }}
+              onChange={handleICSImport}
+            />
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setOpen(true)}
+            >
+              Create Trip
+            </Button>
+          </Box>
+        </Box>
 
         <Grid container spacing={3}>
           {trips.map((trip) => (
             <Grid item xs={12} sm={6} md={4} key={trip.id}>
-              <Card 
-                sx={{ cursor: 'pointer', '&:hover': { elevation: 4 } }}
-                onClick={() => onTripSelect(trip)}
-              >
-                <CardContent>
+              <Card sx={{ position: 'relative' }}>
+                <CardContent onClick={() => onTripSelect(trip)} sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
                   <Typography variant="h6" gutterBottom>
                     {trip.name}
                   </Typography>
@@ -98,6 +167,16 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
                     </Typography>
                   )}
                 </CardContent>
+                <IconButton
+                  sx={{ position: 'absolute', top: 8, right: 8 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTrip(trip);
+                    setAnchorEl(e.currentTarget);
+                  }}
+                >
+                  <MoreVert />
+                </IconButton>
               </Card>
             </Grid>
           ))}
@@ -112,8 +191,12 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           <Add />
         </Fab>
 
-        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Create New Trip</DialogTitle>
+        <Dialog open={open} onClose={() => {
+          setOpen(false);
+          setEditingTrip(null);
+          setNewTrip({ name: '', description: '' });
+        }} maxWidth="sm" fullWidth>
+          <DialogTitle>{editingTrip ? 'Edit Trip' : 'Create New Trip'}</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -136,12 +219,42 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              setOpen(false);
+              setEditingTrip(null);
+              setNewTrip({ name: '', description: '' });
+            }}>Cancel</Button>
             <Button onClick={handleCreateTrip} disabled={loading}>
-              {loading ? 'Creating...' : 'Create'}
+              {loading ? (editingTrip ? 'Updating...' : 'Creating...') : (editingTrip ? 'Update' : 'Create')}
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Actions Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          <MenuItem onClick={() => {
+            if (selectedTrip) {
+              setEditingTrip(selectedTrip);
+              setNewTrip({ name: selectedTrip.name, description: selectedTrip.description || '' });
+              setOpen(true);
+            }
+            setAnchorEl(null);
+          }}>
+            Edit
+          </MenuItem>
+          <MenuItem onClick={() => {
+            if (selectedTrip && window.confirm('Are you sure you want to delete this trip?')) {
+              handleDeleteTrip(selectedTrip.id);
+            }
+            setAnchorEl(null);
+          }}>
+            Delete
+          </MenuItem>
+        </Menu>
       </Box>
     </Box>
   );

@@ -15,7 +15,7 @@ router.get('/trip/:tripId', async (req, res) => {
         { model: Transport },
         { model: Accommodation }
       ],
-      order: [['startDate', 'ASC']]
+      order: [['startDate', 'ASC NULLS LAST']]
     })
     res.json(stages)
   } catch (error) {
@@ -80,12 +80,23 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const stage = await Stage.findByPk(req.params.id)
-    if (stage) {
-      await stage.destroy()
-      res.status(204).end()
-    } else {
-      res.status(404).json({ error: 'Stage not found' })
+    if (!stage) {
+      return res.status(404).json({ error: 'Stage not found' })
     }
+
+    // Count activities to inform user
+    const activities = await Activity.findAll({ where: { stageId: req.params.id } })
+    const activityCount = activities.length
+
+    // Delete all activities of this stage
+    await Activity.destroy({ where: { stageId: req.params.id } })
+
+    // Delete the stage
+    await stage.destroy()
+
+    const message = `Étape "${stage.name || 'Sans nom'}" supprimée avec succès. ${activityCount} activité(s) ont également été supprimées.`
+    
+    res.json({ message })
   } catch (error) {
     console.error('Error deleting stage:', error)
     res.status(500).json({ error: 'Failed to delete stage' })

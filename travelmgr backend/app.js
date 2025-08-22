@@ -19,8 +19,19 @@ const { connectToDatabase } = require('./utils/db')
 const { SECRET } = require('./utils/config');
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:8080'],
-  credentials: true
+  origin: function (origin, callback) {
+    console.log('CORS Origin:', origin);
+    const allowedOrigins = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }))
 app.use((require('express')).json())
 app.use(session({
@@ -51,6 +62,7 @@ app.use('/api/transport-types', transportTypesRouter)
 app.use('/api/accommodation-types', accommodationTypesRouter)
 app.use('/api/expense-categories', expenseCategoriesRouter)
 app.use('/api/notification-types', notificationTypesRouter)
+app.use('/api/import', require('./controllers/import'))
 
 connectToDatabase()
 

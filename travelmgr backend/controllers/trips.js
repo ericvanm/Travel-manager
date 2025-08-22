@@ -51,12 +51,38 @@ router.put('/:id', async (req, res) => {
 
 // DELETE trip
 router.delete('/:id', async (req, res) => {
-  const trip = await Trip.findByPk(req.params.id)
-  if (trip) {
+  try {
+    const trip = await Trip.findByPk(req.params.id)
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found' })
+    }
+
+    // Count stages and activities to inform user
+    const stages = await Stage.findAll({ where: { tripId: req.params.id } })
+    let totalActivities = 0
+    
+    for (const stage of stages) {
+      const activities = await Activity.findAll({ where: { stageId: stage.id } })
+      totalActivities += activities.length
+    }
+
+    // Delete all activities first
+    for (const stage of stages) {
+      await Activity.destroy({ where: { stageId: stage.id } })
+    }
+
+    // Delete all stages
+    await Stage.destroy({ where: { tripId: req.params.id } })
+
+    // Delete the trip
     await trip.destroy()
-    res.status(204).end()
-  } else {
-    res.status(404).json({ error: 'Trip not found' })
+
+    const message = `Voyage "${trip.name}" supprimé avec succès. ${stages.length} étape(s) et ${totalActivities} activité(s) ont également été supprimées.`
+    
+    res.json({ message })
+  } catch (error) {
+    console.error('Error deleting trip:', error)
+    res.status(500).json({ error: 'Failed to delete trip' })
   }
 })
 

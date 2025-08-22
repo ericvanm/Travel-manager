@@ -36,7 +36,20 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     console.log('Creating activity with data:', req.body)
-    const activity = await Activity.create(req.body)
+    
+    let activityData = { ...req.body }
+
+    // For hotel activities (activityTypeId = 7), initialize start/end dates with checkIn/checkOut dates
+    if (req.body.activityTypeId === 7) {
+      if (req.body.checkInDate) {
+        activityData.startDateTime = req.body.checkInDate
+      }
+      if (req.body.checkOutDate) {
+        activityData.endDateTime = req.body.checkOutDate
+      }
+    }
+
+    const activity = await Activity.create(activityData)
     res.json(activity)
   } catch (error) {
     console.error('Error creating activity:', error)
@@ -48,13 +61,27 @@ router.post('/', async (req, res) => {
 // PUT update activity
 router.put('/:id', async (req, res) => {
   try {
-    const activity = await Activity.findByPk(req.params.id)
-    if (activity) {
-      await activity.update(req.body)
-      res.json(activity)
-    } else {
-      res.status(404).json({ error: 'Activity not found' })
+    const activity = await Activity.findByPk(req.params.id, {
+      include: [{ model: ActivityType }]
+    })
+    if (!activity) {
+      return res.status(404).json({ error: 'Activity not found' })
     }
+
+    let updateData = { ...req.body }
+
+    // For hotel activities (activityTypeId = 7), sync checkIn/checkOut dates with start/end dates
+    if (activity.activityTypeId === 7 || req.body.activityTypeId === 7) {
+      if (req.body.checkInDate) {
+        updateData.startDateTime = req.body.checkInDate
+      }
+      if (req.body.checkOutDate) {
+        updateData.endDateTime = req.body.checkOutDate
+      }
+    }
+
+    await activity.update(updateData)
+    res.json(activity)
   } catch (error) {
     console.error('Error updating activity:', error)
     res.status(500).json({ error: 'Failed to update activity' })

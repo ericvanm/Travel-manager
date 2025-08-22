@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Add } from '@mui/icons-material';
 import { Trip, Stage, Activity, Country, ActivityType } from '../types';
-import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity } from '../services/trips';
+import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity } from '../services/trips';
 import { useCountries } from '../contexts/CountriesContext';
 
 interface TripDetailProps {
@@ -23,6 +23,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
   const { countries, isLoading: countriesLoading } = useCountries();
   const [stageDialog, setStageDialog] = useState(false);
   const [activityDialog, setActivityDialog] = useState(false);
+  const [activityTypeDialog, setActivityTypeDialog] = useState(false);
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [newStage, setNewStage] = useState({
     name: '',
@@ -33,13 +34,37 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [selectedActivityType, setSelectedActivityType] = useState<string>('');
   const [newActivity, setNewActivity] = useState({
     name: '',
     activityTypeId: '',
     startDateTime: '',
     endDateTime: '',
     city: '',
-    cost: ''
+    cost: '',
+    // Flight fields
+    airline: '',
+    flightNumber: '',
+    departureAirport: '',
+    arrivalAirport: '',
+    seat: '',
+    confirmationCode: '',
+    gate: '',
+    terminal: '',
+    // Hotel fields
+    address: '',
+    phone: '',
+    checkInDate: '',
+    checkOutDate: '',
+    confirmationNumber: '',
+    roomType: '',
+    // Car rental fields
+    company: '',
+    pickupLocation: '',
+    dropoffLocation: '',
+    pickupDate: '',
+    dropoffDate: '',
+    carType: ''
   });
 
   useEffect(() => {
@@ -60,12 +85,11 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
   const loadStagesData = async () => {
     try {
       const data = await getStagesByTrip(tripId);
-      // Sort stages by startDate in ascending order
-      const sortedStages = data.sort((a, b) => {
-        if (!a.startDate && !b.startDate) return 0;
-        if (!a.startDate) return 1;
-        if (!b.startDate) return -1;
-        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+      // Sort stages by startDate in ascending order (chronological)
+      const sortedStages = [...data].sort((a, b) => {
+        const dateA = a.startDate ? new Date(a.startDate) : new Date('9999-12-31');
+        const dateB = b.startDate ? new Date(b.startDate) : new Date('9999-12-31');
+        return dateA.getTime() - dateB.getTime();
       });
       setStages(sortedStages);
     } catch (error) {
@@ -147,10 +171,21 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
         city: newActivity.city || null,
         cost: newActivity.cost ? parseFloat(newActivity.cost) : null
       };
+
+      // For hotel activities, include check-in/check-out dates
+      if (parseInt(newActivity.activityTypeId) === 7) {
+        activityData.checkInDate = newActivity.checkInDate || null;
+        activityData.checkOutDate = newActivity.checkOutDate || null;
+        activityData.address = newActivity.address || null;
+        activityData.phone = newActivity.phone || null;
+        activityData.confirmationNumber = newActivity.confirmationNumber || null;
+        activityData.roomType = newActivity.roomType || null;
+      }
+
       await createActivity(activityData);
       await loadStagesData(); // Reload stages data
       setActivityDialog(false);
-      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '' });
+      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
       setSelectedStage(null);
     } catch (error) {
       console.error('Failed to create activity:', error);
@@ -169,11 +204,22 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
         city: newActivity.city || null,
         cost: newActivity.cost ? parseFloat(newActivity.cost) : null
       };
+
+      // For hotel activities, include check-in/check-out dates
+      if (parseInt(newActivity.activityTypeId) === 7) {
+        activityData.checkInDate = newActivity.checkInDate || null;
+        activityData.checkOutDate = newActivity.checkOutDate || null;
+        activityData.address = newActivity.address || null;
+        activityData.phone = newActivity.phone || null;
+        activityData.confirmationNumber = newActivity.confirmationNumber || null;
+        activityData.roomType = newActivity.roomType || null;
+      }
+
       await updateActivity(editingActivity.id, activityData);
       await loadStagesData();
       setActivityDialog(false);
       setEditingActivity(null);
-      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '' });
+      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
     } catch (error) {
       console.error('Failed to update activity:', error);
     }
@@ -224,7 +270,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                   variant="outlined"
                   onClick={() => {
                     setSelectedStage(stage);
-                    setActivityDialog(true);
+                    setActivityTypeDialog(true);
                   }}
                 >
                   Add Activity
@@ -306,20 +352,42 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                               onClick={() => {
                                 setEditingActivity(activity);
                                 setSelectedStage(stage);
+                                const isHotel = activity.activityTypeId === 7;
                                 setNewActivity({
                                   name: activity.name || '',
                                   activityTypeId: activity.activityTypeId?.toString() || '',
                                   startDateTime: activity.startDateTime ? activity.startDateTime.slice(0, 16) : '',
                                   endDateTime: activity.endDateTime ? activity.endDateTime.slice(0, 16) : '',
                                   city: activity.city || '',
-                                  cost: activity.cost?.toString() || ''
+                                  cost: activity.cost?.toString() || '',
+                                  // Hotel specific fields
+                                  checkInDate: isHotel && activity.startDateTime ? activity.startDateTime.split('T')[0] : '',
+                                  checkOutDate: isHotel && activity.endDateTime ? activity.endDateTime.split('T')[0] : '',
+                                  address: activity.address || '',
+                                  phone: activity.phone || '',
+                                  confirmationNumber: activity.confirmationNumber || '',
+                                  roomType: activity.roomType || ''
                                 });
                                 setActivityDialog(true);
                               }}
                             >
                               Edit
                             </Button>
-                            <Button size="small" variant="outlined" color="error">
+                            <Button 
+                              size="small" 
+                              variant="outlined" 
+                              color="error"
+                              onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this activity?')) {
+                                  try {
+                                    await deleteActivity(activity.id);
+                                    await loadStagesData();
+                                  } catch (error) {
+                                    console.error('Failed to delete activity:', error);
+                                  }
+                                }
+                              }}
+                            >
                               Delete
                             </Button>
                           </Box>
@@ -428,9 +496,46 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
           </DialogActions>
         </Dialog>
 
+        {/* Activity Type Selection Dialog */}
+        <Dialog open={activityTypeDialog} onClose={() => setActivityTypeDialog(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Choose Activity Type</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth margin="dense">
+              <InputLabel>Activity Type</InputLabel>
+              <Select
+                value={selectedActivityType}
+                onChange={(e) => setSelectedActivityType(e.target.value)}
+              >
+                {activityTypes.map((type) => (
+                  <MenuItem key={type.id} value={type.id.toString()}>
+                    {type.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setActivityTypeDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (selectedActivityType) {
+                  setNewActivity({ ...newActivity, activityTypeId: selectedActivityType });
+                  setActivityTypeDialog(false);
+                  setActivityDialog(true);
+                }
+              }}
+              disabled={!selectedActivityType}
+            >
+              Continue
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {/* Activity Dialog */}
         <Dialog open={activityDialog} onClose={() => setActivityDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>{editingActivity ? `Edit Activity` : `Add Activity to ${selectedStage?.name}`}</DialogTitle>
+          <DialogTitle>
+            {editingActivity ? `Edit ${activityTypes.find(t => t.id.toString() === newActivity.activityTypeId)?.label}` : `Add ${activityTypes.find(t => t.id.toString() === newActivity.activityTypeId)?.label} to ${selectedStage?.name}`}
+          </DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -441,19 +546,207 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
               value={newActivity.name}
               onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
             />
-            <FormControl fullWidth margin="dense">
-              <InputLabel>Activity Type</InputLabel>
-              <Select
-                value={newActivity.activityTypeId}
-                onChange={(e) => setNewActivity({ ...newActivity, activityTypeId: e.target.value })}
-              >
-                {activityTypes.map((type) => (
-                  <MenuItem key={type.id} value={type.id}>
-                    {type.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {/* Activity type is already selected, show only relevant fields */}
+            
+            {/* Dynamic fields based on activity type */}
+            {newActivity.activityTypeId === '6' && (
+              <>
+                <TextField 
+                  margin="dense" 
+                  label="Airline" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.airline}
+                  onChange={(e) => setNewActivity({ ...newActivity, airline: e.target.value })}
+                />
+                <TextField 
+                  margin="dense" 
+                  label="Flight Number" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.flightNumber}
+                  onChange={(e) => setNewActivity({ ...newActivity, flightNumber: e.target.value })}
+                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField 
+                    margin="dense" 
+                    label="Departure Airport" 
+                    variant="outlined" 
+                    sx={{ flex: 1 }}
+                    value={newActivity.departureAirport}
+                    onChange={(e) => setNewActivity({ ...newActivity, departureAirport: e.target.value })}
+                  />
+                  <TextField 
+                    margin="dense" 
+                    label="Arrival Airport" 
+                    variant="outlined" 
+                    sx={{ flex: 1 }}
+                    value={newActivity.arrivalAirport}
+                    onChange={(e) => setNewActivity({ ...newActivity, arrivalAirport: e.target.value })}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField 
+                    margin="dense" 
+                    label="Seat" 
+                    variant="outlined" 
+                    sx={{ flex: 1 }}
+                    value={newActivity.seat}
+                    onChange={(e) => setNewActivity({ ...newActivity, seat: e.target.value })}
+                  />
+                  <TextField 
+                    margin="dense" 
+                    label="Gate" 
+                    variant="outlined" 
+                    sx={{ flex: 1 }}
+                    value={newActivity.gate}
+                    onChange={(e) => setNewActivity({ ...newActivity, gate: e.target.value })}
+                  />
+                  <TextField 
+                    margin="dense" 
+                    label="Terminal" 
+                    variant="outlined" 
+                    sx={{ flex: 1 }}
+                    value={newActivity.terminal}
+                    onChange={(e) => setNewActivity({ ...newActivity, terminal: e.target.value })}
+                  />
+                </Box>
+                <TextField 
+                  margin="dense" 
+                  label="Confirmation Code" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.confirmationCode}
+                  onChange={(e) => setNewActivity({ ...newActivity, confirmationCode: e.target.value })}
+                />
+              </>
+            )}
+            
+            {newActivity.activityTypeId === '7' && (
+              <>
+                <TextField 
+                  margin="dense" 
+                  label="Address" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.address}
+                  onChange={(e) => setNewActivity({ ...newActivity, address: e.target.value })}
+                />
+                <TextField 
+                  margin="dense" 
+                  label="Phone" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.phone}
+                  onChange={(e) => setNewActivity({ ...newActivity, phone: e.target.value })}
+                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField 
+                    margin="dense" 
+                    label="Check-in Date" 
+                    type="date" 
+                    variant="outlined" 
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ flex: 1 }}
+                    value={newActivity.checkInDate}
+                    onChange={(e) => setNewActivity({ ...newActivity, checkInDate: e.target.value })}
+                  />
+                  <TextField 
+                    margin="dense" 
+                    label="Check-out Date" 
+                    type="date" 
+                    variant="outlined" 
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ flex: 1 }}
+                    value={newActivity.checkOutDate}
+                    onChange={(e) => setNewActivity({ ...newActivity, checkOutDate: e.target.value })}
+                  />
+                </Box>
+                <TextField 
+                  margin="dense" 
+                  label="Room Type" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.roomType}
+                  onChange={(e) => setNewActivity({ ...newActivity, roomType: e.target.value })}
+                />
+                <TextField 
+                  margin="dense" 
+                  label="Confirmation Number" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.confirmationNumber}
+                  onChange={(e) => setNewActivity({ ...newActivity, confirmationNumber: e.target.value })}
+                />
+              </>
+            )}
+            
+            {newActivity.activityTypeId === '8' && (
+              <>
+                <TextField 
+                  margin="dense" 
+                  label="Rental Company" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.company}
+                  onChange={(e) => setNewActivity({ ...newActivity, company: e.target.value })}
+                />
+                <TextField 
+                  margin="dense" 
+                  label="Pickup Location" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.pickupLocation}
+                  onChange={(e) => setNewActivity({ ...newActivity, pickupLocation: e.target.value })}
+                />
+                <TextField 
+                  margin="dense" 
+                  label="Dropoff Location" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.dropoffLocation}
+                  onChange={(e) => setNewActivity({ ...newActivity, dropoffLocation: e.target.value })}
+                />
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField 
+                    margin="dense" 
+                    label="Pickup Date" 
+                    type="date" 
+                    variant="outlined" 
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ flex: 1 }}
+                    value={newActivity.pickupDate}
+                    onChange={(e) => setNewActivity({ ...newActivity, pickupDate: e.target.value })}
+                  />
+                  <TextField 
+                    margin="dense" 
+                    label="Dropoff Date" 
+                    type="date" 
+                    variant="outlined" 
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ flex: 1 }}
+                    value={newActivity.dropoffDate}
+                    onChange={(e) => setNewActivity({ ...newActivity, dropoffDate: e.target.value })}
+                  />
+                </Box>
+                <TextField 
+                  margin="dense" 
+                  label="Car Type" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.carType}
+                  onChange={(e) => setNewActivity({ ...newActivity, carType: e.target.value })}
+                />
+                <TextField 
+                  margin="dense" 
+                  label="Confirmation Number" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={newActivity.confirmationNumber}
+                  onChange={(e) => setNewActivity({ ...newActivity, confirmationNumber: e.target.value })}
+                />
+              </>
+            )}
             <TextField
               margin="dense"
               label="City"
@@ -532,7 +825,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
             <Button onClick={() => {
               setActivityDialog(false);
               setEditingActivity(null);
-              setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '' });
+              setSelectedActivityType('');
+              setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
             }}>Cancel</Button>
             <Button onClick={editingActivity ? handleUpdateActivity : handleCreateActivity}>
               {editingActivity ? 'Update Activity' : 'Add Activity'}

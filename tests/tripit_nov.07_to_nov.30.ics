@@ -1,0 +1,688 @@
+BEGIN:VCALENDAR
+METHOD:PUBLISH
+X-WR-CALNAME:Marianne foguenne@gmail Foguenne (TripIt - Cape Town, South A
+ frica, November 2025)
+X-WR-CALDESC:Cape Town, South Africa, November 2025 (Trip Shared by Marian
+ ne foguenne@gmail Foguenne)
+PRODID:-//John Papaioannou/NONSGML Bennu 0.1//EN
+VERSION:2.0
+BEGIN:VEVENT
+DTSTAMP:20250822T130345Z
+UID:8d2bbf05-2836-9000-0001-000015f8cb48@tripit.com
+DTSTART;VALUE=DATE:20251107
+DTEND;VALUE=DATE:20251201
+SUMMARY:Cape Town\, South Africa\, November 2025
+LOCATION:Cape Town\, South Africa
+GEO:-33.92584;18.42322
+TRANSP:TRANSPARENT
+DESCRIPTION:Marianne foguenne@gmail Foguenne is in Cape Town\, South Afric
+ a from Nov 7 to 30\, 2025\nView and/or edit details in TripIt : https://ww
+ w.tripit.com/trip/show?id=368626504\nTripIt - organize your travel at http
+ s://www.tripit.com\n
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+DTEND:20251107T061000Z
+SUMMARY:KL1700 BRU to AMS
+LOCATION:Brussels (BRU)
+UID:item-b53326d1-bc50-9000-0003-00012f5adf8d@tripit.com
+DTSTART:20251107T051500Z
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nFri\, Nov 7\n06:15  CET\n[Flight] BRU to AMS\n 
+ \n\nKLM 1700\, Terminal \, Gate \n \n\n07:10  CET\nArrive Amsterdam (AMS)\
+ nTerminal \, Gate \n \n\n \nTripIt - organize your travel at https://www.t
+ ripit.com
+GEO:52.37403;4.88969
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+DTEND:20251107T200500Z
+SUMMARY:KL591 AMS to JNB
+LOCATION:Amsterdam (AMS)
+UID:item-b80239c4-e664-9000-0003-00012f5adf91@tripit.com
+DTSTART:20251107T091000Z
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n10:10  CET\n[Flight] AMS to JNB\n \n\nKLM 591\,
+  Terminal \, Gate \n \n\n22:05  SAST\nArrive Johannesburg (JNB)\nTerminal 
+ \, Gate \n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-26.20227;28.04363
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Eagle Rock Executive Guest House
+TRANSP:TRANSPARENT
+UID:item-1ee80766-4f18-9000-0003-00012f4bf33d@tripit.com
+DTSTART:20251107T120000Z
+DTEND:20251107T130000Z
+LOCATION:69 Oleander Avenue\, 1619 Kempton Park\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Eagle Rock Execut
+ ive Guest House\nCheck-In: 14:00\n69 Oleander Avenue\, 1619 Kempton Park\,
+  Afrique du Sud\n+27 11 393 4665\n \n\n \nTripIt - organize your travel at
+  https://www.tripit.com
+GEO:-26.094916;28.2024842
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Pick Up Rental Car: Europcar
+TRANSP:TRANSPARENT
+UID:item-1b9569a1-8533-9000-0003-00012f5f1f1d@tripit.com
+DTSTART:20251107T204500Z
+DTEND:20251107T214500Z
+LOCATION:1 Jones Rd\, Kempton Park\, Johannesburg\, 1632\, South Africa
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n22:45  SAST\n[Car Rental] Pick Up Europcar Car 
+ Rental\nPick-Up: 22:45\n1 Jones Rd\, Kempton Park\, Johannesburg\, 1632\, 
+ South Africa\n011 921 6262\n \n\n \nTripIt - organize your travel at https
+ ://www.tripit.com
+GEO:-26.1643366;28.230591
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Eagle Rock Executive Guest House
+TRANSP:TRANSPARENT
+UID:item-aa7bee70-a4ef-9000-0003-00012f4bf349@tripit.com
+DTSTART:20251108T080000Z
+DTEND:20251108T090000Z
+LOCATION:69 Oleander Avenue\, 1619 Kempton Park\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSat\, Nov 8\n10:00  SAST\n[Lodging] Depart Eagl
+ e Rock Executive Guest House\nCheck-Out: 10:00\n69 Oleander Avenue\, 1619 
+ Kempton Park\, Afrique du Sud\n+27 11 393 4665\n \n\n \nTripIt - organize 
+ your travel at https://www.tripit.com
+GEO:-26.094916;28.2024842
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Graskop Hotel
+TRANSP:TRANSPARENT
+UID:item-167f4ee1-133e-9000-0003-00012f4c0e5d@tripit.com
+DTSTART:20251108T120000Z
+DTEND:20251108T130000Z
+LOCATION:3 Main Street \, 1270 Graskop\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Graskop Hotel\nCh
+ eck-In: 14:00\n3 Main Street \, 1270 Graskop\, Afrique du Sud\n+27 13 767 
+ 1244\n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-24.9322063;30.8409412
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Graskop Hotel
+TRANSP:TRANSPARENT
+UID:item-a1fab862-2645-9000-0003-00012f4c0e61@tripit.com
+DTSTART:20251109T080000Z
+DTEND:20251109T090000Z
+LOCATION:3 Main Street \, 1270 Graskop\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSun\, Nov 9\n10:00  SAST\n[Lodging] Depart Gras
+ kop Hotel\nCheck-Out: 10:00\n3 Main Street \, 1270 Graskop\, Afrique du Su
+ d\n+27 13 767 1244\n \n\n \nTripIt - organize your travel at https://www.t
+ ripit.com
+GEO:-24.9322063;30.8409412
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: SKUKUZA REST CAMP
+TRANSP:TRANSPARENT
+UID:item-ad53686f-4bfa-9000-0003-00012f4c1179@tripit.com
+DTSTART:20251109T120000Z
+DTEND:20251109T130000Z
+LOCATION:
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive SKUKUZA REST CAMP
+ \nCheck-In: 14:00\n \n\n \nTripIt - organize your travel at https://www.tr
+ ipit.com
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: SKUKUZA REST CAMP
+TRANSP:TRANSPARENT
+UID:item-fe368ff2-5b14-9000-0003-00012f4c117d@tripit.com
+DTSTART:20251110T080000Z
+DTEND:20251110T090000Z
+LOCATION:
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nMon\, Nov 10\n10:00  SAST\n[Lodging] Depart SKU
+ KUZA REST CAMP\nCheck-Out: 10:00\n \n\n \nTripIt - organize your travel at
+  https://www.tripit.com
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: LOWER SABIE REST
+TRANSP:TRANSPARENT
+UID:item-ee78b674-43e1-9000-0003-00012f4c1125@tripit.com
+DTSTART:20251111T120000Z
+DTEND:20251111T130000Z
+LOCATION:
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nTue\, Nov 11\n14:00  SAST\n[Lodging] Arrive LOW
+ ER SABIE REST\nCheck-In: 14:00\n \n\n \nTripIt - organize your travel at h
+ ttps://www.tripit.com
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: LOWER SABIE REST
+TRANSP:TRANSPARENT
+UID:item-a680c17b-083e-9000-0003-00012f4c1129@tripit.com
+DTSTART:20251112T080000Z
+DTEND:20251112T090000Z
+LOCATION:
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nWed\, Nov 12\n10:00  SAST\n[Lodging] Depart LOW
+ ER SABIE REST\nCheck-Out: 10:00\n \n\n \nTripIt - organize your travel at 
+ https://www.tripit.com
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: South Safari Lodge
+TRANSP:TRANSPARENT
+UID:item-6dc571be-3061-9000-0003-00012f4bf8a5@tripit.com
+DTSTART:20251112T120000Z
+DTEND:20251112T130000Z
+LOCATION:4280 Erdvark Street\, 1321 Marloth Park\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive South Safari Lodg
+ e\nCheck-In: 14:00\n4280 Erdvark Street\, 1321 Marloth Park\, Afrique du S
+ ud\n+27 79 041 1762\n \n\n \nTripIt - organize your travel at https://www.
+ tripit.com
+GEO:-25.35721;31.8030657
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: South Safari Lodge
+TRANSP:TRANSPARENT
+UID:item-72b3969d-6129-9000-0003-00012f4bf8a9@tripit.com
+DTSTART:20251113T080000Z
+DTEND:20251113T090000Z
+LOCATION:4280 Erdvark Street\, 1321 Marloth Park\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nThu\, Nov 13\n10:00  SAST\n[Lodging] Depart Sou
+ th Safari Lodge\nCheck-Out: 10:00\n4280 Erdvark Street\, 1321 Marloth Park
+ \, Afrique du Sud\n+27 79 041 1762\n \n\n \nTripIt - organize your travel 
+ at https://www.tripit.com
+GEO:-25.35721;31.8030657
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Mantenga Lodge
+TRANSP:TRANSPARENT
+UID:item-3f93bd8c-1c3f-9000-0003-00012f4bf7e1@tripit.com
+DTSTART:20251113T120000Z
+DTEND:20251113T130000Z
+LOCATION:2 Mantenga Falls Road\, H106 Ezulwini\, Eswatini
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Mantenga Lodge\nC
+ heck-In: 14:00\n2 Mantenga Falls Road\, H106 Ezulwini\, Eswatini\n+268 241
+ 6 1049\n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-26.4;31.166667
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Mantenga Lodge
+TRANSP:TRANSPARENT
+UID:item-0d4fcdaa-c993-9000-0003-00012f4bf7e5@tripit.com
+DTSTART:20251114T090000Z
+DTEND:20251114T100000Z
+LOCATION:2 Mantenga Falls Road\, H106 Ezulwini\, Eswatini
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nFri\, Nov 14\n11:00  SAST\n[Lodging] Depart Man
+ tenga Lodge\nCheck-Out: 11:00\n2 Mantenga Falls Road\, H106 Ezulwini\, Esw
+ atini\n+268 2416 1049\n \n\n \nTripIt - organize your travel at https://ww
+ w.tripit.com
+GEO:-26.4;31.166667
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Leopard Corner Lodge
+TRANSP:TRANSPARENT
+UID:item-ab8e0068-314d-9000-0003-00012f4c1509@tripit.com
+DTSTART:20251114T120000Z
+DTEND:20251114T130000Z
+LOCATION:32 Sandpiper Street\, 3936 Sainte-Lucie\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Leopard Corner Lo
+ dge\nCheck-In: 14:00\n32 Sandpiper Street\, 3936 Sainte-Lucie\, Afrique du
+  Sud\n+27 82 551 4454\n \n\n \nTripIt - organize your travel at https://ww
+ w.tripit.com
+GEO:-28.3771832;32.4189306
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Leopard Corner Lodge
+TRANSP:TRANSPARENT
+UID:item-f4fc972c-7119-9000-0003-00012f4c150d@tripit.com
+DTSTART:20251116T080000Z
+DTEND:20251116T090000Z
+LOCATION:32 Sandpiper Street\, 3936 Sainte-Lucie\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSun\, Nov 16\n10:00  SAST\n[Lodging] Depart Leo
+ pard Corner Lodge\nCheck-Out: 10:00\n32 Sandpiper Street\, 3936 Sainte-Luc
+ ie\, Afrique du Sud\n+27 82 551 4454\n \n\n \nTripIt - organize your trave
+ l at https://www.tripit.com
+GEO:-28.3771832;32.4189306
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Belaire Suites Hotel
+TRANSP:TRANSPARENT
+UID:item-b4d917ce-ca31-9000-0003-00012f5034d1@tripit.com
+DTSTART:20251116T120000Z
+DTEND:20251116T130000Z
+LOCATION:151 Snell Parade\, North Beach\, Marine Parade\, 4056 Durban\, Af
+ rique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Belaire Suites Ho
+ tel\nCheck-In: 14:00\n151 Snell Parade\, North Beach\, Marine Parade\, 405
+ 6 Durban\, Afrique du Sud\n+27 31 332 4485\n \n\n \nTripIt - organize your
+  travel at https://www.tripit.com
+GEO:-29.8417632;31.0349315
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Belaire Suites Hotel
+TRANSP:TRANSPARENT
+UID:item-2b3e3261-34e8-9000-0003-00012f5034d5@tripit.com
+DTSTART:20251117T080000Z
+DTEND:20251117T090000Z
+LOCATION:151 Snell Parade\, North Beach\, Marine Parade\, 4056 Durban\, Af
+ rique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nMon\, Nov 17\n10:00  SAST\n[Lodging] Depart Bel
+ aire Suites Hotel\nCheck-Out: 10:00\n151 Snell Parade\, North Beach\, Mari
+ ne Parade\, 4056 Durban\, Afrique du Sud\n+27 31 332 4485\n \n\n \nTripIt 
+ - organize your travel at https://www.tripit.com
+GEO:-29.8417632;31.0349315
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: J&B Lodge
+TRANSP:TRANSPARENT
+UID:item-31ec7a7f-7def-9000-0003-00012f4da305@tripit.com
+DTSTART:20251117T100000Z
+DTEND:20251117T110000Z
+LOCATION:4 Pin Oak Lane\, Underberg\, 3257\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n12:00  SAST\n[Lodging] Arrive J&B Lodge\nCheck-
+ In: 12:00\n4 Pin Oak Lane\, Underberg\, 3257\, Afrique du Sud\n+2783794471
+ 1\n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-29.7886407;29.4853836
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: J&B Lodge
+TRANSP:TRANSPARENT
+UID:item-5860dc4b-5b17-9000-0003-00012f4da309@tripit.com
+DTSTART:20251119T080000Z
+DTEND:20251119T090000Z
+LOCATION:4 Pin Oak Lane\, Underberg\, 3257\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nWed\, Nov 19\n10:00  SAST\n[Lodging] Depart J&B
+  Lodge\nCheck-Out: 10:00\n4 Pin Oak Lane\, Underberg\, 3257\, Afrique du S
+ ud\n+27837944711\n \n\n \nTripIt - organize your travel at https://www.tri
+ pit.com
+GEO:-29.7886407;29.4853836
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Drop Off Rental Car: Europcar
+TRANSP:TRANSPARENT
+UID:item-32bd7a1b-8b54-9000-0003-00012f5f1f21@tripit.com
+DTSTART:20251119T100000Z
+DTEND:20251119T110000Z
+LOCATION:King Shaka Dr\, La Mercy\, 4407\, South Africa
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n12:00  SAST\n[Car Rental] Drop Off Europcar Car
+  Rental\nDrop-Off: 12:00\nKing Shaka Dr\, La Mercy\, 4407\, South Africa\n
+ 032 436 6585\n \n\n \nTripIt - organize your travel at https://www.tripit.
+ com
+GEO:-29.6189192;31.1020492
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Addo African Home
+TRANSP:TRANSPARENT
+UID:item-6b7eb8ed-0cfc-9000-0003-00012f4eeb9d@tripit.com
+DTSTART:20251119T120000Z
+DTEND:20251119T130000Z
+LOCATION:Caesar's Avenue\, Addo\, 6105\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Addo African Home
+ \nCheck-In: 14:00\nCaesar's Avenue\, Addo\, 6105\, Afrique du Sud\n+27 42 
+ 233 1244\n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-33.5227404;25.7119236
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+DTEND:20251119T133000Z
+SUMMARY:FA421 DUR to PLZ
+LOCATION:Durban (DUR)
+UID:item-cff0058d-0534-9000-0003-0001307894f5@tripit.com
+DTSTART:20251119T120000Z
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Flight] DUR to PLZ\n \n\nSafair 4
+ 21\, Terminal \, Gate \n \n\n15:30  SAST\nArrive Port Elizabeth (PLZ)\nTer
+ minal \, Gate \n \n\n \nTripIt - organize your travel at https://www.tripi
+ t.com
+GEO:-33.96109;25.61494
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Pick Up Rental Car: Europcar
+TRANSP:TRANSPARENT
+UID:item-26b55969-59d6-9000-0003-00012f5eeb31@tripit.com
+DTSTART:20251119T143000Z
+DTEND:20251119T153000Z
+LOCATION:Allister Miller Dr\, Walmer\, Gqeberha\, 6070\, South Africa
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n16:30  SAST\n[Car Rental] Pick Up Europcar Car 
+ Rental\nPick-Up: 16:30\nAllister Miller Dr\, Walmer\, Gqeberha\, 6070\, So
+ uth Africa\n041 507 7340\n \n\n \nTripIt - organize your travel at https:/
+ /www.tripit.com
+GEO:-33.9807637;25.6085923
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Addo African Home
+TRANSP:TRANSPARENT
+UID:item-a3953ac3-5ec8-9000-0003-00012f4eeba1@tripit.com
+DTSTART:20251120T083000Z
+DTEND:20251120T093000Z
+LOCATION:Caesar's Avenue\, Addo\, 6105\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nThu\, Nov 20\n10:30  SAST\n[Lodging] Depart Add
+ o African Home\nCheck-Out: 10:30\nCaesar's Avenue\, Addo\, 6105\, Afrique 
+ du Sud\n+27 42 233 1244\n \n\n \nTripIt - organize your travel at https://
+ www.tripit.com
+GEO:-33.5227404;25.7119236
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Marina Martinique B&B
+TRANSP:TRANSPARENT
+UID:item-7747171a-e0b7-9000-0003-00012f4c15d1@tripit.com
+DTSTART:20251120T120000Z
+DTEND:20251120T130000Z
+LOCATION:972 Tobago Crescent\, 6330 Jeffreys Bay\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Marina Martinique
+  B&B\nCheck-In: 14:00\n972 Tobago Crescent\, 6330 Jeffreys Bay\, Afrique d
+ u Sud\n+27722459228\n \n\n \nTripIt - organize your travel at https://www.
+ tripit.com
+GEO:-34.0762932;24.9131377
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Marina Martinique B&B
+TRANSP:TRANSPARENT
+UID:item-2c1866c1-6666-9000-0003-00012f4c15d5@tripit.com
+DTSTART:20251121T080000Z
+DTEND:20251121T090000Z
+LOCATION:972 Tobago Crescent\, 6330 Jeffreys Bay\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nFri\, Nov 21\n10:00  SAST\n[Lodging] Depart Mar
+ ina Martinique B&B\nCheck-Out: 10:00\n972 Tobago Crescent\, 6330 Jeffreys 
+ Bay\, Afrique du Sud\n+27722459228\n \n\n \nTripIt - organize your travel 
+ at https://www.tripit.com
+GEO:-34.0762932;24.9131377
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Villa Castollini
+TRANSP:TRANSPARENT
+UID:item-ec85e003-482f-9000-0003-00012f4eec09@tripit.com
+DTSTART:20251121T120000Z
+DTEND:20251121T130000Z
+LOCATION:Brenton-on-Sea Road\, Brenton Hill\, Brenton-on-Sea\, 6570\, Afri
+ que du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Villa Castollini\
+ nCheck-In: 14:00\nBrenton-on-Sea Road\, Brenton Hill\, Brenton-on-Sea\, 65
+ 70\, Afrique du Sud\n+27443818200\n \n\n \nTripIt - organize your travel a
+ t https://www.tripit.com
+GEO:-34.0713932;23.0252294
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Villa Castollini
+TRANSP:TRANSPARENT
+UID:item-e9d2e54f-14f0-9000-0003-00012f4eec0d@tripit.com
+DTSTART:20251122T080000Z
+DTEND:20251122T090000Z
+LOCATION:Brenton-on-Sea Road\, Brenton Hill\, Brenton-on-Sea\, 6570\, Afri
+ que du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSat\, Nov 22\n10:00  SAST\n[Lodging] Depart Vil
+ la Castollini\nCheck-Out: 10:00\nBrenton-on-Sea Road\, Brenton Hill\, Bren
+ ton-on-Sea\, 6570\, Afrique du Sud\n+27443818200\n \n\n \nTripIt - organiz
+ e your travel at https://www.tripit.com
+GEO:-34.0713932;23.0252294
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Protea Hotel Mossel Bay
+TRANSP:TRANSPARENT
+UID:item-70397796-4ea2-9000-0003-00012f5a15c9@tripit.com
+DTSTART:20251122T120000Z
+DTEND:20251122T130000Z
+LOCATION:Mossel Bay Locksmiths\, Church Street\, Mossel Bay Central\, Moss
+ el Bay\, 6500\, South Africa
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Protea Hotel Moss
+ el Bay\nCheck-In: 14:00\nMossel Bay Locksmiths\, Church Street\, Mossel Ba
+ y Central\, Mossel Bay\, 6500\, South Africa\n+27 44-6913738\n \n\n \nTrip
+ It - organize your travel at https://www.tripit.com
+GEO:-34.1833883;22.142541
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Protea Hotel Mossel Bay
+TRANSP:TRANSPARENT
+UID:item-d93ad444-46f3-9000-0003-00012f5a15cd@tripit.com
+DTSTART:20251123T090000Z
+DTEND:20251123T100000Z
+LOCATION:Mossel Bay Locksmiths\, Church Street\, Mossel Bay Central\, Moss
+ el Bay\, 6500\, South Africa
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSun\, Nov 23\n11:00  SAST\n[Lodging] Depart Pro
+ tea Hotel Mossel Bay\nCheck-Out: 11:00\nMossel Bay Locksmiths\, Church Str
+ eet\, Mossel Bay Central\, Mossel Bay\, 6500\, South Africa\n+27 44-691373
+ 8\n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-34.1833883;22.142541
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Oceans Guest House & Luxurious Apartments
+TRANSP:TRANSPARENT
+UID:item-a97c56f3-c433-9000-0003-00012f4bfd71@tripit.com
+DTSTART:20251123T120000Z
+DTEND:20251123T130000Z
+LOCATION:6 Harbour Road\, Struisbaai\, 7285\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Oceans Guest Hous
+ e & Luxurious Apartments\nCheck-In: 14:00\n6 Harbour Road\, Struisbaai\, 7
+ 285\, Afrique du Sud\n+27 60 980 0664\n \n\n \nTripIt - organize your trav
+ el at https://www.tripit.com
+GEO:-34.8018589;20.0568222
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Oceans Guest House & Luxurious Apartments
+TRANSP:TRANSPARENT
+UID:item-cb085a0b-162a-9000-0003-00012f4bfd75@tripit.com
+DTSTART:20251124T080000Z
+DTEND:20251124T090000Z
+LOCATION:6 Harbour Road\, Struisbaai\, 7285\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nMon\, Nov 24\n10:00  SAST\n[Lodging] Depart Oce
+ ans Guest House & Luxurious Apartments\nCheck-Out: 10:00\n6 Harbour Road\,
+  Struisbaai\, 7285\, Afrique du Sud\n+27 60 980 0664\n \n\n \nTripIt - org
+ anize your travel at https://www.tripit.com
+GEO:-34.8018589;20.0568222
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: 6 Stemmet Lodge
+TRANSP:TRANSPARENT
+UID:item-87486289-fbf8-9000-0003-00012f4bfc8d@tripit.com
+DTSTART:20251124T123000Z
+DTEND:20251124T133000Z
+LOCATION:6 Stemmet Street\, 7200 Hermanus\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:30  SAST\n[Lodging] Arrive 6 Stemmet Lodge\n
+ Check-In: 14:30\n6 Stemmet Street\, 7200 Hermanus\, Afrique du Sud\n+27828
+ 413547\n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-34.4139429;19.2453986
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: 6 Stemmet Lodge
+TRANSP:TRANSPARENT
+UID:item-41f98353-f473-9000-0003-00012f4bfc91@tripit.com
+DTSTART:20251125T083000Z
+DTEND:20251125T093000Z
+LOCATION:6 Stemmet Street\, 7200 Hermanus\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nTue\, Nov 25\n10:30  SAST\n[Lodging] Depart 6 S
+ temmet Lodge\nCheck-Out: 10:30\n6 Stemmet Street\, 7200 Hermanus\, Afrique
+  du Sud\n+27828413547\n \n\n \nTripIt - organize your travel at https://ww
+ w.tripit.com
+GEO:-34.4139429;19.2453986
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Bluegum Hill Guesthouse & Apartments
+TRANSP:TRANSPARENT
+UID:item-4442df2b-6f1c-9000-0003-00012f4f082d@tripit.com
+DTSTART:20251125T120000Z
+DTEND:20251125T130000Z
+LOCATION:13 Merriman Road\, Green Point\, Green Point\, Le Cap\, 8005 \, A
+ frique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Bluegum Hill Gues
+ thouse & Apartments\nCheck-In: 14:00\n13 Merriman Road\, Green Point\, Gre
+ en Point\, Le Cap\, 8005 \, Afrique du Sud\n+27 21 439 8764\n \n\n \nTripI
+ t - organize your travel at https://www.tripit.com
+GEO:-33.912963;18.4084454
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Bluegum Hill Guesthouse & Apartments
+TRANSP:TRANSPARENT
+UID:item-157f9741-9152-9000-0003-00012f4f0831@tripit.com
+DTSTART:20251127T093000Z
+DTEND:20251127T103000Z
+LOCATION:13 Merriman Road\, Green Point\, Green Point\, Le Cap\, 8005 \, A
+ frique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nThu\, Nov 27\n11:30  SAST\n[Lodging] Depart Blu
+ egum Hill Guesthouse & Apartments\nCheck-Out: 11:30\n13 Merriman Road\, Gr
+ een Point\, Green Point\, Le Cap\, 8005 \, Afrique du Sud\n+27 21 439 8764
+ \n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:-33.912963;18.4084454
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Ocean View House
+TRANSP:TRANSPARENT
+UID:item-624f48a5-dc59-9000-0003-00012f4f0945@tripit.com
+DTSTART:20251127T120000Z
+DTEND:20251127T130000Z
+LOCATION:33 Victoria Road\, Bakoven\, Camps Bay\, Le Cap\, 8005\, Afrique 
+ du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n14:00  SAST\n[Lodging] Arrive Ocean View House\
+ nCheck-In: 14:00\n33 Victoria Road\, Bakoven\, Camps Bay\, Le Cap\, 8005\,
+  Afrique du Sud\n+27214381982\n \n\n \nTripIt - organize your travel at ht
+ tps://www.tripit.com
+GEO:-33.9504593;18.378873
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Ocean View House
+TRANSP:TRANSPARENT
+UID:item-f1a6a689-5e43-9000-0003-00012f4f0949@tripit.com
+DTSTART:20251129T083000Z
+DTEND:20251129T093000Z
+LOCATION:33 Victoria Road\, Bakoven\, Camps Bay\, Le Cap\, 8005\, Afrique 
+ du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSat\, Nov 29\n10:30  SAST\n[Lodging] Depart Oce
+ an View House\nCheck-Out: 10:30\n33 Victoria Road\, Bakoven\, Camps Bay\, 
+ Le Cap\, 8005\, Afrique du Sud\n+27214381982\n \n\n \nTripIt - organize yo
+ ur travel at https://www.tripit.com
+GEO:-33.9504593;18.378873
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-in: Optimum Stay Self Catering Accommodation Deluxe Room
+TRANSP:TRANSPARENT
+UID:item-72fad531-a1ef-9000-0003-00012f4bf3fd@tripit.com
+DTSTART:20251129T130000Z
+DTEND:20251129T140000Z
+LOCATION:13 Wrench Street\, 7500 Cape Town\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n15:00  SAST\n[Lodging] Arrive Optimum Stay Self
+  Catering Accommodation Deluxe Room\nCheck-In: 15:00\n13 Wrench Street\, 7
+ 500 Cape Town\, Afrique du Sud\n+27817183360\n \n\n \nTripIt - organize yo
+ ur travel at https://www.tripit.com
+GEO:-33.9052148;18.584184
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Drop Off Rental Car: Europcar
+TRANSP:TRANSPARENT
+UID:item-af6a0a97-5ac0-9000-0003-00012f5eeb35@tripit.com
+DTSTART:20251130T050000Z
+DTEND:20251130T060000Z
+LOCATION:Matroosfontein\, Cape Town\, 7550\, South Africa
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\nSun\, Nov 30\n07:00  SAST\n[Car Rental] Drop Of
+ f Europcar Car Rental\nDrop-Off: 07:00\nMatroosfontein\, Cape Town\, 7550\
+ , South Africa\n021 934 1198\n \n\n \nTripIt - organize your travel at htt
+ ps://www.tripit.com
+GEO:-33.847486;18.6531909
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+DTEND:20251130T175000Z
+SUMMARY:KL596 CPT to AMS
+LOCATION:Cape Town (CPT)
+UID:item-69f72778-b311-9000-0003-00012f5adf95@tripit.com
+DTSTART:20251130T060000Z
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n08:00  SAST\n[Flight] CPT to AMS\n \n\nKLM 596\
+ , Terminal \, Gate \n \n\n18:50  CET\nArrive Amsterdam (AMS)\nTerminal \, 
+ Gate \, 2h\, 50m layover\n \n\n \nTripIt - organize your travel at https:/
+ /www.tripit.com
+GEO:52.37403;4.88969
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+SUMMARY:Check-out: Optimum Stay Self Catering Accommodation Deluxe Room
+TRANSP:TRANSPARENT
+UID:item-759e9047-6629-9000-0003-00012f4bf401@tripit.com
+DTSTART:20251130T080000Z
+DTEND:20251130T090000Z
+LOCATION:13 Wrench Street\, 7500 Cape Town\, Afrique du Sud
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n10:00  SAST\n[Lodging] Depart Optimum Stay Self
+  Catering Accommodation Deluxe Room\nCheck-Out: 10:00\n13 Wrench Street\, 
+ 7500 Cape Town\, Afrique du Sud\n+27817183360\n \n\n \nTripIt - organize y
+ our travel at https://www.tripit.com
+GEO:-33.9052148;18.584184
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20250822T130346Z
+DTEND:20251130T212000Z
+SUMMARY:KL1707 AMS to BRU
+LOCATION:Amsterdam (AMS)
+UID:item-c7c3454e-35c0-9000-0003-00012f5adf99@tripit.com
+DTSTART:20251130T204000Z
+DESCRIPTION:View and/or edit details in TripIt : https://www.tripit.com/tr
+ ip/show/id/368626504\n \n\n21:40  CET\n[Flight] AMS to BRU\n \n\nKLM 1707\
+ , Terminal \, Gate \n \n\n22:20  CET\nArrive Brussels (BRU)\nTerminal \, G
+ ate \n \n\n \nTripIt - organize your travel at https://www.tripit.com
+GEO:50.85045;4.34878
+END:VEVENT
+END:VCALENDAR

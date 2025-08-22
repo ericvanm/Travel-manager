@@ -656,8 +656,187 @@ Notification.belongsTo(NotificationType, { foreignKey: 'notificationTypeId' })
 User.belongsToMany(Trip, { through: TripList, foreignKey: 'userId' })
 Trip.belongsToMany(User, { through: TripList, foreignKey: 'tripId' })
 
+// Flight model
+class Flight extends Model {}
+Flight.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'stages', key: 'id' }
+  },
+  airline: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  flightNumber: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  departureAirport: {
+    type: DataTypes.STRING(10),
+    allowNull: true
+  },
+  arrivalAirport: {
+    type: DataTypes.STRING(10),
+    allowNull: true
+  },
+  departureTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  arrivalTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  seat: {
+    type: DataTypes.STRING(10),
+    allowNull: true
+  },
+  confirmationCode: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  gate: {
+    type: DataTypes.STRING(10),
+    allowNull: true
+  },
+  terminal: {
+    type: DataTypes.STRING(10),
+    allowNull: true
+  },
+  cost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'flight'
+})
+
+// Lodging model
+class Lodging extends Model {}
+Lodging.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'stages', key: 'id' }
+  },
+  name: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  phone: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  checkInDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  checkOutDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  confirmationNumber: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  roomType: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  totalCost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'lodging'
+})
+
+// CarRental model
+class CarRental extends Model {}
+CarRental.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'stages', key: 'id' }
+  },
+  company: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  pickupLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  dropoffLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  pickupDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  dropoffDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  carType: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  confirmationNumber: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  totalCost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'carRental'
+})
+
+// Relations for new models
+Stage.hasMany(Flight, { foreignKey: 'stageId' })
+Flight.belongsTo(Stage, { foreignKey: 'stageId' })
+
+Stage.hasMany(Lodging, { foreignKey: 'stageId' })
+Lodging.belongsTo(Stage, { foreignKey: 'stageId' })
+
+Stage.hasMany(CarRental, { foreignKey: 'stageId' })
+CarRental.belongsTo(Stage, { foreignKey: 'stageId' })
+
 module.exports = {
   Language, Translation, User, Country, Trip, Stage, ActivityType, Activity,
   TransportType, Transport, AccommodationType, Accommodation,
-  ExpenseCategory, Expense, NotificationType, Notification, TripList
+  ExpenseCategory, Expense, NotificationType, Notification, TripList,
+  Flight, Lodging, CarRental
 }
