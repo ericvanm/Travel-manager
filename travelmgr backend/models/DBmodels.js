@@ -1,9 +1,67 @@
 const { Model, DataTypes } = require('sequelize')
 const { sequelize } = require('../utils/db') 
 
+// Language model
+class Language extends Model {}
+Language.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  code: {
+    type: DataTypes.STRING(5),
+    unique: true,
+    allowNull: false
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'language'
+})
+
+// Translation model
+class Translation extends Model {}
+Translation.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  languageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'languages', key: 'id' }
+  },
+  entityType: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  entityId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  fieldName: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  translatedText: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'translation'
+})
 
 // User model
-
 class User extends Model {}
 User.init({
   id: {
@@ -14,7 +72,6 @@ User.init({
   username: {
     type: DataTypes.STRING,
     unique: true,
-    validate: { isEmail: { msg: 'Validation isEmail on username failed'} },
     allowNull: false
   },
   name: {
@@ -23,13 +80,23 @@ User.init({
   },
   passwordHash: {
     type: DataTypes.STRING,
+    allowNull: false
   },
   disabled: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   },
-  
+  preferredLanguageId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'languages', key: 'id' }
+  },
+  email: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: true
+  }
 }, {
   sequelize,
   underscored: true,
@@ -37,119 +104,560 @@ User.init({
   modelName: 'user'
 })
 
-// the global data structure is the following
-//
-// Trip 1-n stages
-// Stage 1-n activities
-//
-// Blog model
-
+// Country model
+class Country extends Model {}
+Country.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  code: {
+    type: DataTypes.STRING(3),
+    unique: true,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'country'
+})
 
 // Trip model
+class Trip extends Model {}
+Trip.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  startDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  endDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  budget: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  currency: {
+    type: DataTypes.STRING(3),
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'trip'
+})
 
-class Trip extends Model {} 
-  Trip.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    name: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    startDate: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    endDate: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    likes: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    },
-    
-  }, {
-    sequelize,
-    underscored: true,
-    timestamps: true,
-    modelName: 'trip'
-  })
+// Stage model
+class Stage extends Model {}
+Stage.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  tripId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'trips', key: 'id' }
+  },
+  countryId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'countries', key: 'id' }
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  startDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  endDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'stage'
+})
 
+// ActivityType model
+class ActivityType extends Model {}
+ActivityType.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  label: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'activityType'
+})
 
-  // Stage model
+// Activity model
+class Activity extends Model {}
+Activity.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'stages', key: 'id' }
+  },
+  activityTypeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'activity_types', key: 'id' }
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  bookingCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  startDateTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  endDateTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  addressLine: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  postalCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  country: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  comments: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  cost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'activity'
+})
 
-  class Stage extends Model {} 
-  Stage.init({
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-      },
-      userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: { model: 'users', key: 'id' },
-      },
-      blogId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: { model: 'blogs', key: 'id' },
-      },
-      isRead: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      }
-  }, {
-    sequelize,
-    underscored: true,
-    timestamps: false,
-    modelName: 'stage'
-  })
+// TransportType model
+class TransportType extends Model {}
+TransportType.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  label: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'transportType'
+})
 
-// TripList
-class TripList extends Model {} 
-  TripList.init({
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-      },
-      userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: { model: 'users', key: 'id' },
-      },
-      tripId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: { model: 'trips', key: 'id' },
-      },
-      
-  }, {
-    sequelize,
-    underscored: true,
-    timestamps: false,
-    modelName: 'triplist'
-  })
+// Transport model
+class Transport extends Model {}
+Transport.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'stages', key: 'id' }
+  },
+  transportTypeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'transport_types', key: 'id' }
+  },
+  departureLocation: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  arrivalLocation: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  departureDateTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  arrivalDateTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  bookingReference: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  cost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'transport'
+})
 
+// AccommodationType model
+class AccommodationType extends Model {}
+AccommodationType.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  label: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'accommodationType'
+})
 
-// relationships
-User.hasMany(Blog)
-Blog.belongsTo(User)
+// Accommodation model
+class Accommodation extends Model {}
+Accommodation.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'stages', key: 'id' }
+  },
+  accommodationTypeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'accommodation_types', key: 'id' }
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  addressLine: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  checkInDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  checkOutDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  bookingReference: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  costPerNight: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  totalCost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'accommodation',
+  tableName: 'accommodations'
+})
 
+// ExpenseCategory model
+class ExpenseCategory extends Model {}
+ExpenseCategory.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  label: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'expenseCategory'
+})
+
+// Expense model
+class Expense extends Model {}
+Expense.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  tripId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'trips', key: 'id' }
+  },
+  expenseCategoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'expense_categories', key: 'id' }
+  },
+  description: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  amount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  currency: {
+    type: DataTypes.STRING(3),
+    allowNull: false
+  },
+  expenseDate: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  receiptUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'expense'
+})
+
+// NotificationType model
+class NotificationType extends Model {}
+NotificationType.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  label: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'notificationType'
+})
+
+// Notification model
+class Notification extends Model {}
+Notification.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'users', key: 'id' }
+  },
+  notificationTypeId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'notification_types', key: 'id' }
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  message: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  isRead: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  scheduledFor: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  sentAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'notification'
+})
+
+// TripList model
+class TripList extends Model {}
+TripList.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'users', key: 'id' }
+  },
+  tripId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'trips', key: 'id' }
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: false,
+  modelName: 'tripList'
+})
+
+// Relationships
+Language.hasMany(Translation, { foreignKey: 'languageId' })
+Translation.belongsTo(Language, { foreignKey: 'languageId' })
+
+Country.hasMany(Translation, { 
+  foreignKey: 'entityId',
+  scope: { entityType: 'country' },
+  as: 'translations'
+})
+
+User.belongsTo(Language, { foreignKey: 'preferredLanguageId' })
+Language.hasMany(User, { foreignKey: 'preferredLanguageId' })
+
+Trip.hasMany(Stage, { foreignKey: 'tripId' })
 Stage.belongsTo(Trip, { foreignKey: 'tripId' })
-Readinglist.belongsTo(Blog, { foreignKey: 'blogId' })
-Trip.belongsToMany(User, { through: Trip, foreignKey: 'tripId' })
-User.belongsToMany(Trip, { through: Readinglist, foreignKey: 'userId' })
-User.hasMany(Readinglist, { foreignKey: 'userId' });
+
+Country.hasMany(Stage, { foreignKey: 'countryId' })
+Stage.belongsTo(Country, { foreignKey: 'countryId', as: 'Country' })
+
+Stage.hasMany(Activity, { foreignKey: 'stageId' })
+Activity.belongsTo(Stage, { foreignKey: 'stageId' })
+
+ActivityType.hasMany(Activity, { foreignKey: 'activityTypeId' })
+Activity.belongsTo(ActivityType, { foreignKey: 'activityTypeId' })
+
+Stage.hasMany(Transport, { foreignKey: 'stageId' })
+Transport.belongsTo(Stage, { foreignKey: 'stageId' })
+
+TransportType.hasMany(Transport, { foreignKey: 'transportTypeId' })
+Transport.belongsTo(TransportType, { foreignKey: 'transportTypeId' })
+
+Stage.hasMany(Accommodation, { foreignKey: 'stageId' })
+Accommodation.belongsTo(Stage, { foreignKey: 'stageId' })
+
+AccommodationType.hasMany(Accommodation, { foreignKey: 'accommodationTypeId' })
+Accommodation.belongsTo(AccommodationType, { foreignKey: 'accommodationTypeId' })
+
+Trip.hasMany(Expense, { foreignKey: 'tripId' })
+Expense.belongsTo(Trip, { foreignKey: 'tripId' })
+
+ExpenseCategory.hasMany(Expense, { foreignKey: 'expenseCategoryId' })
+Expense.belongsTo(ExpenseCategory, { foreignKey: 'expenseCategoryId' })
+
+User.hasMany(Notification, { foreignKey: 'userId' })
+Notification.belongsTo(User, { foreignKey: 'userId' })
+
+NotificationType.hasMany(Notification, { foreignKey: 'notificationTypeId' })
+Notification.belongsTo(NotificationType, { foreignKey: 'notificationTypeId' })
+
+User.belongsToMany(Trip, { through: TripList, foreignKey: 'userId' })
+Trip.belongsToMany(User, { through: TripList, foreignKey: 'tripId' })
 
 module.exports = {
-  Blog, User, Readinglist
+  Language, Translation, User, Country, Trip, Stage, ActivityType, Activity,
+  TransportType, Transport, AccommodationType, Accommodation,
+  ExpenseCategory, Expense, NotificationType, Notification, TripList
 }

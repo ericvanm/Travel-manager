@@ -8,6 +8,8 @@ RUN npm ci
 
 COPY . .
 
-EXPOSE 5173
+RUN npm rebuild bcrypt --build-from-source
 
-CMD ["npm", "run", "dev", "--", "--host"]
+EXPOSE 3001
+
+CMD ["npm", "run", "dev"]

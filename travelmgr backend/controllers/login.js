@@ -39,7 +39,7 @@ loginRouter.post("/", async (request, response) => {
 
   response
     .status(200)
-    .send({ username: user.username, name: user.name });   // normally no more needed seeing cookie mechanism handled by express-session
+    .send({ id: user.id, username: user.username, name: user.name, email: user.email });
 });
 
 module.exports = loginRouter;

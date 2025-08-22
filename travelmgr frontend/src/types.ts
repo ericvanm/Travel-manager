@@ -1,96 +1,66 @@
-export interface Diagnosis {
+export interface User {
+  id: number;
+  username: string;
+  name: string;
+  email?: string;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegisterData {
+  username: string;
+  name: string;
+  password: string;
+  email?: string;
+}
+
+export interface Trip {
+  id: number;
+  name: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  currency?: string;
+  stages?: Stage[];
+}
+
+export interface Stage {
+  id: number;
+  tripId: number;
+  countryId: number;
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+  activities?: Activity[];
+}
+
+export interface Activity {
+  id: number;
+  stageId: number;
+  activityTypeId: number;
+  name?: string;
+  bookingCode?: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  addressLine?: string;
+  city?: string;
+  country?: string;
+  comments?: string;
+  notes?: string;
+  cost?: number;
+}
+
+export interface Country {
+  id: number;
+  name: string;
   code: string;
-  name: string;
-  latin?: string;
 }
 
-interface BaseEntry {
-  id: string;
-  description: string;
-  date: string;
-  specialist: string;
-  diagnosisCodes?: Array<Diagnosis["code"]>;
+export interface ActivityType {
+  id: number;
+  label: string;
 }
-
-export enum HealthCheckRating {
-  "Healthy" = 0,
-  "LowRisk" = 1,
-  "HighRisk" = 2,
-  "CriticalRisk" = 3,
-}
-
-export interface HealthCheckEntry extends BaseEntry {
-  type: "HealthCheck";
-  healthCheckRating: HealthCheckRating;
-}
-
-export interface OccupationalHealthcareEntry extends BaseEntry {
-  type: "OccupationalHealthcare";
-  employerName: string;
-  sickLeave?: {
-    startDate: string;
-    endDate: string;
-  };
-}
-
-export interface HospitalEntry extends BaseEntry {
-  type: "Hospital";
-  discharge?: {
-    date: string;
-    criteria: string;
-  };
-}
-
-export type Entry =
-  | HospitalEntry
-  | OccupationalHealthcareEntry
-  | HealthCheckEntry;
-
-export enum Gender {
-  Male = "male",
-  Female = "female",
-  Other = "other",
-}
-
-export interface Patient {
-  id: string;
-  name: string;
-  occupation: string;
-  gender: Gender;
-  ssn?: string;
-  dateOfBirth?: string;
-  entries?: Entry[];
-}
-
-export type entryType = "Hospital" | "OccupationalHealthcare" | "HealthCheck";
-
-export enum TypeEnum {
-  Hospital = "Hospital",
-  OccupationalHealthcare = "OccupationalHealthcare",
-  HealthCheck = "HealthCheck",
-}
-
-export type PatientFormValues = Omit<Patient, "id" | "entries">;
-
-export interface EntryFormStrings {
-  type: string;
-  date: string;
-  description: string;
-  specialist: string;
-  diagnosisCodes: string[];
-  healthCheckRating: string;
-  discharge: {
-    date: string;
-    criteria: string;
-  };
-  employerName: string;
-  sickLeave: {
-    startDate: string;
-    endDate: string;
-  };
-}
-
-export type EntryFormValues =
-  | Omit<HospitalEntry, "id">
-  | Omit<OccupationalHealthcareEntry, "id">
-  | Omit<HealthCheckEntry, "id">;

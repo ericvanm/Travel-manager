@@ -1,58 +1,64 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
-import { Button, Divider, Container, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CountriesProvider } from './contexts/CountriesContext';
+import Login from './components/Login';
+import Register from './components/Register';
+import TripList from './components/TripList';
+import TripDetail from './components/TripDetail';
+import { Trip } from './types';
 
-import { apiBaseUrl } from "./constants";
-import { Diagnosis, Patient } from "./types";
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+});
 
-import patientService from "./services/patients";
-import diagnosesService from "./services/diagnoses";
+const AppContent: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  const [showRegister, setShowRegister] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
-import PatientListPage from "./components/PatientListPage";
-import PatientInfo from "./components/PatientInfo";
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-const App = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [diagnosisCodesList, setDiagnosisCodesList] = useState<Diagnosis[]>([]);
+  if (!user) {
+    return showRegister ? (
+      <Register onSwitchToLogin={() => setShowRegister(false)} />
+    ) : (
+      <Login onSwitchToRegister={() => setShowRegister(true)} />
+    );
+  }
 
-  
+  if (selectedTrip) {
+    return (
+      <TripDetail
+        tripId={selectedTrip.id}
+        onBack={() => setSelectedTrip(null)}
+      />
+    );
+  }
 
-  useEffect(() => {
-    void axios.get<void>(`${apiBaseUrl}/ping`);
+  return <TripList onTripSelect={setSelectedTrip} />;
+};
 
-    const fetchPatientList = async () => {
-      const patients:Patient[] = await patientService.getAll();
-      setPatients(patients);
-    };
-    void fetchPatientList();
-    const fetchDiagnosisList = async () => {
-      const diagnosisCodesList:Diagnosis[] = await diagnosesService.getAll();
-      setDiagnosisCodesList(diagnosisCodesList);
-    };
-    void fetchDiagnosisList();
-  }, []);
-
-  
-  
+const App: React.FC = () => {
   return (
-    <div className="App">
-      <Router>
-        <Container>
-          <Typography variant="h3" style={{ marginBottom: "0.5em" }}>
-            Patientor
-          </Typography>
-          <Button component={Link} to="/" variant="contained" color="primary">
-            Home
-          </Button>
-          <Divider hidden />
-          <Routes>
-            <Route path="/" element={<PatientListPage patients={patients} setPatients={setPatients} />} />
-            <Route path="/patients/:id" element={<PatientInfo patients={patients} setPatients={setPatients} diagnosisCodesList={diagnosisCodesList} />} />
-          </Routes>
-        </Container>
-      </Router>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <CountriesProvider>
+          <AppContent />
+        </CountriesProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

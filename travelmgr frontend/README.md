@@ -1,7 +1,31 @@
-# Patientor frontend
+# Travel Manager Frontend
 
-### Getting started
+A React TypeScript application for managing travel itineraries.
 
-- To get the app running just install its dependencies with `npm install` and run it with `npm run dev`.
-- The app should work without a backend, but make sure that the request made to `/api/ping` made on startup is successful before continuing.
-  => yes it is now - when backend started - ping has a 200 status in network view of the browser development tools
+## Features
+
+- User authentication (login/register)
+- Trip management
+- Stage and activity planning
+- Material-UI components
+
+## Getting started
+
+### Development
+```bash
+npm run dev
+```
+
+### Docker Development
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+### Production  
+```bash
+docker-compose up --build
+```
+
+## Environment Variables
+
+- `VITE_BACKEND_URL`: Backend API URL (default: http://localhost:3001/api)

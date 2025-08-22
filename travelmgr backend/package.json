@@ -1,7 +1,7 @@
 {
-  "name": "blog",
+  "name": "travel-manager-backend",
   "version": "1.0.0",
-  "description": "exercises part 4 of fullstack open course",
+  "description": "Travel Manager Backend API",
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production node index.js",

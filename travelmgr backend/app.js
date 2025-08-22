@@ -1,41 +1,58 @@
 const app = require('express')()
 const session = require('express-session')
 const cors = require('cors')
-const blogsRouter = require('./controllers/blogs')
 const usersRouter = require('./controllers/users')
 const middleware = require('./utils/middleware')
 const loginRouter = require('./controllers/login')
 const logoutRouter = require('./controllers/logout')
-const authorsRouter = require('./controllers/authors')
-const readinglistsRouter = require('./controllers/readinglists')
+const tripsRouter = require('./controllers/trips')
+const stagesRouter = require('./controllers/stages')
+const activitiesRouter = require('./controllers/activities')
+const countriesRouter = require('./controllers/countries')
+const languagesRouter = require('./controllers/languages')
+const activityTypesRouter = require('./controllers/activityTypes')
+const transportTypesRouter = require('./controllers/transportTypes')
+const accommodationTypesRouter = require('./controllers/accommodationTypes')
+const expenseCategoriesRouter = require('./controllers/expenseCategories')
+const notificationTypesRouter = require('./controllers/notificationTypes')
 const { connectToDatabase } = require('./utils/db')
 const { SECRET } = require('./utils/config');
 
-app.use(cors())
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:8080'],
+  credentials: true
+}))
 app.use((require('express')).json())
 app.use(session({
   secret: SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 5 * 1  // 5 minutes session timeout to test purpose - to be increased for production
+    maxAge: 1000 * 60 * 60 * 2,  // 2 hours session timeout
+    httpOnly: true,
+    secure: false,  // set to true in production with HTTPS
+    sameSite: 'lax'
   }
 }))
 app.use(middleware.requestLogger)
 app.use(middleware.tokenExtractor)
-app.use('/api/blogs', blogsRouter)
+
+// Travel Manager routes
 app.use('/api/users', usersRouter)
 app.use('/api/login', loginRouter)
 app.use('/api/logout', logoutRouter)
-app.use('/api/authors', authorsRouter)
-app.use('/api/readinglists', readinglistsRouter)
+app.use('/api/trips', tripsRouter)
+app.use('/api/stages', stagesRouter)
+app.use('/api/activities', activitiesRouter)
+app.use('/api/countries', countriesRouter)
+app.use('/api/languages', languagesRouter)
+app.use('/api/activity-types', activityTypesRouter)
+app.use('/api/transport-types', transportTypesRouter)
+app.use('/api/accommodation-types', accommodationTypesRouter)
+app.use('/api/expense-categories', expenseCategoriesRouter)
+app.use('/api/notification-types', notificationTypesRouter)
 
 connectToDatabase()
-if (process.env.NODE_ENV === 'test') {
-    const testingRouter = require('./controllers/testing')
-    app.use('/api/testing', testingRouter)
-    console.log("mode testing activated")
-}
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)

@@ -1,21 +1,46 @@
 services:
-  backend:
-    image: patientor-back
-    build:
-      context: ./Patientor backend # The context will pick this directory as the "build context"
-      dockerfile: Dockerfile # This will simply tell which dockerfile to read
-    container_name: patientor-back # This will name the container patientor-back
-  
-  app:
-    image: patientor-front
-    build:
-      context: ./Patientor frontend # The context will pick this directory as the "build context"
-      dockerfile: ./Dockerfile # This will simply tell which dockerfile to read
+  db:
+    image: postgres:15
+    restart: unless-stopped
     environment:
-      VITE_BACKEND_URL: http://localhost:8080/api/
-    
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: travel_mgr
+    container_name: travel-mgr-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-    container_name: patientor-front # This will name the container patientor-front-dev
+  backend:
+    image: travel-mgr-back
+    build:
+      context: ./travelmgr backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:mypassword@db:5432/travel_mgr
+      SECRET: prod-secret-key
+      PORT: 3001
+    container_name: travel-mgr-back
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  app:
+    image: travel-mgr-front
+    build:
+      context: ./travelmgr frontend
+      dockerfile: ./Dockerfile
+    environment:
+      VITE_BACKEND_URL: http://localhost:8080/api
+    container_name: travel-mgr-front
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   nginx:
     image: nginx:1.20.1
     volumes:
@@ -24,7 +49,9 @@ services:
       - 8080:80
     container_name: reverse-proxy
     depends_on:
-      - app # wait for the frontend container to be started
-      - backend # wait also for backend container to be started
-  debug-helper:    
-    image: busybox
+      - app
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
