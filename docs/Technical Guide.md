@@ -86,19 +86,32 @@ languages (1) ←→ (N) translations
 - **Date synchronization**: Check-in/check-out dates automatically sync with start/end dates
 - **Extended fields**: Address, phone, confirmation number, room type support
 
-### 3. **ICS Import System**
+### 3. **Flight Activity Management**
+- **Extended fields**: Airline, flight number, departure/arrival airports, seat, gate, terminal
+- **Date/time initialization**: Proper field initialization during editing
+- **Type-specific handling**: Flight-specific fields only shown for flight activities
+
+### 4. **ICS Import System**
 - **Calendar integration**: Import trips from ICS/iCal files
 - **Hotel event merging**: Automatically combines check-in/check-out events into single activities
 - **Flight detection**: Identifies flights using keywords (Terminal, [Flight], Gate) in descriptions
 - **Address extraction**: Cleans and extracts addresses from LOCATION fields
 - **Stage overlap prevention**: Automatically splits overlapping stages chronologically
+- **New trip creation**: Create new trips from ICS files with user-defined names
 
-### 4. **Timezone Support**
+### 5. **CSV Import/Export System**
+- **Human-readable format**: Clear column names and logical organization
+- **Complete data export**: Trip → Stages → Activities with all specialized fields
+- **Flexible import**: Import into existing trips or create new trips
+- **Type-specific fields**: Handles flight, hotel, and car rental specific data
+- **User confirmation**: Dialog for trip naming and import approval
+
+### 6. **Timezone Support**
 - **Country-based timezones**: Each country has associated timezone information
 - **Localized display**: All dates/times displayed in appropriate timezone
 - **Database storage**: UTC storage with timezone conversion for display
 
-### 5. **Component Architecture**
+### 7. **Component Architecture**
 - **Modular structure**: Components organized in directories with index.tsx pattern
 - **Sub-component isolation**: Related components grouped together
 - **Clean imports**: Consistent import patterns across the application
@@ -137,10 +150,28 @@ PUT    /api/activities/:id              # Update activity
 DELETE /api/activities/:id              # Delete activity
 ```
 
-### Import System
+### Import/Export System
 ```
-POST /api/import/ics    # Import trip from ICS file
+POST /api/import/ics              # Import trip from ICS file
+POST /api/trips/:id/import-csv    # Import CSV data into existing trip
 ```
+
+## CSV Format
+
+### Export Format
+The CSV export includes all trip data in a human-readable format:
+
+```csv
+"Trip Name","Trip Description","Trip Start Date","Trip End Date","Trip Budget","Trip Currency","Stage Name","Stage Country","Stage Start Date","Stage End Date","Activity Name","Activity Type","Activity Start DateTime","Activity End DateTime","Activity City","Activity Cost","Airline","Flight Number","Departure Airport","Arrival Airport","Seat","Gate","Terminal","Hotel Address","Hotel Phone","Check-in Date","Check-out Date","Room Type","Confirmation Number"
+"South Africa Trip","Safari and Cape Town","2025-11-07","2025-11-30","5000","EUR","Johannesburg","South Africa","2025-11-07","2025-11-10","KL591 AMS to JNB","Flight","2025-11-07 11:10","2025-11-07 22:05","","","KLM","591","AMS","JNB","12A","B7","2","","","","","",""
+```
+
+### Import Requirements
+- **Headers**: Must match exact column names
+- **Country matching**: Stage countries must exist in database
+- **Activity types**: Must match existing activity type labels
+- **Date formats**: Standard date/datetime formats supported
+- **Specialized fields**: Flight, hotel, and car rental fields automatically mapped
 
 ## Database Queries Examples
 
@@ -314,6 +345,26 @@ NODE_ENV=development
 VITE_BACKEND_URL=http://localhost:3001/api
 ```
 
+## User Interface Features
+
+### Trip Management
+- **Trip List**: Table format with name, description, dates, and actions
+- **Trip Actions Menu**: Edit, Export CSV, Import CSV, Delete options
+- **Create by Import**: Dropdown menu for ICS/CSV file import with trip creation
+- **Import Dialog**: User confirmation with trip naming for new imports
+
+### Activity Management
+- **Type-specific forms**: Different fields for flights, hotels, car rentals
+- **Date/time handling**: Timezone-aware display and input
+- **Field initialization**: Proper pre-population during editing
+- **Validation**: Type-specific field validation and requirements
+
+### Data Management
+- **Export options**: CSV export from trip actions menu
+- **Import flexibility**: Import into existing trips or create new ones
+- **User feedback**: Progress messages and error handling
+- **File validation**: Format checking and error reporting
+
 ## Future Enhancements
 
 ### Planned Features
@@ -323,12 +374,14 @@ VITE_BACKEND_URL=http://localhost:3001/api
 - Integration with booking platforms
 - Offline capability
 - Push notifications
+- Additional file formats (JSON, XML)
 
 ### Technical Improvements
 - GraphQL API implementation
 - Redis caching layer
 - Microservices architecture
 - Advanced search capabilities
-- Data export/import formats (JSON, CSV)
+- Bulk operations for large datasets
+- API rate limiting and throttling
 
 This technical guide provides a comprehensive overview of the Travel Manager system architecture, implementation details, and development practices.

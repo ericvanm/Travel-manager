@@ -191,7 +191,7 @@ const convertToActivity = (event) => {
 // POST import ICS file
 router.post('/', async (req, res) => {
   try {
-    const { icsContent, userId } = req.body
+    const { icsContent, userId, tripId, tripName } = req.body
     
     if (!icsContent) {
       return res.status(400).json({ error: 'ICS content is required' })
@@ -205,14 +205,28 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Could not extract trip information' })
     }
     
-    // Create trip
-    const trip = await Trip.create({
-      name: tripInfo.name,
-      description: tripInfo.description,
-      startDate: tripInfo.startDate,
-      endDate: tripInfo.endDate,
-      userId: userId || 1 // Default user
-    })
+    // Use existing trip or create new one
+    let trip
+    if (tripId) {
+      trip = await Trip.findByPk(tripId)
+      if (!trip) {
+        return res.status(404).json({ error: 'Trip not found' })
+      }
+      // Update trip with ICS data
+      await trip.update({
+        description: tripInfo.description,
+        startDate: tripInfo.startDate,
+        endDate: tripInfo.endDate
+      })
+    } else {
+      trip = await Trip.create({
+        name: tripName || tripInfo.name,
+        description: tripInfo.description,
+        startDate: tripInfo.startDate,
+        endDate: tripInfo.endDate,
+        userId: userId || 1
+      })
+    }
     
     // Group events by stages
     const stageGroups = groupEventsByStage(events)

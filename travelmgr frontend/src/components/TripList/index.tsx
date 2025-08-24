@@ -10,6 +10,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import TripDialog from './TripDialog';
 import TripTable from './TripTable';
 import TripActionsMenu from './TripActionsMenu';
+import ImportMenu from './ImportMenu';
+import ImportDialog from './ImportDialog';
 
 interface TripListProps {
   onTripSelect: (trip: Trip) => void;
@@ -23,6 +25,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [importDialog, setImportDialog] = useState(false);
+  const [importType, setImportType] = useState<'ICS' | 'CSV'>('ICS');
+  const [importFile, setImportFile] = useState<File | null>(null);
   const { user, setUser } = useAuth();
 
   useEffect(() => {
@@ -122,6 +127,109 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     setAnchorEl(event.currentTarget);
   };
 
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedTrip) return;
+
+    try {
+      const text = await file.text();
+      const response = await fetch(`http://localhost:8080/api/trips/${selectedTrip.id}/import-csv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ csvContent: text })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('CSV import successful:', result);
+        alert(`CSV imported successfully: ${result.importedStages} stages, ${result.importedActivities} activities`);
+      } else {
+        const errorText = await response.text();
+        console.error('CSV import failed:', response.status, errorText);
+        alert(`CSV import failed: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('CSV import error:', error);
+      alert('CSV import failed');
+    }
+
+    event.target.value = '';
+  };
+
+  const handleNewICSImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setImportFile(file);
+    setImportType('ICS');
+    setImportDialog(true);
+    event.target.value = '';
+  };
+
+  const handleNewCSVImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setImportFile(file);
+    setImportType('CSV');
+    setImportDialog(true);
+    event.target.value = '';
+  };
+
+  const handleImportConfirm = async (tripName: string) => {
+    if (!importFile) return;
+    
+    try {
+      const trip = await createTrip({ name: tripName, description: '' });
+      const content = await importFile.text();
+      
+      if (importType === 'ICS') {
+        const response = await fetch('http://localhost:8080/api/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            icsContent: content, 
+            userId: user?.id,
+            tripId: trip.id,
+            tripName: tripName
+          })
+        });
+        
+        if (response.ok) {
+          alert('ICS imported successfully!');
+        } else {
+          const errorText = await response.text();
+          alert(`ICS import failed: ${response.status} - ${errorText}`);
+        }
+      } else {
+        const response = await fetch(`http://localhost:8080/api/trips/${trip.id}/import-csv`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ csvContent: content })
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          alert(`CSV imported successfully: ${result.importedStages} stages, ${result.importedActivities} activities`);
+        } else {
+          const errorText = await response.text();
+          alert(`CSV import failed: ${response.status} - ${errorText}`);
+        }
+      }
+      
+      await loadTrips();
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Import failed');
+    }
+    
+    setImportDialog(false);
+    setImportFile(null);
+  };
+
   return (
     <Box>
       <AppBar position="static">
@@ -139,18 +247,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4">My Trips</Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={() => document.getElementById('ics-file-input')?.click()}
-            >
-              Import ICS
-            </Button>
-            <input
-              id="ics-file-input"
-              type="file"
-              accept=".ics"
-              style={{ display: 'none' }}
-              onChange={handleICSImport}
+            <ImportMenu
+              onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
+              onCSVImport={() => document.getElementById('new-csv-file-input')?.click()}
             />
             <Button
               variant="contained"
@@ -194,6 +293,38 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           selectedTrip={selectedTrip}
           onEdit={handleEditTrip}
           onDelete={handleDeleteTrip}
+        />
+        
+        <input
+          id="csv-file-input"
+          type="file"
+          accept=".csv"
+          style={{ display: 'none' }}
+          onChange={handleImportCSV}
+        />
+        
+        <input
+          id="new-ics-file-input"
+          type="file"
+          accept=".ics"
+          style={{ display: 'none' }}
+          onChange={handleNewICSImport}
+        />
+        
+        <input
+          id="new-csv-file-input"
+          type="file"
+          accept=".csv"
+          style={{ display: 'none' }}
+          onChange={handleNewCSVImport}
+        />
+        
+        <ImportDialog
+          open={importDialog}
+          onClose={() => setImportDialog(false)}
+          onConfirm={handleImportConfirm}
+          importType={importType}
+          fileName={importFile?.name || ''}
         />
       </Box>
     </Box>

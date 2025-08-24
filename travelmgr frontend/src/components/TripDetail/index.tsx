@@ -279,122 +279,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
     setActivityDialog(true);
   };
 
-  const handleExportCSV = () => {
-    const csvData = [];
-    
-    // Headers
-    csvData.push([
-      'Trip Name', 'Trip Description', 'Trip Start Date', 'Trip End Date', 'Trip Budget', 'Trip Currency',
-      'Stage Name', 'Stage Country', 'Stage Start Date', 'Stage End Date',
-      'Activity Name', 'Activity Type', 'Activity Start DateTime', 'Activity End DateTime', 'Activity City', 'Activity Cost',
-      'Airline', 'Flight Number', 'Departure Airport', 'Arrival Airport', 'Seat', 'Gate', 'Terminal',
-      'Hotel Address', 'Hotel Phone', 'Check-in Date', 'Check-out Date', 'Room Type', 'Confirmation Number',
-      'Car Company', 'Pickup Location', 'Dropoff Location', 'Pickup Date', 'Dropoff Date', 'Car Type'
-    ]);
 
-    // Data rows
-    stages.forEach(stage => {
-      if (stage.activities && stage.activities.length > 0) {
-        stage.activities.forEach(activity => {
-          csvData.push([
-            trip.name || '',
-            trip.description || '',
-            trip.startDate ? new Date(trip.startDate).toLocaleDateString() : '',
-            trip.endDate ? new Date(trip.endDate).toLocaleDateString() : '',
-            trip.budget || '',
-            trip.currency || '',
-            stage.name || '',
-            stage.Country?.name || '',
-            stage.startDate ? new Date(stage.startDate).toLocaleDateString() : '',
-            stage.endDate ? new Date(stage.endDate).toLocaleDateString() : '',
-            activity.name || '',
-            activityTypes.find(t => t.id === activity.activityTypeId)?.label || '',
-            activity.startDateTime ? new Date(activity.startDateTime).toLocaleString() : '',
-            activity.endDateTime ? new Date(activity.endDateTime).toLocaleString() : '',
-            activity.city || '',
-            activity.cost || '',
-            activity.airline || '',
-            activity.flightNumber || '',
-            activity.departureAirport || '',
-            activity.arrivalAirport || '',
-            activity.seat || '',
-            activity.gate || '',
-            activity.terminal || '',
-            activity.address || '',
-            activity.phone || '',
-            activity.checkInDate ? new Date(activity.checkInDate).toLocaleDateString() : '',
-            activity.checkOutDate ? new Date(activity.checkOutDate).toLocaleDateString() : '',
-            activity.roomType || '',
-            activity.confirmationNumber || '',
-            activity.company || '',
-            activity.pickupLocation || '',
-            activity.dropoffLocation || '',
-            activity.pickupDate ? new Date(activity.pickupDate).toLocaleDateString() : '',
-            activity.dropoffDate ? new Date(activity.dropoffDate).toLocaleDateString() : '',
-            activity.carType || ''
-          ]);
-        });
-      } else {
-        // Stage without activities
-        csvData.push([
-          trip.name || '',
-          trip.description || '',
-          trip.startDate ? new Date(trip.startDate).toLocaleDateString() : '',
-          trip.endDate ? new Date(trip.endDate).toLocaleDateString() : '',
-          trip.budget || '',
-          trip.currency || '',
-          stage.name || '',
-          stage.Country?.name || '',
-          stage.startDate ? new Date(stage.startDate).toLocaleDateString() : '',
-          stage.endDate ? new Date(stage.endDate).toLocaleDateString() : '',
-          '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
-        ]);
-      }
-    });
-
-    // Convert to CSV string
-    const csvContent = csvData.map(row => 
-      row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
-    ).join('\n');
-
-    // Download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${trip.name.replace(/[^a-z0-9]/gi, '_')}_export.csv`;
-    link.click();
-  };
-
-  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const response = await fetch(`http://localhost:8080/api/trips/${tripId}/import-csv`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ csvContent: text })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('CSV import successful:', result);
-        await loadStagesData();
-        alert('CSV imported successfully!');
-      } else {
-        const errorText = await response.text();
-        console.error('CSV import failed:', response.status, errorText);
-        alert(`CSV import failed: ${response.status} - ${errorText}`);
-      }
-    } catch (error) {
-      console.error('CSV import error:', error);
-      alert('CSV import failed');
-    }
-
-    event.target.value = '';
-  };
 
   if (!trip) {
     return <Typography>Loading...</Typography>;
@@ -410,19 +295,6 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {trip.name}
           </Typography>
-          <Button color="inherit" onClick={handleExportCSV}>
-            Export CSV
-          </Button>
-          <Button color="inherit" onClick={() => document.getElementById('csv-file-input')?.click()}>
-            Import CSV
-          </Button>
-          <input
-            id="csv-file-input"
-            type="file"
-            accept=".csv"
-            style={{ display: 'none' }}
-            onChange={handleImportCSV}
-          />
         </Toolbar>
       </AppBar>
 

@@ -37,7 +37,9 @@ src/components/TripList/
 ├── index.tsx              # Main TripList component
 ├── TripDialog.tsx         # Trip creation/editing dialog
 ├── TripTable.tsx          # Trip table display
-└── TripActionsMenu.tsx    # Trip actions menu
+├── TripActionsMenu.tsx    # Trip actions menu
+├── ImportMenu.tsx         # Import dropdown menu
+└── ImportDialog.tsx       # Import confirmation dialog
 ```
 
 **Simple Components**
