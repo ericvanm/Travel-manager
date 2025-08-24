@@ -3,33 +3,52 @@ const { Trip, Stage, Activity, Flight, Lodging, CarRental, Country } = require('
 
 // Parse ICS content
 const parseICS = (icsContent) => {
+  console.log('ICS Content length:', icsContent.length)
+  console.log('First 200 chars:', icsContent.substring(0, 200))
+  
   const events = []
   const lines = icsContent.split('\n')
   let currentEvent = {}
   let inEvent = false
+  let currentKey = null
+  let eventCount = 0
 
   for (let line of lines) {
-    line = line.trim()
-    
-    if (line === 'BEGIN:VEVENT') {
+    if (line.trim() === 'BEGIN:VEVENT') {
       inEvent = true
       currentEvent = {}
-    } else if (line === 'END:VEVENT') {
+      currentKey = null
+      eventCount++
+      console.log('Starting event', eventCount)
+    } else if (line.trim() === 'END:VEVENT') {
       inEvent = false
       events.push(currentEvent)
+      currentKey = null
+      console.log('Ending event', eventCount, 'SUMMARY:', currentEvent.SUMMARY)
     } else if (inEvent) {
-      const [key, ...valueParts] = line.split(':')
-      const value = valueParts.join(':').replace(/\\,/g, ',').replace(/\\n/g, '\n')
-      
-      if (key.includes(';')) {
-        const [mainKey] = key.split(';')
-        currentEvent[mainKey] = value
+      // Handle line continuation (starts with space or tab)
+      if (line.startsWith(' ') || line.startsWith('\t')) {
+        if (currentKey && currentEvent[currentKey]) {
+          currentEvent[currentKey] += line.substring(1)
+        }
       } else {
-        currentEvent[key] = value
+        line = line.trim()
+        const [key, ...valueParts] = line.split(':')
+        const value = valueParts.join(':').replace(/\\,/g, ',').replace(/\\n/g, '\n')
+        
+        if (key.includes(';')) {
+          const [mainKey] = key.split(';')
+          currentEvent[mainKey] = value
+          currentKey = mainKey
+        } else {
+          currentEvent[key] = value
+          currentKey = key
+        }
       }
     }
   }
   
+  console.log('Total events parsed:', events.length)
   return events
 }
 
@@ -60,14 +79,22 @@ const parseICSDate = (dateStr) => {
   }
 }
 
-// Extract trip info from main event
-const extractTripInfo = (events) => {
-  const mainEvent = events.find(e => e.SUMMARY && e.SUMMARY.includes('Cape Town') && e.DTSTART && e.DTEND)
+// Extract trip info from main event and ICS metadata
+const extractTripInfo = (events, icsContent) => {
+  console.log('Events found:', events.length)
+  events.forEach((e, i) => console.log(`Event ${i}:`, e.SUMMARY))
+  
+  const mainEvent = events.find(e => e.SUMMARY && e.DTSTART && e.DTEND && e.DTSTART.length === 8)
+  console.log('Main event found:', mainEvent ? mainEvent.SUMMARY : 'None')
   if (!mainEvent) return null
+  
+  // Extract X-WR-CALDESC from ICS content
+  const caldescMatch = icsContent.match(/X-WR-CALDESC:(.+)/)
+  const caldescValue = caldescMatch ? caldescMatch[1].replace(/\\,/g, ',').trim() : ''
   
   return {
     name: mainEvent.SUMMARY.replace(/\\,/g, ','),
-    description: mainEvent.DESCRIPTION ? mainEvent.DESCRIPTION.split('\\n')[0] : '',
+    description: caldescValue || (mainEvent.DESCRIPTION ? mainEvent.DESCRIPTION.split('\\n')[0] : ''),
     startDate: parseICSDate(mainEvent.DTSTART),
     endDate: parseICSDate(mainEvent.DTEND),
     location: mainEvent.LOCATION ? mainEvent.LOCATION.replace(/\\,/g, ',') : ''
@@ -100,35 +127,39 @@ const groupEventsByStage = (events) => {
 // Convert ICS event to activity
 const convertToActivity = (event) => {
   const summary = event.SUMMARY || ''
-  
-  // Flight
-  if (summary.includes('to') && (summary.includes('KL') || summary.includes('FA'))) {
+  const description = event.DESCRIPTION || ''
+  console.log('Processing flight description:', description)
+  // Flight - detect by DESCRIPTION containing Terminal, [Flight], Gate
+  if (description.includes('Terminal') && description.includes('[Flight]') && description.includes('Gate')) {
+    const flightMatch = description.match(/\[Flight\]\s+([A-Z]{3}\s+to\s+[A-Z]{3})/)
+    const flightInfo = flightMatch ? flightMatch[1].trim() : summary
+    const flightNumberMatch = description.match(/([A-Z]{2,3}\s+\d+)/)
+    const flightNumber = flightNumberMatch ? flightNumberMatch[1] : ''
+    
     return {
       type: 'flight',
-      name: summary,
+      name: flightInfo,
       activityTypeId: 6,
       startDateTime: parseICSDate(event.DTSTART),
       endDateTime: parseICSDate(event.DTEND),
-      airline: summary.includes('KL') ? 'KLM' : 'Safair',
-      flightNumber: summary.split(' ')[0],
-      departureAirport: summary.split(' ')[1],
-      arrivalAirport: summary.split(' ')[3]
+      flightNumber: flightNumber
     }
   }
   
   // Hotel/Lodging
   if (summary.includes('Check-in:') || summary.includes('Check-out:')) {
-    const startDate = parseICSDate(event.DTSTART)
-    const endDate = parseICSDate(event.DTEND)
+    const dateTime = parseICSDate(event.DTSTART)
+    const cleanAddress = event.LOCATION ? event.LOCATION.replace(/\\,/g, ',').replace(/\\/g, '') : ''
+    
     return {
       type: 'lodging',
       name: summary.replace('Check-in: ', '').replace('Check-out: ', ''),
       activityTypeId: 7,
-      startDateTime: startDate,
-      endDateTime: endDate,
-      address: event.LOCATION,
-      checkInDate: startDate,
-      checkOutDate: endDate
+      startDateTime: dateTime,
+      endDateTime: dateTime,
+      address: cleanAddress,
+      checkInDate: summary.includes('Check-in:') ? dateTime : null,
+      checkOutDate: summary.includes('Check-out:') ? dateTime : null
     }
   }
   
@@ -168,7 +199,7 @@ router.post('/', async (req, res) => {
     
     // Parse ICS
     const events = parseICS(icsContent)
-    const tripInfo = extractTripInfo(events)
+    const tripInfo = extractTripInfo(events, icsContent)
     
     if (!tripInfo) {
       return res.status(400).json({ error: 'Could not extract trip information' })
@@ -189,63 +220,116 @@ router.post('/', async (req, res) => {
     // Find South Africa country
     const southAfrica = await Country.findOne({ where: { code: 'ZA' } })
     
-    for (const stageGroup of stageGroups) {
-      // Calculate stage dates from activities
-      const activityDates = stageGroup.activities
-        .map(event => parseICSDate(event.DTSTART))
-        .filter(date => date !== null)
-      
-      const stageStartDate = activityDates.length > 0 ? new Date(Math.min(...activityDates.map(d => d.getTime()))) : null
-      const stageEndDate = activityDates.length > 0 ? new Date(Math.max(...activityDates.map(d => d.getTime()))) : null
-      
-      // Create stage with calculated dates
+    // Collect all activities with their dates and stage info
+    const allActivities = []
+    stageGroups.forEach(stageGroup => {
+      stageGroup.activities.forEach(event => {
+        const eventDate = parseICSDate(event.DTSTART)
+        if (eventDate) {
+          allActivities.push({
+            event,
+            date: eventDate,
+            stageName: stageGroup.name
+          })
+        }
+      })
+    })
+    
+    // Sort all activities by date
+    allActivities.sort((a, b) => a.date.getTime() - b.date.getTime())
+    
+    // Group activities into non-overlapping stages
+    const finalStages = []
+    let currentStage = null
+    let stageCounter = 1
+    
+    for (const activity of allActivities) {
+      if (!currentStage || activity.stageName !== currentStage.name) {
+        // Start new stage
+        if (currentStage) {
+          finalStages.push(currentStage)
+        }
+        currentStage = {
+          name: activity.stageName,
+          activities: [activity.event],
+          startDate: activity.date,
+          endDate: activity.date
+        }
+      } else {
+        // Add to current stage
+        currentStage.activities.push(activity.event)
+        currentStage.endDate = activity.date
+      }
+    }
+    
+    // Add the last stage
+    if (currentStage) {
+      finalStages.push(currentStage)
+    }
+    
+    // Create stages in database
+    for (const stageData of finalStages) {
       const stage = await Stage.create({
-        name: stageGroup.name,
+        name: stageData.name,
         tripId: trip.id,
         countryId: southAfrica ? southAfrica.id : null,
-        startDate: stageStartDate,
-        endDate: stageEndDate
+        startDate: stageData.startDate,
+        endDate: stageData.endDate
       })
       
-      // Create activities for this stage
-      for (const event of stageGroup.activities) {
+      await processStageActivities(stage, stageData.activities)
+    }
+    
+    // Helper function to process activities for a stage
+    async function processStageActivities(stage, activities) {
+      // Group hotel check-in/check-out events
+      const hotelGroups = new Map()
+      const otherActivities = []
+      
+      for (const event of activities) {
         const activityData = convertToActivity(event)
         
-        if (activityData.type === 'flight' && activityData.startDateTime && activityData.endDateTime) {
-          await Flight.create({
-            stageId: stage.id,
-            airline: activityData.airline,
-            flightNumber: activityData.flightNumber,
-            departureAirport: activityData.departureAirport,
-            arrivalAirport: activityData.arrivalAirport,
-            departureTime: activityData.startDateTime,
-            arrivalTime: activityData.endDateTime,
-            cost: null
-          })
-        // Skip specialized tables for now - only create generic activities
-        // } else if (activityData.type === 'lodging') {
-        //   await Lodging.create({
-        //     stageId: stage.id,
-        //     name: activityData.name,
-        //     address: activityData.address,
-        //     checkInDate: activityData.checkInDate,
-        //     checkOutDate: activityData.checkOutDate,
-        //     totalCost: null
-        //   })
-        // } else if (activityData.type === 'car_rental') {
-        //   await CarRental.create({
-        //     stageId: stage.id,
-        //     company: activityData.company,
-        //     pickupLocation: activityData.pickupLocation,
-        //     dropoffLocation: activityData.dropoffLocation,
-        //     pickupDate: activityData.startDateTime,
-        //     dropoffDate: activityData.endDateTime,
-        //     totalCost: null
-        //   })
+        if (activityData.type === 'lodging') {
+          const hotelName = activityData.name
+          if (!hotelGroups.has(hotelName)) {
+            hotelGroups.set(hotelName, { checkIn: null, checkOut: null, address: activityData.address })
+          }
+          
+          const hotel = hotelGroups.get(hotelName)
+          if (event.SUMMARY.includes('Check-in:')) {
+            hotel.checkIn = activityData
+            hotel.address = activityData.address
+          } else if (event.SUMMARY.includes('Check-out:')) {
+            hotel.checkOut = activityData
+            if (!hotel.address) hotel.address = activityData.address
+          }
+        } else {
+          otherActivities.push({ event, activityData })
         }
+      }
+      
+      // Create merged hotel activities
+      for (const [hotelName, hotel] of hotelGroups) {
+        const checkInDateTime = hotel.checkIn?.checkInDate || hotel.checkIn?.startDateTime
+        const checkOutDateTime = hotel.checkOut?.checkOutDate || hotel.checkOut?.endDateTime
         
-        // Create generic activity with hotel-specific fields if applicable
-        const activityCreateData = {
+        await Activity.create({
+          name: hotelName,
+          stageId: stage.id,
+          activityTypeId: 7,
+          startDateTime: checkInDateTime,
+          endDateTime: checkOutDateTime,
+          checkInDate: checkInDateTime,
+          checkOutDate: checkOutDateTime,
+          address: hotel.address,
+          city: null,
+          cost: null
+        })
+      }
+      
+      // Create other activities
+      for (const { event, activityData } of otherActivities) {
+        await Activity.create({
           name: activityData.name,
           stageId: stage.id,
           activityTypeId: activityData.activityTypeId,
@@ -253,16 +337,7 @@ router.post('/', async (req, res) => {
           endDateTime: activityData.endDateTime,
           city: activityData.city,
           cost: null
-        }
-
-        // Add hotel-specific fields for lodging activities
-        if (activityData.activityTypeId === 7) {
-          activityCreateData.checkInDate = activityData.checkInDate
-          activityCreateData.checkOutDate = activityData.checkOutDate
-          activityCreateData.address = activityData.address
-        }
-
-        await Activity.create(activityCreateData)
+        })
       }
     }
     

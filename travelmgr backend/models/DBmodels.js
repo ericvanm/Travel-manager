@@ -120,6 +120,10 @@ Country.init({
     type: DataTypes.STRING(3),
     unique: true,
     allowNull: false
+  },
+  timezone: {
+    type: DataTypes.STRING(50),
+    allowNull: true
   }
 }, {
   sequelize,
@@ -258,10 +262,6 @@ Activity.init({
     type: DataTypes.DATE,
     allowNull: true
   },
-  addressLine: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
   postalCode: {
     type: DataTypes.STRING,
     allowNull: true
@@ -285,6 +285,102 @@ Activity.init({
   cost: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  phone: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  checkInDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  checkOutDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  confirmationNumber: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  roomType: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  // Flight fields
+  airline: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'airline'
+  },
+  flightNumber: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    field: 'flight_number'
+  },
+  departureAirport: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'departure_airport'
+  },
+  arrivalAirport: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'arrival_airport'
+  },
+  seat: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'seat'
+  },
+  confirmationCode: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'confirmation_code'
+  },
+  gate: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'gate'
+  },
+  terminal: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+    field: 'terminal'
+  },
+  // Car rental fields
+  company: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'company'
+  },
+  pickupLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'pickup_location'
+  },
+  dropoffLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'dropoff_location'
+  },
+  pickupDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'pickup_date'
+  },
+  dropoffDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'dropoff_date'
+  },
+  carType: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'car_type'
   }
 }, {
   sequelize,

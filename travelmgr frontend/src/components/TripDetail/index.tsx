@@ -1,0 +1,514 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab
+} from '@mui/material';
+import { ArrowBack, Add } from '@mui/icons-material';
+import { Trip, Stage, Activity, Country, ActivityType } from '../../types';
+import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity } from '../../services/trips';
+import { useCountries } from '../../contexts/CountriesContext';
+import StageDialog from './StageDialog';
+import ActivityTypeDialog from './ActivityTypeDialog';
+import ActivityDialog from './ActivityDialog';
+
+interface TripDetailProps {
+  tripId: number;
+  onBack: () => void;
+}
+
+const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [stages, setStages] = useState<Stage[]>([]);
+  const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
+  const { countries, isLoading: countriesLoading } = useCountries();
+  const [stageDialog, setStageDialog] = useState(false);
+  const [activityDialog, setActivityDialog] = useState(false);
+  const [activityTypeDialog, setActivityTypeDialog] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
+  const [newStage, setNewStage] = useState({
+    name: '',
+    countryId: '',
+    startDate: '',
+    endDate: ''
+  });
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [editingStage, setEditingStage] = useState<Stage | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [selectedActivityType, setSelectedActivityType] = useState<string>('');
+  const [newActivity, setNewActivity] = useState({
+    name: '',
+    activityTypeId: '',
+    startDateTime: '',
+    endDateTime: '',
+    city: '',
+    cost: '',
+    airline: '',
+    flightNumber: '',
+    departureAirport: '',
+    arrivalAirport: '',
+    seat: '',
+    confirmationCode: '',
+    gate: '',
+    terminal: '',
+    address: '',
+    phone: '',
+    checkInDate: '',
+    checkOutDate: '',
+    confirmationNumber: '',
+    roomType: '',
+    company: '',
+    pickupLocation: '',
+    dropoffLocation: '',
+    pickupDate: '',
+    dropoffDate: '',
+    carType: ''
+  });
+
+  useEffect(() => {
+    loadTripData();
+    loadStagesData();
+    loadActivityTypes();
+  }, [tripId]);
+
+  const loadTripData = async () => {
+    try {
+      const data = await getTrip(tripId);
+      setTrip(data);
+    } catch (error) {
+      console.error('Failed to load trip:', error);
+    }
+  };
+
+  const loadStagesData = async () => {
+    try {
+      const data = await getStagesByTrip(tripId);
+      const sortedStages = [...data].sort((a, b) => {
+        const dateA = a.startDate ? new Date(a.startDate) : new Date('9999-12-31');
+        const dateB = b.startDate ? new Date(b.startDate) : new Date('9999-12-31');
+        return dateA.getTime() - dateB.getTime();
+      });
+      setStages(sortedStages);
+    } catch (error) {
+      console.error('Failed to load stages:', error);
+    }
+  };
+
+  const loadActivityTypes = async () => {
+    try {
+      const activityTypesData = await getActivityTypes();
+      setActivityTypes(activityTypesData);
+    } catch (error) {
+      console.error('Failed to load activity types:', error);
+    }
+  };
+
+  const handleCreateStage = async () => {
+    if (!newStage.name.trim() || !selectedCountry) return;
+    
+    try {
+      const stageData = {
+        name: newStage.name,
+        tripId,
+        countryId: selectedCountry.id,
+        startDate: newStage.startDate || null,
+        endDate: newStage.endDate || null
+      };
+      await createStage(stageData);
+      await loadStagesData();
+      setStageDialog(false);
+      setNewStage({ name: '', countryId: '', startDate: '', endDate: '' });
+      setSelectedCountry(null);
+    } catch (error) {
+      console.error('Failed to create stage:', error);
+    }
+  };
+
+  const handleUpdateStage = async () => {
+    if (!newStage.name.trim() || !selectedCountry || !editingStage) return;
+    
+    try {
+      const stageData = {
+        name: newStage.name,
+        countryId: selectedCountry.id,
+        startDate: newStage.startDate || null,
+        endDate: newStage.endDate || null
+      };
+      await updateStage(editingStage.id, stageData);
+      await loadStagesData();
+      setStageDialog(false);
+      setEditingStage(null);
+      setNewStage({ name: '', countryId: '', startDate: '', endDate: '' });
+      setSelectedCountry(null);
+    } catch (error) {
+      console.error('Failed to update stage:', error);
+    }
+  };
+
+  const handleCreateActivity = async () => {
+    if (!newActivity.name.trim() || !newActivity.activityTypeId || !selectedStage) return;
+    
+    try {
+      const activityData = {
+        name: newActivity.name,
+        stageId: selectedStage.id,
+        activityTypeId: parseInt(newActivity.activityTypeId),
+        startDateTime: newActivity.startDateTime || null,
+        endDateTime: newActivity.endDateTime || null,
+        city: newActivity.city || null,
+        cost: newActivity.cost ? parseFloat(newActivity.cost) : null
+      };
+
+      if (parseInt(newActivity.activityTypeId) === 6) {
+        activityData.airline = newActivity.airline || null;
+        activityData.flightNumber = newActivity.flightNumber || null;
+        activityData.departureAirport = newActivity.departureAirport || null;
+        activityData.arrivalAirport = newActivity.arrivalAirport || null;
+        activityData.seat = newActivity.seat || null;
+        activityData.confirmationCode = newActivity.confirmationCode || null;
+        activityData.gate = newActivity.gate || null;
+        activityData.terminal = newActivity.terminal || null;
+      }
+
+      if (parseInt(newActivity.activityTypeId) === 7) {
+        activityData.checkInDate = newActivity.checkInDate || null;
+        activityData.checkOutDate = newActivity.checkOutDate || null;
+        activityData.address = newActivity.address || null;
+        activityData.phone = newActivity.phone || null;
+        activityData.confirmationNumber = newActivity.confirmationNumber || null;
+        activityData.roomType = newActivity.roomType || null;
+      }
+
+      await createActivity(activityData);
+      await loadStagesData();
+      setActivityDialog(false);
+      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
+      setSelectedStage(null);
+    } catch (error) {
+      console.error('Failed to create activity:', error);
+    }
+  };
+
+  const handleUpdateActivity = async () => {
+    if (!newActivity.name.trim() || !newActivity.activityTypeId || !editingActivity) return;
+    
+    try {
+      const activityData = {
+        name: newActivity.name,
+        activityTypeId: parseInt(newActivity.activityTypeId),
+        startDateTime: newActivity.startDateTime || null,
+        endDateTime: newActivity.endDateTime || null,
+        city: newActivity.city || null,
+        cost: newActivity.cost ? parseFloat(newActivity.cost) : null
+      };
+
+      if (parseInt(newActivity.activityTypeId) === 6) {
+        activityData.airline = newActivity.airline || null;
+        activityData.flightNumber = newActivity.flightNumber || null;
+        activityData.departureAirport = newActivity.departureAirport || null;
+        activityData.arrivalAirport = newActivity.arrivalAirport || null;
+        activityData.seat = newActivity.seat || null;
+        activityData.confirmationCode = newActivity.confirmationCode || null;
+        activityData.gate = newActivity.gate || null;
+        activityData.terminal = newActivity.terminal || null;
+      }
+
+      if (parseInt(newActivity.activityTypeId) === 7) {
+        activityData.checkInDate = newActivity.checkInDate || null;
+        activityData.checkOutDate = newActivity.checkOutDate || null;
+        activityData.address = newActivity.address || null;
+        activityData.phone = newActivity.phone || null;
+        activityData.confirmationNumber = newActivity.confirmationNumber || null;
+        activityData.roomType = newActivity.roomType || null;
+      }
+
+      await updateActivity(editingActivity.id, activityData);
+      await loadStagesData();
+      setActivityDialog(false);
+      setEditingActivity(null);
+      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
+    } catch (error) {
+      console.error('Failed to update activity:', error);
+    }
+  };
+
+  const handleEditActivity = (activity: Activity, stage: Stage) => {
+    setEditingActivity(activity);
+    setSelectedStage(stage);
+    const timezone = stage.Country?.timezone || 'UTC';
+    const formatDateTimeForInput = (dateTime) => {
+      if (!dateTime) return '';
+      const date = new Date(dateTime);
+      return date.toLocaleString('sv-SE', { timeZone: timezone }).slice(0, 16);
+    };
+    const formatDateForInput = (dateTime) => {
+      if (!dateTime) return '';
+      const date = new Date(dateTime);
+      return date.toLocaleDateString('sv-SE', { timeZone: timezone });
+    };
+
+    setNewActivity({
+      name: activity.name || '',
+      activityTypeId: activity.activityTypeId?.toString() || '',
+      startDateTime: formatDateTimeForInput(activity.startDateTime),
+      endDateTime: formatDateTimeForInput(activity.endDateTime),
+      city: activity.city || '',
+      cost: activity.cost?.toString() || '',
+      airline: activity.airline || '',
+      flightNumber: activity.flightNumber || '',
+      departureAirport: activity.departureAirport || '',
+      arrivalAirport: activity.arrivalAirport || '',
+      seat: activity.seat || '',
+      confirmationCode: activity.confirmationCode || '',
+      gate: activity.gate || '',
+      terminal: activity.terminal || '',
+      checkInDate: activity.activityTypeId === 7 ? formatDateForInput(activity.checkInDate || activity.startDateTime) : '',
+      checkOutDate: activity.activityTypeId === 7 ? formatDateForInput(activity.checkOutDate || activity.endDateTime) : '',
+      checkInTime: activity.activityTypeId === 7 && (activity.checkInDate || activity.startDateTime) ? new Date(activity.checkInDate || activity.startDateTime).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5) : '',
+      checkOutTime: activity.activityTypeId === 7 && (activity.checkOutDate || activity.endDateTime) ? new Date(activity.checkOutDate || activity.endDateTime).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5) : '',
+      address: activity.address || '',
+      phone: activity.phone || '',
+      confirmationNumber: activity.confirmationNumber || '',
+      roomType: activity.roomType || '',
+      company: activity.company || '',
+      pickupLocation: activity.pickupLocation || '',
+      dropoffLocation: activity.dropoffLocation || '',
+      pickupDate: activity.pickupDate ? formatDateForInput(activity.pickupDate) : '',
+      dropoffDate: activity.dropoffDate ? formatDateForInput(activity.dropoffDate) : '',
+      carType: activity.carType || ''
+    });
+    setActivityDialog(true);
+  };
+
+  if (!trip) {
+    return <Typography>Loading...</Typography>;
+  }
+
+  return (
+    <Box>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton edge="start" color="inherit" onClick={onBack}>
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {trip.name}
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      <Box sx={{ p: 3 }}>
+        <Typography variant="body1" paragraph>
+          {trip.description}
+        </Typography>
+
+        <Typography variant="h5" gutterBottom sx={{ mt: 3 }}>
+          Stages
+        </Typography>
+
+        {stages.map((stage) => (
+          <Paper key={stage.id} sx={{ mb: 3, p: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  {stage.name || `Stage ${stage.id}`}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {stage.Country?.name || 'N/A'} • 
+                  {stage.startDate ? new Date(stage.startDate).toLocaleDateString() : 'N/A'} - 
+                  {stage.endDate ? new Date(stage.endDate).toLocaleDateString() : 'N/A'}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button 
+                  size="small" 
+                  variant="outlined"
+                  onClick={() => {
+                    setSelectedStage(stage);
+                    setActivityTypeDialog(true);
+                  }}
+                >
+                  Add Activity
+                </Button>
+                <Button 
+                  size="small" 
+                  variant="outlined"
+                  onClick={() => {
+                    setEditingStage(stage);
+                    setNewStage({
+                      name: stage.name || '',
+                      countryId: stage.countryId?.toString() || '',
+                      startDate: stage.startDate ? stage.startDate.split('T')[0] : '',
+                      endDate: stage.endDate ? stage.endDate.split('T')[0] : ''
+                    });
+                    const country = countries.find(c => c.id === stage.countryId);
+                    setSelectedCountry(country || null);
+                    setStageDialog(true);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button 
+                  size="small" 
+                  variant="outlined"
+                  color="error"
+                  onClick={async () => {
+                    if (window.confirm('Are you sure you want to delete this stage?')) {
+                      try {
+                        await deleteStage(stage.id);
+                        await loadStagesData();
+                      } catch (error) {
+                        console.error('Failed to delete stage:', error);
+                      }
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
+              </Box>
+            </Box>
+            
+            {stage.activities && stage.activities.length > 0 ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Activity Name</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell>City</TableCell>
+                      <TableCell>Start Time</TableCell>
+                      <TableCell>End Time</TableCell>
+                      <TableCell>Cost</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {stage.activities.map((activity) => (
+                      <TableRow key={activity.id}>
+                        <TableCell>{activity.name}</TableCell>
+                        <TableCell>
+                          {activityTypes.find(type => type.id === activity.activityTypeId)?.label || 'N/A'}
+                        </TableCell>
+                        <TableCell>{activity.city || 'N/A'}</TableCell>
+                        <TableCell>
+                          {activity.startDateTime ? new Date(activity.startDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {activity.endDateTime ? new Date(activity.endDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {activity.cost ? `$${activity.cost}` : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button 
+                              size="small" 
+                              variant="outlined"
+                              onClick={() => handleEditActivity(activity, stage)}
+                            >
+                              Edit
+                            </Button>
+                            <Button 
+                              size="small" 
+                              variant="outlined" 
+                              color="error"
+                              onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this activity?')) {
+                                  try {
+                                    await deleteActivity(activity.id);
+                                    await loadStagesData();
+                                  } catch (error) {
+                                    console.error('Failed to delete activity:', error);
+                                  }
+                                }
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                No activities yet. Click "Add Activity" to create one.
+              </Typography>
+            )}
+          </Paper>
+        ))}
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setStageDialog(true)}
+          >
+            Add Stage
+          </Button>
+        </Box>
+
+        <Fab
+          color="primary"
+          aria-label="add stage"
+          sx={{ position: 'fixed', bottom: 16, right: 16 }}
+          onClick={() => setStageDialog(true)}
+        >
+          <Add />
+        </Fab>
+
+        <StageDialog
+          open={stageDialog}
+          onClose={() => {
+            setStageDialog(false);
+            setEditingStage(null);
+            setNewStage({ name: '', countryId: '', startDate: '', endDate: '' });
+            setSelectedCountry(null);
+          }}
+          editingStage={editingStage}
+          newStage={newStage}
+          setNewStage={setNewStage}
+          selectedCountry={selectedCountry}
+          setSelectedCountry={setSelectedCountry}
+          countries={countries}
+          countriesLoading={countriesLoading}
+          onSubmit={editingStage ? handleUpdateStage : handleCreateStage}
+        />
+
+        <ActivityTypeDialog
+          open={activityTypeDialog}
+          onClose={() => setActivityTypeDialog(false)}
+          selectedActivityType={selectedActivityType}
+          setSelectedActivityType={setSelectedActivityType}
+          activityTypes={activityTypes}
+          onContinue={() => {
+            if (selectedActivityType) {
+              setNewActivity({ ...newActivity, activityTypeId: selectedActivityType });
+              setActivityTypeDialog(false);
+              setActivityDialog(true);
+            }
+          }}
+        />
+
+        <ActivityDialog
+          open={activityDialog}
+          onClose={() => {
+            setActivityDialog(false);
+            setEditingActivity(null);
+            setSelectedActivityType('');
+            setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
+          }}
+          editingActivity={editingActivity}
+          selectedStage={selectedStage}
+          newActivity={newActivity}
+          setNewActivity={setNewActivity}
+          activityTypes={activityTypes}
+          onSubmit={editingActivity ? handleUpdateActivity : handleCreateActivity}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+export default TripDetail;

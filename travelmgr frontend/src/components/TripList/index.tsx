@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Button, Card, CardContent, Typography, Grid, Fab, Dialog,
-  DialogTitle, DialogContent, TextField, DialogActions, AppBar,
-  Toolbar, IconButton, Menu, MenuItem
+  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton
 } from '@mui/material';
-import { Add, Logout, MoreVert } from '@mui/icons-material';
-import { Trip } from '../types';
-import { getTrips, createTrip, updateTrip, deleteTrip } from '../services/trips';
-import { logout } from '../services/auth';
-import { useAuth } from '../contexts/AuthContext';
+import { Add, Logout } from '@mui/icons-material';
+import { Trip } from '../../types';
+import { getTrips, createTrip, updateTrip, deleteTrip } from '../../services/trips';
+import { logout } from '../../services/auth';
+import { useAuth } from '../../contexts/AuthContext';
+import TripDialog from './TripDialog';
+import TripTable from './TripTable';
+import TripActionsMenu from './TripActionsMenu';
 
 interface TripListProps {
   onTripSelect: (trip: Trip) => void;
@@ -49,9 +50,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         const trip = await createTrip(newTrip);
         setTrips([...trips, trip]);
       }
-      setNewTrip({ name: '', description: '' });
-      setEditingTrip(null);
-      setOpen(false);
+      handleCloseDialog();
     } catch (error) {
       console.error('Failed to save trip:', error);
     } finally {
@@ -103,8 +102,24 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
       console.error('Import error:', error);
     }
     
-    // Reset file input
     event.target.value = '';
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setEditingTrip(null);
+    setNewTrip({ name: '', description: '' });
+  };
+
+  const handleEditTrip = (trip: Trip) => {
+    setEditingTrip(trip);
+    setNewTrip({ name: trip.name, description: trip.description || '' });
+    setOpen(true);
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, trip: Trip) => {
+    setSelectedTrip(trip);
+    setAnchorEl(event.currentTarget);
   };
 
   return (
@@ -122,13 +137,11 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
 
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">
-            My Trips
-          </Typography>
+          <Typography variant="h4">My Trips</Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="outlined"
-              onClick={() => document.getElementById('ics-file-input').click()}
+              onClick={() => document.getElementById('ics-file-input')?.click()}
             >
               Import ICS
             </Button>
@@ -149,38 +162,11 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           </Box>
         </Box>
 
-        <Grid container spacing={3}>
-          {trips.map((trip) => (
-            <Grid item xs={12} sm={6} md={4} key={trip.id}>
-              <Card sx={{ position: 'relative' }}>
-                <CardContent onClick={() => onTripSelect(trip)} sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-                  <Typography variant="h6" gutterBottom>
-                    {trip.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {trip.description || 'No description'}
-                  </Typography>
-                  {trip.startDate && (
-                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                      {new Date(trip.startDate).toLocaleDateString()} - 
-                      {trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'Ongoing'}
-                    </Typography>
-                  )}
-                </CardContent>
-                <IconButton
-                  sx={{ position: 'absolute', top: 8, right: 8 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedTrip(trip);
-                    setAnchorEl(e.currentTarget);
-                  }}
-                >
-                  <MoreVert />
-                </IconButton>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <TripTable
+          trips={trips}
+          onTripSelect={onTripSelect}
+          onMenuClick={handleMenuClick}
+        />
 
         <Fab
           color="primary"
@@ -191,70 +177,24 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           <Add />
         </Fab>
 
-        <Dialog open={open} onClose={() => {
-          setOpen(false);
-          setEditingTrip(null);
-          setNewTrip({ name: '', description: '' });
-        }} maxWidth="sm" fullWidth>
-          <DialogTitle>{editingTrip ? 'Edit Trip' : 'Create New Trip'}</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Trip Name"
-              fullWidth
-              variant="outlined"
-              value={newTrip.name}
-              onChange={(e) => setNewTrip({ ...newTrip, name: e.target.value })}
-            />
-            <TextField
-              margin="dense"
-              label="Description"
-              fullWidth
-              multiline
-              rows={3}
-              variant="outlined"
-              value={newTrip.description}
-              onChange={(e) => setNewTrip({ ...newTrip, description: e.target.value })}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => {
-              setOpen(false);
-              setEditingTrip(null);
-              setNewTrip({ name: '', description: '' });
-            }}>Cancel</Button>
-            <Button onClick={handleCreateTrip} disabled={loading}>
-              {loading ? (editingTrip ? 'Updating...' : 'Creating...') : (editingTrip ? 'Update' : 'Create')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <TripDialog
+          open={open}
+          onClose={handleCloseDialog}
+          onSave={handleCreateTrip}
+          editingTrip={editingTrip}
+          newTrip={newTrip}
+          setNewTrip={setNewTrip}
+          loading={loading}
+        />
 
-        {/* Actions Menu */}
-        <Menu
+        <TripActionsMenu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={() => setAnchorEl(null)}
-        >
-          <MenuItem onClick={() => {
-            if (selectedTrip) {
-              setEditingTrip(selectedTrip);
-              setNewTrip({ name: selectedTrip.name, description: selectedTrip.description || '' });
-              setOpen(true);
-            }
-            setAnchorEl(null);
-          }}>
-            Edit
-          </MenuItem>
-          <MenuItem onClick={() => {
-            if (selectedTrip && window.confirm('Are you sure you want to delete this trip?')) {
-              handleDeleteTrip(selectedTrip.id);
-            }
-            setAnchorEl(null);
-          }}>
-            Delete
-          </MenuItem>
-        </Menu>
+          selectedTrip={selectedTrip}
+          onEdit={handleEditTrip}
+          onDelete={handleDeleteTrip}
+        />
       </Box>
     </Box>
   );
