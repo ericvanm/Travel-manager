@@ -63,6 +63,7 @@ app.use('/api/accommodation-types', accommodationTypesRouter)
 app.use('/api/expense-categories', expenseCategoriesRouter)
 app.use('/api/notification-types', notificationTypesRouter)
 app.use('/api/import', require('./controllers/import'))
+app.use('/api/ai-import', require('./controllers/ai-import'))
 
 connectToDatabase()
 

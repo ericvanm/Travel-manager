@@ -67,3 +67,8 @@ export const updateActivity = async (id: number, activity: Partial<Activity>): P
 export const deleteActivity = async (id: number): Promise<void> => {
   await api.delete(`/activities/${id}`);
 };
+
+export const mergeStages = async (stageIds: number[], newName: string): Promise<{ message: string; mergedStage: Stage }> => {
+  const response = await api.post('/stages/merge', { stageIds, newName });
+  return response.data;
+};

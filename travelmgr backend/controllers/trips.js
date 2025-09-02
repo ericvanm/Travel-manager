@@ -30,6 +30,12 @@ router.get('/:id', async (req, res) => {
 // POST new trip
 router.post('/', async (req, res) => {
   try {
+    // Check if trip name already exists
+    const existingTrip = await Trip.findOne({ where: { name: req.body.name } })
+    if (existingTrip) {
+      return res.status(400).json({ error: 'trip_name_exists' })
+    }
+    
     const trip = await Trip.create(req.body)
     res.json(trip)
   } catch (error) {
@@ -40,12 +46,30 @@ router.post('/', async (req, res) => {
 
 // PUT update trip
 router.put('/:id', async (req, res) => {
-  const trip = await Trip.findByPk(req.params.id)
-  if (trip) {
+  try {
+    const trip = await Trip.findByPk(req.params.id)
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found' })
+    }
+    
+    // Check if trip name already exists (excluding current trip)
+    if (req.body.name && req.body.name !== trip.name) {
+      const existingTrip = await Trip.findOne({ 
+        where: { 
+          name: req.body.name,
+          id: { [require('sequelize').Op.ne]: req.params.id }
+        } 
+      })
+      if (existingTrip) {
+        return res.status(400).json({ error: 'trip_name_exists' })
+      }
+    }
+    
     await trip.update(req.body)
     res.json(trip)
-  } else {
-    res.status(404).json({ error: 'Trip not found' })
+  } catch (error) {
+    console.error('Error updating trip:', error)
+    res.status(500).json({ error: 'Failed to update trip' })
   }
 })
 

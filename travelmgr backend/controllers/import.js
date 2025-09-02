@@ -283,8 +283,33 @@ router.post('/', async (req, res) => {
     
     // Create stages in database
     for (const stageData of finalStages) {
+      // Determine stage name - use hotel or car rental name if stage contains only one type
+      let stageName = stageData.name
+      const hotelActivities = stageData.activities.filter(event => {
+        const summary = event.SUMMARY || ''
+        return summary.includes('Check-in:') || summary.includes('Check-out:')
+      })
+      const carRentalActivities = stageData.activities.filter(event => {
+        const summary = event.SUMMARY || ''
+        return summary.includes('Rental Car') || summary.includes('Pick Up') || summary.includes('Drop Off')
+      })
+      
+      if (hotelActivities.length > 0 && stageData.activities.length <= 2) {
+        // If stage has only hotel activities (check-in/check-out), use hotel name
+        const hotelName = hotelActivities[0].SUMMARY.replace('Check-in: ', '').replace('Check-out: ', '')
+        if (hotelName) {
+          stageName = hotelName
+        }
+      } else if (carRentalActivities.length > 0 && stageData.activities.length <= 2) {
+        // If stage has only car rental activities (pick-up/drop-off), use car rental name
+        const carRentalName = carRentalActivities[0].SUMMARY
+        if (carRentalName) {
+          stageName = carRentalName
+        }
+      }
+      
       const stage = await Stage.create({
-        name: stageData.name,
+        name: stageName,
         tripId: trip.id,
         countryId: southAfrica ? southAfrica.id : null,
         startDate: stageData.startDate,

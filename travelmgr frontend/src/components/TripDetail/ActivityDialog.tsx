@@ -142,6 +142,14 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           value={newActivity.cost}
           onChange={(e) => setNewActivity({ ...newActivity, cost: e.target.value })}
         />
+        <TextField
+          margin="dense"
+          label="Confirmation"
+          fullWidth
+          variant="outlined"
+          value={newActivity.confirmationNumber || ''}
+          onChange={(e) => setNewActivity({ ...newActivity, confirmationNumber: e.target.value })}
+        />
         
         {/* Generic Start/End Date fields for non-hotel activities */}
         {newActivity.activityTypeId !== '7' && (

@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button
+  Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, Alert
 } from '@mui/material';
 import { Trip } from '../../types';
 
@@ -12,6 +12,8 @@ interface TripDialogProps {
   newTrip: { name: string; description: string };
   setNewTrip: (trip: { name: string; description: string }) => void;
   loading: boolean;
+  error: string | null;
+  onErrorClear?: () => void;
 }
 
 const TripDialog: React.FC<TripDialogProps> = ({
@@ -21,12 +23,25 @@ const TripDialog: React.FC<TripDialogProps> = ({
   editingTrip,
   newTrip,
   setNewTrip,
-  loading
+  loading,
+  error,
+  onErrorClear
 }) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewTrip({ ...newTrip, name: e.target.value });
+    if (error && onErrorClear) {
+      onErrorClear();
+    }
+  };
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{editingTrip ? 'Edit Trip' : 'Create New Trip'}</DialogTitle>
       <DialogContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <TextField
           autoFocus
           margin="dense"
@@ -34,7 +49,7 @@ const TripDialog: React.FC<TripDialogProps> = ({
           fullWidth
           variant="outlined"
           value={newTrip.name}
-          onChange={(e) => setNewTrip({ ...newTrip, name: e.target.value })}
+          onChange={handleNameChange}
         />
         <TextField
           margin="dense"

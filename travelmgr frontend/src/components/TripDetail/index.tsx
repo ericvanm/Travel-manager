@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
 } from '@mui/material';
-import { ArrowBack, Add } from '@mui/icons-material';
+import { ArrowBack, Add, MergeType } from '@mui/icons-material';
 import { Trip, Stage, Activity, Country, ActivityType } from '../../types';
-import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity } from '../../services/trips';
+import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages } from '../../services/trips';
 import { useCountries } from '../../contexts/CountriesContext';
 import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
+import MergeStagesDialog from './MergeStagesDialog';
 
 interface TripDetailProps {
   tripId: number;
@@ -25,6 +26,9 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
   const [activityDialog, setActivityDialog] = useState(false);
   const [activityTypeDialog, setActivityTypeDialog] = useState(false);
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [selectedStageIds, setSelectedStageIds] = useState<number[]>([]);
+  const [mergeDialog, setMergeDialog] = useState(false);
   const [newStage, setNewStage] = useState({
     name: '',
     countryId: '',
@@ -155,7 +159,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
         startDateTime: newActivity.startDateTime || null,
         endDateTime: newActivity.endDateTime || null,
         city: newActivity.city || null,
-        cost: newActivity.cost ? parseFloat(newActivity.cost) : null
+        cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
+        confirmationNumber: newActivity.confirmationNumber || null
       };
 
       if (parseInt(newActivity.activityTypeId) === 6) {
@@ -198,7 +203,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
         startDateTime: newActivity.startDateTime || null,
         endDateTime: newActivity.endDateTime || null,
         city: newActivity.city || null,
-        cost: newActivity.cost ? parseFloat(newActivity.cost) : null
+        cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
+        confirmationNumber: newActivity.confirmationNumber || null
       };
 
       if (parseInt(newActivity.activityTypeId) === 6) {
@@ -279,6 +285,43 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
     setActivityDialog(true);
   };
 
+  const handleStageSelection = (stageId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedStageIds(prev => [...prev, stageId]);
+    } else {
+      setSelectedStageIds(prev => prev.filter(id => id !== stageId));
+    }
+  };
+
+  const areStagesConsecutive = (stageIds: number[]): boolean => {
+    if (stageIds.length < 2) return false;
+    const positions = stageIds.map(id => stages.findIndex(stage => stage.id === id)).sort((a, b) => a - b);
+    for (let i = 1; i < positions.length; i++) {
+      if (positions[i] !== positions[i-1] + 1) return false;
+    }
+    return true;
+  };
+
+  const handleMergeStages = async (newName: string) => {
+    try {
+      await mergeStages(selectedStageIds, newName);
+      await loadStagesData();
+      setMergeDialog(false);
+      setMergeMode(false);
+      setSelectedStageIds([]);
+    } catch (error) {
+      console.error('Failed to merge stages:', error);
+    }
+  };
+
+  const toggleMergeMode = () => {
+    setMergeMode(!mergeMode);
+    setSelectedStageIds([]);
+  };
+
+  const canMerge = selectedStageIds.length >= 2 && areStagesConsecutive(selectedStageIds);
+  const selectedStages = stages.filter(stage => selectedStageIds.includes(stage.id));
+
 
 
   if (!trip) {
@@ -303,70 +346,102 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
           {trip.description}
         </Typography>
 
-        <Typography variant="h5" gutterBottom sx={{ mt: 3 }}>
-          Stages
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>
+          <Typography variant="h5">
+            Stages
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {mergeMode && (
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!canMerge}
+                onClick={() => setMergeDialog(true)}
+                startIcon={<MergeType />}
+              >
+                Fusionner ({selectedStageIds.length})
+              </Button>
+            )}
+            <Button
+              variant={mergeMode ? "contained" : "outlined"}
+              color={mergeMode ? "secondary" : "primary"}
+              onClick={toggleMergeMode}
+            >
+              {mergeMode ? 'Annuler' : 'Fusionner'}
+            </Button>
+          </Box>
+        </Box>
 
         {stages.map((stage) => (
           <Paper key={stage.id} sx={{ mb: 3, p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  {stage.name || `Stage ${stage.id}`}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {stage.Country?.name || 'N/A'} • 
-                  {stage.startDate ? new Date(stage.startDate).toLocaleDateString() : 'N/A'} - 
-                  {stage.endDate ? new Date(stage.endDate).toLocaleDateString() : 'N/A'}
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {mergeMode && (
+                  <Checkbox
+                    checked={selectedStageIds.includes(stage.id)}
+                    onChange={(e) => handleStageSelection(stage.id, e.target.checked)}
+                  />
+                )}
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    {stage.name || `Stage ${stage.id}`}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {stage.Country?.name || 'N/A'} • 
+                    {stage.startDate ? new Date(stage.startDate).toLocaleDateString() : 'N/A'} - 
+                    {stage.endDate ? new Date(stage.endDate).toLocaleDateString() : 'N/A'}
+                  </Typography>
+                </Box>
               </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button 
-                  size="small" 
-                  variant="outlined"
-                  onClick={() => {
-                    setSelectedStage(stage);
-                    setActivityTypeDialog(true);
-                  }}
-                >
-                  Add Activity
-                </Button>
-                <Button 
-                  size="small" 
-                  variant="outlined"
-                  onClick={() => {
-                    setEditingStage(stage);
-                    setNewStage({
-                      name: stage.name || '',
-                      countryId: stage.countryId?.toString() || '',
-                      startDate: stage.startDate ? stage.startDate.split('T')[0] : '',
-                      endDate: stage.endDate ? stage.endDate.split('T')[0] : ''
-                    });
-                    const country = countries.find(c => c.id === stage.countryId);
-                    setSelectedCountry(country || null);
-                    setStageDialog(true);
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button 
-                  size="small" 
-                  variant="outlined"
-                  color="error"
-                  onClick={async () => {
-                    if (window.confirm('Are you sure you want to delete this stage?')) {
-                      try {
-                        await deleteStage(stage.id);
-                        await loadStagesData();
-                      } catch (error) {
-                        console.error('Failed to delete stage:', error);
+              {!mergeMode && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    size="small" 
+                    variant="outlined"
+                    onClick={() => {
+                      setSelectedStage(stage);
+                      setActivityTypeDialog(true);
+                    }}
+                  >
+                    Add Activity
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined"
+                    onClick={() => {
+                      setEditingStage(stage);
+                      setNewStage({
+                        name: stage.name || '',
+                        countryId: stage.countryId?.toString() || '',
+                        startDate: stage.startDate ? stage.startDate.split('T')[0] : '',
+                        endDate: stage.endDate ? stage.endDate.split('T')[0] : ''
+                      });
+                      const country = countries.find(c => c.id === stage.countryId);
+                      setSelectedCountry(country || null);
+                      setStageDialog(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined"
+                    color="error"
+                    onClick={async () => {
+                      if (window.confirm('Are you sure you want to delete this stage?')) {
+                        try {
+                          await deleteStage(stage.id);
+                          await loadStagesData();
+                        } catch (error) {
+                          console.error('Failed to delete stage:', error);
+                        }
                       }
-                    }
-                  }}
-                >
-                  Delete
-                </Button>
-              </Box>
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              )}
             </Box>
             
             {stage.activities && stage.activities.length > 0 ? (
@@ -384,7 +459,12 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {stage.activities.map((activity) => (
+                    {[...stage.activities].sort((a, b) => {
+                      if (!a.startDateTime && !b.startDateTime) return 0;
+                      if (!a.startDateTime) return 1;
+                      if (!b.startDateTime) return -1;
+                      return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime();
+                    }).map((activity) => (
                       <TableRow key={activity.id}>
                         <TableCell>{activity.name}</TableCell>
                         <TableCell>
@@ -507,6 +587,13 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
           setNewActivity={setNewActivity}
           activityTypes={activityTypes}
           onSubmit={editingActivity ? handleUpdateActivity : handleCreateActivity}
+        />
+
+        <MergeStagesDialog
+          open={mergeDialog}
+          onClose={() => setMergeDialog(false)}
+          selectedStages={selectedStages}
+          onMerge={handleMergeStages}
         />
       </Box>
     </Box>

@@ -12,6 +12,8 @@ import TripTable from './TripTable';
 import TripActionsMenu from './TripActionsMenu';
 import ImportMenu from './ImportMenu';
 import ImportDialog from './ImportDialog';
+import { AIDocumentImport } from '../AIDocumentImport';
+import { getTranslation } from '../../translations';
 
 interface TripListProps {
   onTripSelect: (trip: Trip) => void;
@@ -23,11 +25,15 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [newTrip, setNewTrip] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [importDialog, setImportDialog] = useState(false);
-  const [importType, setImportType] = useState<'ICS' | 'CSV'>('ICS');
+  const [importType, setImportType] = useState<'ICS' | 'CSV' | 'AI'>('ICS');
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [aiImportDialog, setAiImportDialog] = useState(false);
+  const [aiImportTripId, setAiImportTripId] = useState<number | null>(null);
   const { user, setUser } = useAuth();
 
   useEffect(() => {
@@ -47,6 +53,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     if (!newTrip.name.trim()) return;
     
     setLoading(true);
+    setError(null);
     try {
       if (editingTrip) {
         const updatedTrip = await updateTrip(editingTrip.id, newTrip);
@@ -56,8 +63,13 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         setTrips([...trips, trip]);
       }
       handleCloseDialog();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save trip:', error);
+      if (error.response?.status === 400) {
+        setError(getTranslation(error.response.data.error, 'fr'));
+      } else {
+        setError(getTranslation('trip_save_error', 'fr'));
+      }
     } finally {
       setLoading(false);
     }
@@ -114,11 +126,13 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     setOpen(false);
     setEditingTrip(null);
     setNewTrip({ name: '', description: '' });
+    setError(null);
   };
 
   const handleEditTrip = (trip: Trip) => {
     setEditingTrip(trip);
     setNewTrip({ name: trip.name, description: trip.description || '' });
+    setError(null);
     setOpen(true);
   };
 
@@ -163,6 +177,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     
     setImportFile(file);
     setImportType('ICS');
+    setImportError(null);
     setImportDialog(true);
     event.target.value = '';
   };
@@ -173,6 +188,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     
     setImportFile(file);
     setImportType('CSV');
+    setImportError(null);
     setImportDialog(true);
     event.target.value = '';
   };
@@ -221,13 +237,17 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
       }
       
       await loadTrips();
-    } catch (error) {
+      setImportDialog(false);
+      setImportFile(null);
+    } catch (error: any) {
       console.error('Import error:', error);
-      alert('Import failed');
+      if (error.response?.status === 400 && error.response?.data?.error) {
+        setImportError(getTranslation(error.response.data.error, 'fr'));
+      } else {
+        setImportError(getTranslation('import_failed', 'fr'));
+      }
+      // Ne pas fermer le dialogue en cas d'erreur pour permettre la correction
     }
-    
-    setImportDialog(false);
-    setImportFile(null);
   };
 
   return (
@@ -250,6 +270,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
             <ImportMenu
               onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
               onCSVImport={() => document.getElementById('new-csv-file-input')?.click()}
+              onAIImport={() => setAiImportDialog(true)}
             />
             <Button
               variant="contained"
@@ -284,6 +305,8 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           newTrip={newTrip}
           setNewTrip={setNewTrip}
           loading={loading}
+          error={error}
+          onErrorClear={() => setError(null)}
         />
 
         <TripActionsMenu
@@ -321,11 +344,72 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         
         <ImportDialog
           open={importDialog}
-          onClose={() => setImportDialog(false)}
+          onClose={() => {
+            setImportDialog(false);
+            setImportError(null);
+          }}
           onConfirm={handleImportConfirm}
           importType={importType}
           fileName={importFile?.name || ''}
+          error={importError}
+          onErrorClear={() => setImportError(null)}
         />
+        
+        {aiImportDialog && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '90%',
+              overflow: 'auto'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2>Import Document IA</h2>
+                <Button onClick={() => setAiImportDialog(false)}>✕</Button>
+              </div>
+              <p>Sélectionnez d'abord un voyage existant pour y ajouter des activités :</p>
+              <div style={{ marginBottom: '20px' }}>
+                {trips.map(trip => (
+                  <Button
+                    key={trip.id}
+                    variant="outlined"
+                    onClick={() => {
+                      setAiImportTripId(trip.id)
+                    }}
+                    style={{ margin: '5px', display: 'block', width: '100%', textAlign: 'left' }}
+                  >
+                    {trip.name} ({trip.startDate ? new Date(trip.startDate).toLocaleDateString() : 'Pas de date'})
+                  </Button>
+                ))}
+              </div>
+              
+              {aiImportTripId && (
+                <AIDocumentImport 
+                  tripId={aiImportTripId}
+                  onImportComplete={() => {
+                    loadTrips()
+                    setAiImportDialog(false)
+                    setAiImportTripId(null)
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </Box>
     </Box>
   );

@@ -5,9 +5,10 @@ import { KeyboardArrowDown } from '@mui/icons-material';
 interface ImportMenuProps {
   onICSImport: () => void;
   onCSVImport: () => void;
+  onAIImport: () => void;
 }
 
-const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport }) => {
+const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAIImport }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -26,6 +27,11 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport }) => 
 
   const handleCSVImport = () => {
     onCSVImport();
+    handleClose();
+  };
+
+  const handleAIImport = () => {
+    onAIImport();
     handleClose();
   };
 
@@ -48,6 +54,9 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport }) => 
         </MenuItem>
         <MenuItem onClick={handleCSVImport}>
           Import CSV File
+        </MenuItem>
+        <MenuItem onClick={handleAIImport}>
+          🤖 Import Document IA
         </MenuItem>
       </Menu>
     </>

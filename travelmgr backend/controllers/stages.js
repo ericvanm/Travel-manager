@@ -15,7 +15,10 @@ router.get('/trip/:tripId', async (req, res) => {
         { model: Transport },
         { model: Accommodation }
       ],
-      order: [['startDate', 'ASC NULLS LAST']]
+      order: [
+        ['startDate', 'ASC NULLS LAST'],
+        [Activity, 'startDateTime', 'ASC NULLS LAST']
+      ]
     })
     res.json(stages)
   } catch (error) {
@@ -36,6 +39,9 @@ router.get('/:id', async (req, res) => {
         },
         { model: Transport },
         { model: Accommodation }
+      ],
+      order: [
+        [Activity, 'startDateTime', 'ASC NULLS LAST']
       ]
     })
     if (stage) {
@@ -100,6 +106,113 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting stage:', error)
     res.status(500).json({ error: 'Failed to delete stage' })
+  }
+})
+
+// POST merge stages
+router.post('/merge', async (req, res) => {
+  try {
+    const { stageIds, newName } = req.body
+    
+    if (!stageIds || stageIds.length < 2) {
+      return res.status(400).json({ error: 'Au moins 2 étapes sont requises pour la fusion' })
+    }
+    
+    if (!newName || !newName.trim()) {
+      return res.status(400).json({ error: 'Le nom de la nouvelle étape est requis' })
+    }
+
+    // Get all stages to merge
+    const stages = await Stage.findAll({
+      where: { id: stageIds },
+      order: [['startDate', 'ASC NULLS LAST']]
+    })
+
+    if (stages.length !== stageIds.length) {
+      return res.status(404).json({ error: 'Une ou plusieurs étapes introuvables' })
+    }
+
+    // Verify all stages belong to the same trip
+    const tripId = stages[0].tripId
+    if (!stages.every(stage => stage.tripId === tripId)) {
+      return res.status(400).json({ error: 'Toutes les étapes doivent appartenir au même voyage' })
+    }
+
+    // Verify stages are consecutive by date
+    const allTripStages = await Stage.findAll({
+      where: { tripId },
+      order: [['startDate', 'ASC NULLS LAST']]
+    })
+    
+    const stagePositions = stageIds.map(id => 
+      allTripStages.findIndex(stage => stage.id === id)
+    ).sort((a, b) => a - b)
+    
+    for (let i = 1; i < stagePositions.length; i++) {
+      if (stagePositions[i] !== stagePositions[i-1] + 1) {
+        return res.status(400).json({ error: 'Les étapes doivent être consécutives' })
+      }
+    }
+
+    // Calculate merged stage dates and country
+    const startDate = stages.reduce((earliest, stage) => {
+      if (!stage.startDate) return earliest
+      if (!earliest) return stage.startDate
+      return new Date(stage.startDate) < new Date(earliest) ? stage.startDate : earliest
+    }, null)
+    
+    const endDate = stages.reduce((latest, stage) => {
+      if (!stage.endDate) return latest
+      if (!latest) return stage.endDate
+      return new Date(stage.endDate) > new Date(latest) ? stage.endDate : latest
+    }, null)
+
+    // Use the country of the first stage
+    const countryId = stages[0].countryId
+
+    // Create the merged stage
+    const mergedStage = await Stage.create({
+      name: newName.trim(),
+      tripId,
+      countryId,
+      startDate,
+      endDate
+    })
+
+    // Move all activities to the merged stage and sort them chronologically
+    let totalActivities = 0
+    const allActivities = []
+    
+    for (const stage of stages) {
+      const activities = await Activity.findAll({ where: { stageId: stage.id } })
+      totalActivities += activities.length
+      allActivities.push(...activities)
+    }
+    
+    // Sort activities by startDateTime (nulls last)
+    allActivities.sort((a, b) => {
+      if (!a.startDateTime && !b.startDateTime) return 0
+      if (!a.startDateTime) return 1
+      if (!b.startDateTime) return -1
+      return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
+    })
+    
+    // Update all activities to the merged stage
+    await Activity.update(
+      { stageId: mergedStage.id },
+      { where: { stageId: stages.map(s => s.id) } }
+    )
+
+    // Delete the original stages
+    await Stage.destroy({ where: { id: stageIds } })
+
+    const stageNames = stages.map(s => s.name || 'Sans nom').join(', ')
+    const message = `Étapes "${stageNames}" fusionnées avec succès en "${newName}". ${totalActivities} activité(s) ont été transférées.`
+    
+    res.json({ message, mergedStage })
+  } catch (error) {
+    console.error('Error merging stages:', error)
+    res.status(500).json({ error: 'Failed to merge stages' })
   }
 })
 

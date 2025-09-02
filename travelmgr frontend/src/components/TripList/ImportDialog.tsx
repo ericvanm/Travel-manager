@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, Alert
 } from '@mui/material';
 
 interface ImportDialogProps {
@@ -9,6 +9,8 @@ interface ImportDialogProps {
   onConfirm: (tripName: string) => void;
   importType: 'ICS' | 'CSV';
   fileName: string;
+  error?: string | null;
+  onErrorClear?: () => void;
 }
 
 const ImportDialog: React.FC<ImportDialogProps> = ({
@@ -16,20 +18,28 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   onClose,
   onConfirm,
   importType,
-  fileName
+  fileName,
+  error,
+  onErrorClear
 }) => {
   const [tripName, setTripName] = useState('');
 
   const handleConfirm = () => {
     if (tripName.trim()) {
       onConfirm(tripName.trim());
-      setTripName('');
     }
   };
 
   const handleClose = () => {
     setTripName('');
     onClose();
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTripName(e.target.value);
+    if (error && onErrorClear) {
+      onErrorClear();
+    }
   };
 
   return (
@@ -41,6 +51,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             File: {fileName}
           </Typography>
         </Box>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <TextField
           autoFocus
           margin="dense"
@@ -48,7 +63,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           fullWidth
           variant="outlined"
           value={tripName}
-          onChange={(e) => setTripName(e.target.value)}
+          onChange={handleNameChange}
           placeholder="Enter a name for the new trip"
         />
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
