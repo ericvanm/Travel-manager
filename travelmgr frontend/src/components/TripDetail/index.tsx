@@ -7,6 +7,7 @@ import { ArrowBack, Add, MergeType } from '@mui/icons-material';
 import { Trip, Stage, Activity, Country, ActivityType } from '../../types';
 import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages } from '../../services/trips';
 import { useCountries } from '../../contexts/CountriesContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
@@ -18,6 +19,7 @@ interface TripDetailProps {
 }
 
 const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
+  const { t } = useLanguage();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
@@ -325,7 +327,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
 
 
   if (!trip) {
-    return <Typography>Loading...</Typography>;
+    return <Typography>{t('loading')}</Typography>;
   }
 
   return (
@@ -348,7 +350,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>
           <Typography variant="h5">
-            Stages
+            {t('stages')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             {mergeMode && (
@@ -359,7 +361,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                 onClick={() => setMergeDialog(true)}
                 startIcon={<MergeType />}
               >
-                Fusionner ({selectedStageIds.length})
+                {t('merge_stages', { count: selectedStageIds.length })}
               </Button>
             )}
             <Button
@@ -367,7 +369,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
               color={mergeMode ? "secondary" : "primary"}
               onClick={toggleMergeMode}
             >
-              {mergeMode ? 'Annuler' : 'Fusionner'}
+              {mergeMode ? t('cancel') : t('merge')}
             </Button>
           </Box>
         </Box>
@@ -403,7 +405,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                       setActivityTypeDialog(true);
                     }}
                   >
-                    Add Activity
+                    {t('add_activity')}
                   </Button>
                   <Button 
                     size="small" 
@@ -421,14 +423,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                       setStageDialog(true);
                     }}
                   >
-                    Edit
+                    {t('edit')}
                   </Button>
                   <Button 
                     size="small" 
                     variant="outlined"
                     color="error"
                     onClick={async () => {
-                      if (window.confirm('Are you sure you want to delete this stage?')) {
+                      if (window.confirm(t('delete_stage_confirm'))) {
                         try {
                           await deleteStage(stage.id);
                           await loadStagesData();
@@ -438,7 +440,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                       }
                     }}
                   >
-                    Delete
+                    {t('delete')}
                   </Button>
                 </Box>
               )}
@@ -449,13 +451,13 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Activity Name</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>City</TableCell>
-                      <TableCell>Start Time</TableCell>
-                      <TableCell>End Time</TableCell>
-                      <TableCell>Cost</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>{t('activity_name')}</TableCell>
+                      <TableCell>{t('type')}</TableCell>
+                      <TableCell>{t('city')}</TableCell>
+                      <TableCell>{t('start_time')}</TableCell>
+                      <TableCell>{t('end_time')}</TableCell>
+                      <TableCell>{t('cost')}</TableCell>
+                      <TableCell>{t('actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -468,17 +470,17 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                       <TableRow key={activity.id}>
                         <TableCell>{activity.name}</TableCell>
                         <TableCell>
-                          {activityTypes.find(type => type.id === activity.activityTypeId)?.label || 'N/A'}
+                          {activityTypes.find(type => type.id === activity.activityTypeId)?.label || t('na')}
                         </TableCell>
-                        <TableCell>{activity.city || 'N/A'}</TableCell>
+                        <TableCell>{activity.city || t('na')}</TableCell>
                         <TableCell>
-                          {activity.startDateTime ? new Date(activity.startDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          {activity.endDateTime ? new Date(activity.endDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : 'N/A'}
+                          {activity.startDateTime ? new Date(activity.startDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
                         </TableCell>
                         <TableCell>
-                          {activity.cost ? `$${activity.cost}` : 'N/A'}
+                          {activity.endDateTime ? new Date(activity.endDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
+                        </TableCell>
+                        <TableCell>
+                          {activity.cost ? `$${activity.cost}` : t('na')}
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -487,14 +489,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                               variant="outlined"
                               onClick={() => handleEditActivity(activity, stage)}
                             >
-                              Edit
+                              {t('edit')}
                             </Button>
                             <Button 
                               size="small" 
                               variant="outlined" 
                               color="error"
                               onClick={async () => {
-                                if (window.confirm('Are you sure you want to delete this activity?')) {
+                                if (window.confirm(t('delete_activity_confirm'))) {
                                   try {
                                     await deleteActivity(activity.id);
                                     await loadStagesData();
@@ -504,7 +506,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
                                 }
                               }}
                             >
-                              Delete
+                              {t('delete')}
                             </Button>
                           </Box>
                         </TableCell>
@@ -515,7 +517,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
               </TableContainer>
             ) : (
               <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                No activities yet. Click "Add Activity" to create one.
+                {t('no_activities')}
               </Typography>
             )}
           </Paper>
@@ -527,7 +529,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
             startIcon={<Add />}
             onClick={() => setStageDialog(true)}
           >
-            Add Stage
+            {t('add_stage')}
           </Button>
         </Box>
 

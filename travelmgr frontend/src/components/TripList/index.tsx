@@ -7,13 +7,14 @@ import { Trip } from '../../types';
 import { getTrips, createTrip, updateTrip, deleteTrip } from '../../services/trips';
 import { logout } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import TripDialog from './TripDialog';
 import TripTable from './TripTable';
 import TripActionsMenu from './TripActionsMenu';
 import ImportMenu from './ImportMenu';
 import ImportDialog from './ImportDialog';
 import { AIDocumentImport } from '../AIDocumentImport';
-import { getTranslation } from '../../translations';
+import UserProfile from '../UserProfile';
 
 interface TripListProps {
   onTripSelect: (trip: Trip) => void;
@@ -34,7 +35,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [importError, setImportError] = useState<string | null>(null);
   const [aiImportDialog, setAiImportDialog] = useState(false);
   const [aiImportTripId, setAiImportTripId] = useState<number | null>(null);
+  const [profileDialog, setProfileDialog] = useState(false);
   const { user, setUser } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadTrips();
@@ -66,9 +69,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     } catch (error: any) {
       console.error('Failed to save trip:', error);
       if (error.response?.status === 400) {
-        setError(getTranslation(error.response.data.error, 'fr'));
+        setError(t(error.response.data.error));
       } else {
-        setError(getTranslation('trip_save_error', 'fr'));
+        setError(t('trip_save_error'));
       }
     } finally {
       setLoading(false);
@@ -242,9 +245,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     } catch (error: any) {
       console.error('Import error:', error);
       if (error.response?.status === 400 && error.response?.data?.error) {
-        setImportError(getTranslation(error.response.data.error, 'fr'));
+        setImportError(t(error.response.data.error));
       } else {
-        setImportError(getTranslation('import_failed', 'fr'));
+        setImportError(t('import_failed'));
       }
       // Ne pas fermer le dialogue en cas d'erreur pour permettre la correction
     }
@@ -255,8 +258,11 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Travel Manager - Welcome {user?.name}
+            Travel Manager - {t('welcome')} {user?.name}
           </Typography>
+          <IconButton color="inherit" onClick={() => setProfileDialog(true)}>
+            <Typography variant="body2" sx={{ mr: 1 }}>{t('profile')}</Typography>
+          </IconButton>
           <IconButton color="inherit" onClick={handleLogout}>
             <Logout />
           </IconButton>
@@ -265,7 +271,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
 
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">My Trips</Typography>
+          <Typography variant="h4">{t('my_trips')}</Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <ImportMenu
               onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
@@ -277,7 +283,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
               startIcon={<Add />}
               onClick={() => setOpen(true)}
             >
-              Create Trip
+              {t('create_trip')}
             </Button>
           </Box>
         </Box>
@@ -410,6 +416,11 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
             </div>
           </div>
         )}
+        
+        <UserProfile
+          open={profileDialog}
+          onClose={() => setProfileDialog(false)}
+        />
       </Box>
     </Box>
   );

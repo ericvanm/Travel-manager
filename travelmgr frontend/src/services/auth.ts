@@ -9,17 +9,17 @@ const api = axios.create({
 });
 
 export const login = async (credentials: LoginCredentials): Promise<User> => {
-  const response = await api.post('/login', credentials);
+  const response = await api.post('/auth/login', credentials);
   return response.data;
 };
 
 export const register = async (data: RegisterData): Promise<User> => {
-  const response = await api.post('/users', data);
+  const response = await api.post('/auth/register', data);
   return response.data;
 };
 
 export const logout = async (): Promise<void> => {
-  await api.post('/logout');
+  await api.post('/auth/logout');
 };
 
 export default api;

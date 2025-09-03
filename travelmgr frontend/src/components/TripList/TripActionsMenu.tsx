@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, MenuItem } from '@mui/material';
 import { Trip } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface TripActionsMenuProps {
   anchorEl: HTMLElement | null;
@@ -133,6 +134,8 @@ const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
   onEdit,
   onDelete
 }) => {
+  const { t } = useLanguage();
+  
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       <MenuItem onClick={() => {
@@ -141,7 +144,7 @@ const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
         }
         onClose();
       }}>
-        Edit
+        {t('edit')}
       </MenuItem>
       <MenuItem onClick={() => {
         if (selectedTrip) {
@@ -149,21 +152,21 @@ const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
         }
         onClose();
       }}>
-        Export CSV
+        {t('export_csv')}
       </MenuItem>
       <MenuItem onClick={() => {
         document.getElementById('csv-file-input')?.click();
         onClose();
       }}>
-        Import CSV
+        {t('import_csv')}
       </MenuItem>
       <MenuItem onClick={() => {
-        if (selectedTrip && window.confirm('Are you sure you want to delete this trip?')) {
+        if (selectedTrip && window.confirm(t('delete_trip_confirm'))) {
           onDelete(selectedTrip.id);
         }
         onClose();
       }}>
-        Delete
+        {t('delete')}
       </MenuItem>
     </Menu>
   );

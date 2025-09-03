@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Menu, MenuItem } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ImportMenuProps {
   onICSImport: () => void;
@@ -9,6 +10,7 @@ interface ImportMenuProps {
 }
 
 const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAIImport }) => {
+  const { t } = useLanguage();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -42,7 +44,7 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAII
         onClick={handleClick}
         endIcon={<KeyboardArrowDown />}
       >
-        Create by Import
+        {t('create_by_import')}
       </Button>
       <Menu
         anchorEl={anchorEl}
@@ -50,13 +52,13 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAII
         onClose={handleClose}
       >
         <MenuItem onClick={handleICSImport}>
-          Import ICS File
+          {t('import_ics_file')}
         </MenuItem>
         <MenuItem onClick={handleCSVImport}>
-          Import CSV File
+          {t('import_csv_file')}
         </MenuItem>
         <MenuItem onClick={handleAIImport}>
-          🤖 Import Document IA
+          {t('import_document_ai')}
         </MenuItem>
       </Menu>
     </>

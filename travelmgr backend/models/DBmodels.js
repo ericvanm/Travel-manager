@@ -78,6 +78,14 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false
   },
+  firstName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  lastName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   passwordHash: {
     type: DataTypes.STRING,
     allowNull: false
@@ -87,10 +95,10 @@ User.init({
     allowNull: false,
     defaultValue: false
   },
-  preferredLanguageId: {
-    type: DataTypes.INTEGER,
+  language: {
+    type: DataTypes.STRING(5),
     allowNull: true,
-    references: { model: 'languages', key: 'id' }
+    defaultValue: 'en'
   },
   email: {
     type: DataTypes.STRING,
@@ -710,8 +718,8 @@ Country.hasMany(Translation, {
   as: 'translations'
 })
 
-User.belongsTo(Language, { foreignKey: 'preferredLanguageId' })
-Language.hasMany(User, { foreignKey: 'preferredLanguageId' })
+User.belongsTo(Language, { foreignKey: 'preferredLanguageId', as: 'preferredLanguage' })
+Language.hasMany(User, { foreignKey: 'preferredLanguageId', as: 'users' })
 
 Trip.hasMany(Stage, { foreignKey: 'tripId' })
 Stage.belongsTo(Trip, { foreignKey: 'tripId' })

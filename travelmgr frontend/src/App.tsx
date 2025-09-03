@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CountriesProvider } from './contexts/CountriesContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import TripList from './components/TripList';
@@ -53,11 +54,13 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <CountriesProvider>
-          <AppContent />
-        </CountriesProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <CountriesProvider>
+            <AppContent />
+          </CountriesProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 };

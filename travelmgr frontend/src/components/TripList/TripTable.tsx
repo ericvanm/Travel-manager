@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { MoreVert } from '@mui/icons-material';
 import { Trip } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface TripTableProps {
   trips: Trip[];
@@ -10,16 +11,18 @@ interface TripTableProps {
 }
 
 const TripTable: React.FC<TripTableProps> = ({ trips, onTripSelect, onMenuClick }) => {
+  const { t } = useLanguage();
+  
   return (
     <Box sx={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ backgroundColor: '#f5f5f5' }}>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Name</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Description</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Start Date</th>
-            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>End Date</th>
-            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd' }}>Actions</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>{t('name')}</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>{t('description')}</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>{t('start_date')}</th>
+            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>{t('end_date')}</th>
+            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd' }}>{t('actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -32,7 +35,7 @@ const TripTable: React.FC<TripTableProps> = ({ trips, onTripSelect, onMenuClick 
               </td>
               <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
                 <Typography variant="body2" color="text.secondary">
-                  {trip.description || 'No description'}
+                  {trip.description || t('no_description')}
                 </Typography>
               </td>
               <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
