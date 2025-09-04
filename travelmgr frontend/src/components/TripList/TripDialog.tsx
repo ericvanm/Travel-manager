@@ -3,6 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, Alert
 } from '@mui/material';
 import { Trip } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface TripDialogProps {
   open: boolean;
@@ -27,6 +28,8 @@ const TripDialog: React.FC<TripDialogProps> = ({
   error,
   onErrorClear
 }) => {
+  const { t } = useLanguage();
+  
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewTrip({ ...newTrip, name: e.target.value });
     if (error && onErrorClear) {
@@ -35,7 +38,7 @@ const TripDialog: React.FC<TripDialogProps> = ({
   };
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{editingTrip ? 'Edit Trip' : 'Create New Trip'}</DialogTitle>
+      <DialogTitle>{editingTrip ? t('edit_trip') : t('create_new_trip')}</DialogTitle>
       <DialogContent>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -45,7 +48,7 @@ const TripDialog: React.FC<TripDialogProps> = ({
         <TextField
           autoFocus
           margin="dense"
-          label="Trip Name"
+          label={t('trip_name')}
           fullWidth
           variant="outlined"
           value={newTrip.name}
@@ -53,7 +56,7 @@ const TripDialog: React.FC<TripDialogProps> = ({
         />
         <TextField
           margin="dense"
-          label="Description"
+          label={t('description')}
           fullWidth
           multiline
           rows={3}
@@ -63,9 +66,9 @@ const TripDialog: React.FC<TripDialogProps> = ({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={onSave} disabled={loading}>
-          {loading ? (editingTrip ? 'Updating...' : 'Creating...') : (editingTrip ? 'Update' : 'Create')}
+          {loading ? (editingTrip ? t('updating') : t('creating')) : (editingTrip ? t('update') : t('create'))}
         </Button>
       </DialogActions>
     </Dialog>

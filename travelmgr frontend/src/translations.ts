@@ -100,6 +100,21 @@ export const translations = {
     'choose_activity_type': 'Choose Activity Type',
     'activity_type': 'Activity Type',
     
+    // Trip Dialog
+    'edit_trip': 'Edit Trip',
+    'create_new_trip': 'Create New Trip',
+    'creating': 'Creating...',
+    'updating': 'Updating...',
+    'update': 'Update',
+    'create': 'Create',
+    
+    // Import Dialog
+    'import_file': 'Import {type} File',
+    'file': 'File',
+    'import': 'Import',
+    'enter_trip_name': 'Enter a name for the new trip',
+    'new_trip_created': 'A new trip will be created with the data from the {type} file.',
+    
     // Errors
     'trip_name_exists': 'A trip with this name already exists. Please choose another name.',
     'trip_save_error': 'An error occurred while saving the trip.',
@@ -212,6 +227,28 @@ export const translations = {
     // Activity Type Dialog
     'choose_activity_type': 'Choisir le Type d\'Activité',
     'activity_type': 'Type d\'Activité',
+    
+    // Trip Dialog
+    'edit_trip': 'Modifier le Voyage',
+    'create_new_trip': 'Créer un Nouveau Voyage',
+    'creating': 'Création...',
+    'updating': 'Mise à jour...',
+    'update': 'Mettre à jour',
+    'create': 'Créer',
+    
+    // Import Dialog
+    'import_file': 'Importer fichier {type}',
+    'file': 'Fichier',
+    'import': 'Importer',
+    'enter_trip_name': 'Entrez un nom pour le nouveau voyage',
+    'new_trip_created': 'Un nouveau voyage sera créé avec les données du fichier {type}.',
+    
+    // Import Dialog
+    'import_file': 'Importer fichier {type}',
+    'file': 'Fichier',
+    'import': 'Importer',
+    'enter_trip_name': 'Entrez un nom pour le nouveau voyage',
+    'new_trip_created': 'Un nouveau voyage sera créé avec les données du fichier {type}.',
     
     // Errors
     'trip_name_exists': 'Un voyage avec ce nom existe déjà. Veuillez choisir un autre nom.',
@@ -326,6 +363,21 @@ export const translations = {
     'choose_activity_type': 'Elegir Tipo de Actividad',
     'activity_type': 'Tipo de Actividad',
     
+    // Trip Dialog
+    'edit_trip': 'Editar Viaje',
+    'create_new_trip': 'Crear Nuevo Viaje',
+    'creating': 'Creando...',
+    'updating': 'Actualizando...',
+    'update': 'Actualizar',
+    'create': 'Crear',
+    
+    // Import Dialog
+    'import_file': 'Importar archivo {type}',
+    'file': 'Archivo',
+    'import': 'Importar',
+    'enter_trip_name': 'Ingresa un nombre para el nuevo viaje',
+    'new_trip_created': 'Se creará un nuevo viaje con los datos del archivo {type}.',
+    
     // Errors
     'trip_name_exists': 'Ya existe un viaje con este nombre. Por favor, elija otro nombre.',
     'trip_save_error': 'Se produjo un error al guardar el viaje.',
@@ -438,6 +490,21 @@ export const translations = {
     // Activity Type Dialog
     'choose_activity_type': 'Activiteitstype Kiezen',
     'activity_type': 'Activiteitstype',
+    
+    // Trip Dialog
+    'edit_trip': 'Reis Bewerken',
+    'create_new_trip': 'Nieuwe Reis Maken',
+    'creating': 'Maken...',
+    'updating': 'Bijwerken...',
+    'update': 'Bijwerken',
+    'create': 'Maken',
+    
+    // Import Dialog
+    'import_file': '{type}-bestand importeren',
+    'file': 'Bestand',
+    'import': 'Importeren',
+    'enter_trip_name': 'Voer een naam in voor de nieuwe reis',
+    'new_trip_created': 'Er wordt een nieuwe reis gemaakt met de gegevens uit het {type}-bestand.',
     
     // Errors
     'trip_name_exists': 'Er bestaat al een reis met deze naam. Kies een andere naam.',
