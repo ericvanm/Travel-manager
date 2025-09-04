@@ -3,6 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Autocomplete
 } from '@mui/material';
 import { Country } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface StageDialogProps {
   open: boolean;
@@ -34,14 +35,16 @@ const StageDialog: React.FC<StageDialogProps> = ({
   countriesLoading,
   onSubmit
 }) => {
+  const { t } = useLanguage();
+  
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{editingStage ? 'Edit Stage' : 'Add New Stage'}</DialogTitle>
+      <DialogTitle>{editingStage ? t('edit_stage') : t('add_new_stage')}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
-          label="Stage Name"
+          label={t('stage_name')}
           fullWidth
           variant="outlined"
           value={newStage.name}
@@ -58,14 +61,14 @@ const StageDialog: React.FC<StageDialogProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Country"
+              label={t('country')}
               margin="dense"
               variant="outlined"
               fullWidth
             />
           )}
           loading={countriesLoading}
-          noOptionsText={countriesLoading ? "Loading countries..." : "No countries found"}
+          noOptionsText={countriesLoading ? t('loading_countries') : t('no_countries_found')}
           filterOptions={(options, { inputValue }) =>
             options.filter((option) =>
               option?.name?.toLowerCase().includes(inputValue.toLowerCase())
@@ -74,7 +77,7 @@ const StageDialog: React.FC<StageDialogProps> = ({
         />
         <TextField
           margin="dense"
-          label="Start Date"
+          label={t('start_date')}
           type="date"
           fullWidth
           variant="outlined"
@@ -84,7 +87,7 @@ const StageDialog: React.FC<StageDialogProps> = ({
         />
         <TextField
           margin="dense"
-          label="End Date"
+          label={t('end_date')}
           type="date"
           fullWidth
           variant="outlined"
@@ -94,9 +97,9 @@ const StageDialog: React.FC<StageDialogProps> = ({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={onSubmit}>
-          {editingStage ? 'Update Stage' : 'Add Stage'}
+          {editingStage ? t('update_stage') : t('add_stage')}
         </Button>
       </DialogActions>
     </Dialog>

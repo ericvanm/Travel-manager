@@ -3,6 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { ActivityType } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ActivityTypeDialogProps {
   open: boolean;
@@ -21,12 +22,14 @@ const ActivityTypeDialog: React.FC<ActivityTypeDialogProps> = ({
   activityTypes,
   onContinue
 }) => {
+  const { t } = useLanguage();
+  
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Choose Activity Type</DialogTitle>
+      <DialogTitle>{t('choose_activity_type')}</DialogTitle>
       <DialogContent>
         <FormControl fullWidth margin="dense">
-          <InputLabel>Activity Type</InputLabel>
+          <InputLabel>{t('activity_type')}</InputLabel>
           <Select
             value={selectedActivityType}
             onChange={(e) => setSelectedActivityType(e.target.value)}
@@ -40,12 +43,12 @@ const ActivityTypeDialog: React.FC<ActivityTypeDialogProps> = ({
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('cancel')}</Button>
         <Button 
           onClick={onContinue}
           disabled={!selectedActivityType}
         >
-          Continue
+          {t('continue')}
         </Button>
       </DialogActions>
     </Dialog>

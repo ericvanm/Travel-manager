@@ -3,6 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box
 } from '@mui/material';
 import { ActivityType, Stage } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ActivityDialogProps {
   open: boolean;
@@ -25,16 +26,19 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
   activityTypes,
   onSubmit
 }) => {
+  const { t } = useLanguage();
+  const activityType = activityTypes.find(t => t.id.toString() === newActivity.activityTypeId)?.label || '';
+  
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {editingActivity ? `Edit ${activityTypes.find(t => t.id.toString() === newActivity.activityTypeId)?.label}` : `Add ${activityTypes.find(t => t.id.toString() === newActivity.activityTypeId)?.label} to ${selectedStage?.name}`}
+        {editingActivity ? t('edit_activity', { type: activityType }) : t('add_activity_to_stage', { type: activityType, stage: selectedStage?.name })}
       </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
-          label="Activity Name"
+          label={t('activity_name')}
           fullWidth
           variant="outlined"
           value={newActivity.name}
@@ -46,7 +50,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           <>
             <TextField 
               margin="dense" 
-              label="Airline" 
+              label={t('airline')} 
               fullWidth 
               variant="outlined" 
               value={newActivity.airline}
@@ -54,7 +58,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             />
             <TextField 
               margin="dense" 
-              label="Flight Number" 
+              label={t('flight_number')} 
               fullWidth 
               variant="outlined" 
               value={newActivity.flightNumber}
@@ -63,7 +67,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField 
                 margin="dense" 
-                label="Departure Airport" 
+                label={t('departure_airport')} 
                 variant="outlined" 
                 sx={{ flex: 1 }}
                 value={newActivity.departureAirport}
@@ -71,7 +75,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
               />
               <TextField 
                 margin="dense" 
-                label="Arrival Airport" 
+                label={t('arrival_airport')} 
                 variant="outlined" 
                 sx={{ flex: 1 }}
                 value={newActivity.arrivalAirport}
@@ -86,7 +90,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           <>
             <TextField 
               margin="dense" 
-              label="Address" 
+              label={t('address')} 
               fullWidth 
               variant="outlined" 
               value={newActivity.address}
@@ -94,7 +98,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             />
             <TextField 
               margin="dense" 
-              label="Phone" 
+              label={t('phone')} 
               fullWidth 
               variant="outlined" 
               value={newActivity.phone}
@@ -103,7 +107,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField 
                 margin="dense" 
-                label="Check-in Date" 
+                label={t('check_in_date')} 
                 type="date" 
                 variant="outlined" 
                 InputLabelProps={{ shrink: true }}
@@ -113,7 +117,19 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
               />
               <TextField 
                 margin="dense" 
-                label="Check-out Date" 
+                label={t('check_in_time')} 
+                type="time" 
+                variant="outlined" 
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: 120 }}
+                value={newActivity.checkInTime || '15:00'}
+                onChange={(e) => setNewActivity({ ...newActivity, checkInTime: e.target.value })}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField 
+                margin="dense" 
+                label={t('check_out_date')} 
                 type="date" 
                 variant="outlined" 
                 InputLabelProps={{ shrink: true }}
@@ -121,13 +137,23 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
                 value={newActivity.checkOutDate}
                 onChange={(e) => setNewActivity({ ...newActivity, checkOutDate: e.target.value })}
               />
+              <TextField 
+                margin="dense" 
+                label={t('check_out_time')} 
+                type="time" 
+                variant="outlined" 
+                InputLabelProps={{ shrink: true }}
+                sx={{ width: 120 }}
+                value={newActivity.checkOutTime || '11:00'}
+                onChange={(e) => setNewActivity({ ...newActivity, checkOutTime: e.target.value })}
+              />
             </Box>
           </>
         )}
         
         <TextField
           margin="dense"
-          label="City"
+          label={t('city')}
           fullWidth
           variant="outlined"
           value={newActivity.city}
@@ -135,7 +161,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
         />
         <TextField
           margin="dense"
-          label="Cost"
+          label={t('cost')}
           type="number"
           fullWidth
           variant="outlined"
@@ -144,7 +170,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
         />
         <TextField
           margin="dense"
-          label="Confirmation"
+          label={t('confirmation')}
           fullWidth
           variant="outlined"
           value={newActivity.confirmationNumber || ''}
@@ -157,7 +183,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField
                 margin="dense"
-                label="Start Date"
+                label={t('start_date')}
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -170,7 +196,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
               />
               <TextField
                 margin="dense"
-                label="Start Time"
+                label={t('start_time')}
                 type="time"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -185,7 +211,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField
                 margin="dense"
-                label="End Date"
+                label={t('end_date')}
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -198,7 +224,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
               />
               <TextField
                 margin="dense"
-                label="End Time"
+                label={t('end_time')}
                 type="time"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -214,9 +240,9 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={onSubmit}>
-          {editingActivity ? 'Update Activity' : 'Add Activity'}
+          {editingActivity ? t('update_activity') : t('add_activity')}
         </Button>
       </DialogActions>
     </Dialog>

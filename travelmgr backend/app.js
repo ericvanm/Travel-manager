@@ -1,5 +1,6 @@
 const app = require('express')()
 const session = require('express-session')
+const pgSession = require('connect-pg-simple')(session)
 const cors = require('cors')
 const usersRouter = require('./controllers/users')
 const middleware = require('./utils/middleware')
@@ -13,7 +14,7 @@ const transportTypesRouter = require('./controllers/transportTypes')
 const accommodationTypesRouter = require('./controllers/accommodationTypes')
 const expenseCategoriesRouter = require('./controllers/expenseCategories')
 const notificationTypesRouter = require('./controllers/notificationTypes')
-const { connectToDatabase } = require('./utils/db')
+const { connectToDatabase, sequelize } = require('./utils/db')
 const { SECRET } = require('./utils/config');
 
 app.use(cors({
@@ -33,11 +34,16 @@ app.use(cors({
 }))
 app.use((require('express')).json())
 app.use(session({
+  store: new pgSession({
+    conString: process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/travel_manager',
+    tableName: 'session',
+    createTableIfMissing: true
+  }),
   secret: SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 2,  // 2 hours session timeout
+    maxAge: 1000 * 60 * 60 * 24 * 7,  // 7 days session timeout
     httpOnly: true,
     secure: false,  // set to true in production with HTTPS
     sameSite: 'lax'
