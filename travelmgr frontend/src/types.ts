@@ -52,6 +52,22 @@ export interface Activity {
   comments?: string;
   notes?: string;
   cost?: number;
+  // Continuous activity fields
+  groupId?: string;
+  isGroupMaster?: boolean;
+  // Hotel specific fields
+  address?: string;
+  phone?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  confirmationNumber?: string;
+  // Flight specific fields
+  airline?: string;
+  flightNumber?: string;
+  departureAirport?: string;
+  arrivalAirport?: string;
 }
 
 export interface Country {

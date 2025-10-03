@@ -3,9 +3,9 @@ import {
   Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
 } from '@mui/material';
-import { ArrowBack, Add, MergeType } from '@mui/icons-material';
+import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
 import { Trip, Stage, Activity, Country, ActivityType } from '../../types';
-import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages } from '../../services/trips';
+import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates } from '../../services/trips';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import StageDialog from './StageDialog';
@@ -16,12 +16,15 @@ import MergeStagesDialog from './MergeStagesDialog';
 interface TripDetailProps {
   tripId: number;
   onBack: () => void;
+  viewMode?: 'timeline' | 'stages';
 }
 
-const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
+const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'timeline' }) => {
   const { t } = useLanguage();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [currentViewMode, setCurrentViewMode] = useState<'timeline' | 'stages'>(viewMode);
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
   const { countries, isLoading: countriesLoading } = useCountries();
   const [stageDialog, setStageDialog] = useState(false);
@@ -74,6 +77,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
     loadTripData();
     loadStagesData();
     loadActivityTypes();
+    loadTimeline();
   }, [tripId]);
 
   const loadTripData = async () => {
@@ -105,6 +109,15 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
       setActivityTypes(activityTypesData);
     } catch (error) {
       console.error('Failed to load activity types:', error);
+    }
+  };
+
+  const loadTimeline = async () => {
+    try {
+      const timelineData = await getTripTimeline(tripId);
+      setTimeline(timelineData);
+    } catch (error) {
+      console.error('Failed to load timeline:', error);
     }
   };
 
@@ -321,6 +334,48 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
     setSelectedStageIds([]);
   };
 
+  const handleStructureTrip = async () => {
+    try {
+      // First, analyze duplicates
+      const duplicateAnalysis = await analyzeDuplicates(tripId);
+      
+      let confirmMessage = t('structure_trip_confirm');
+      if (duplicateAnalysis.count > 0) {
+        confirmMessage += `\n\n${duplicateAnalysis.count} doublons détectés :\n`;
+        duplicateAnalysis.duplicates.slice(0, 5).forEach((dup, index) => {
+          confirmMessage += `${index + 1}. ${dup.name} (${dup.type}) - ${dup.stage}\n`;
+        });
+        if (duplicateAnalysis.count > 5) {
+          confirmMessage += `... et ${duplicateAnalysis.count - 5} autres\n`;
+        }
+        confirmMessage += '\nCes doublons seront supprimés automatiquement.';
+      }
+      
+      if (window.confirm(confirmMessage)) {
+        const result = await structureTrip(tripId);
+        const count = result.message.match(/\d+/)?.[0] || '0';
+        if (count === '0' && duplicateAnalysis.count === 0) {
+          alert(t('structure_trip_no_activities'));
+        } else {
+          let successMessage = '';
+          if (count !== '0') {
+            successMessage += t('structure_trip_success', { count });
+          }
+          if (duplicateAnalysis.count > 0) {
+            if (successMessage) successMessage += '\n';
+            successMessage += `${duplicateAnalysis.count} doublons supprimés.`;
+          }
+          alert(successMessage || 'Voyage structuré avec succès.');
+          await loadStagesData();
+          await loadTimeline();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to structure trip:', error);
+      alert(t('structure_trip_error'));
+    }
+  };
+
   const canMerge = selectedStageIds.length >= 2 && areStagesConsecutive(selectedStageIds);
   const selectedStages = stages.filter(stage => selectedStageIds.includes(stage.id));
 
@@ -350,7 +405,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>
           <Typography variant="h5">
-            {t('stages')}
+            {currentViewMode === 'timeline' ? 'Chronologie du voyage' : t('stages')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             {mergeMode && (
@@ -365,6 +420,21 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
               </Button>
             )}
             <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setCurrentViewMode(currentViewMode === 'timeline' ? 'stages' : 'timeline')}
+            >
+              {currentViewMode === 'timeline' ? 'Vue par étapes' : 'Vue chronologique'}
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleStructureTrip}
+              startIcon={<AccountTree />}
+            >
+              {t('structure_trip')}
+            </Button>
+            <Button
               variant={mergeMode ? "contained" : "outlined"}
               color={mergeMode ? "secondary" : "primary"}
               onClick={toggleMergeMode}
@@ -374,154 +444,304 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack }) => {
           </Box>
         </Box>
 
-        {stages.map((stage) => (
-          <Paper key={stage.id} sx={{ mb: 3, p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {mergeMode && (
-                  <Checkbox
-                    checked={selectedStageIds.includes(stage.id)}
-                    onChange={(e) => handleStageSelection(stage.id, e.target.checked)}
-                  />
-                )}
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    {stage.name || `Stage ${stage.id}`}
-                  </Typography>
+        {currentViewMode === 'timeline' ? (
+          timeline.map((day) => (
+            <Paper key={day.date} sx={{ mb: 2, p: 2 }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  {new Date(day.date).toLocaleDateString('fr-FR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </Typography>
+                {day.stage && (
                   <Typography variant="body2" color="text.secondary">
-                    {stage.Country?.name || 'N/A'} • 
-                    {stage.startDate ? new Date(stage.startDate).toLocaleDateString() : 'N/A'} - 
-                    {stage.endDate ? new Date(stage.endDate).toLocaleDateString() : 'N/A'}
+                    {day.stage.name}
                   </Typography>
-                </Box>
+                )}
               </Box>
-              {!mergeMode && (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button 
-                    size="small" 
-                    variant="outlined"
-                    onClick={() => {
-                      setSelectedStage(stage);
-                      setActivityTypeDialog(true);
-                    }}
-                  >
-                    {t('add_activity')}
-                  </Button>
-                  <Button 
-                    size="small" 
-                    variant="outlined"
-                    onClick={() => {
-                      setEditingStage(stage);
-                      setNewStage({
-                        name: stage.name || '',
-                        countryId: stage.countryId?.toString() || '',
-                        startDate: stage.startDate ? stage.startDate.split('T')[0] : '',
-                        endDate: stage.endDate ? stage.endDate.split('T')[0] : ''
-                      });
-                      const country = countries.find(c => c.id === stage.countryId);
-                      setSelectedCountry(country || null);
-                      setStageDialog(true);
-                    }}
-                  >
-                    {t('edit')}
-                  </Button>
-                  <Button 
-                    size="small" 
-                    variant="outlined"
-                    color="error"
-                    onClick={async () => {
-                      if (window.confirm(t('delete_stage_confirm'))) {
-                        try {
-                          await deleteStage(stage.id);
-                          await loadStagesData();
-                        } catch (error) {
-                          console.error('Failed to delete stage:', error);
-                        }
-                      }
-                    }}
-                  >
-                    {t('delete')}
-                  </Button>
+              
+              {day.activities.length > 0 ? (
+                <Box sx={{ pl: 2 }}>
+                  {day.activities.map((activity, index) => {
+                    const statusColor = {
+                      starts: 'success.main',
+                      ends: 'error.main',
+                      continues: 'warning.main'
+                    }[activity.status];
+                    
+                    const statusText = {
+                      starts: 'Début',
+                      ends: 'Fin', 
+                      continues: 'En cours'
+                    }[activity.status];
+                    
+                    return (
+                      <Box 
+                        key={`${activity.id}-${index}`} 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 2, 
+                          py: 1,
+                          borderLeft: `3px solid`,
+                          borderColor: statusColor,
+                          pl: 2,
+                          mb: 1,
+                          cursor: 'pointer',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                          }
+                        }}
+                        onClick={() => {
+                          const activityStage = stages.find(s => s.id === activity.stageId);
+                          if (activityStage) {
+                            handleEditActivity(activity, activityStage);
+                          }
+                        }}
+                      >
+                        <Box sx={{ 
+                          minWidth: 60,
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          color: statusColor
+                        }}>
+                          {statusText}
+                        </Box>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                            {activity.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {activityTypes.find(type => type.id === activity.activityTypeId)?.label || 'N/A'}
+                            {activity.city && ` • ${activity.city}`}
+                          </Typography>
+                        </Box>
+                        {activity.status === 'starts' && activity.startDateTime && (
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(activity.startDateTime).toLocaleTimeString('fr-FR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </Typography>
+                        )}
+                        {activity.status === 'ends' && activity.endDateTime && (
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(activity.endDateTime).toLocaleTimeString('fr-FR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
                 </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', pl: 2 }}>
+                  Aucune activité prévue
+                </Typography>
               )}
-            </Box>
-            
-            {stage.activities && stage.activities.length > 0 ? (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t('activity_name')}</TableCell>
-                      <TableCell>{t('type')}</TableCell>
-                      <TableCell>{t('city')}</TableCell>
-                      <TableCell>{t('start_time')}</TableCell>
-                      <TableCell>{t('end_time')}</TableCell>
-                      <TableCell>{t('cost')}</TableCell>
-                      <TableCell>{t('actions')}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {[...stage.activities].sort((a, b) => {
-                      if (!a.startDateTime && !b.startDateTime) return 0;
-                      if (!a.startDateTime) return 1;
-                      if (!b.startDateTime) return -1;
-                      return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime();
-                    }).map((activity) => (
-                      <TableRow key={activity.id}>
-                        <TableCell>{activity.name}</TableCell>
-                        <TableCell>
-                          {activityTypes.find(type => type.id === activity.activityTypeId)?.label || t('na')}
-                        </TableCell>
-                        <TableCell>{activity.city || t('na')}</TableCell>
-                        <TableCell>
-                          {activity.startDateTime ? new Date(activity.startDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
-                        </TableCell>
-                        <TableCell>
-                          {activity.endDateTime ? new Date(activity.endDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
-                        </TableCell>
-                        <TableCell>
-                          {activity.cost ? `$${activity.cost}` : t('na')}
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button 
-                              size="small" 
-                              variant="outlined"
-                              onClick={() => handleEditActivity(activity, stage)}
-                            >
-                              {t('edit')}
-                            </Button>
-                            <Button 
-                              size="small" 
-                              variant="outlined" 
-                              color="error"
-                              onClick={async () => {
-                                if (window.confirm(t('delete_activity_confirm'))) {
-                                  try {
-                                    await deleteActivity(activity.id);
-                                    await loadStagesData();
-                                  } catch (error) {
-                                    console.error('Failed to delete activity:', error);
-                                  }
-                                }
-                              }}
-                            >
-                              {t('delete')}
-                            </Button>
-                          </Box>
-                        </TableCell>
+            </Paper>
+          ))
+        ) : (
+          stages.map((stage) => (
+            <Paper key={stage.id} sx={{ mb: 3, p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {mergeMode && (
+                    <Checkbox
+                      checked={selectedStageIds.includes(stage.id)}
+                      onChange={(e) => handleStageSelection(stage.id, e.target.checked)}
+                    />
+                  )}
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      {stage.name || `Stage ${stage.id}`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {stage.Country?.name || 'N/A'} • 
+                      {stage.startDate ? new Date(stage.startDate).toLocaleDateString() : 'N/A'} - 
+                      {stage.endDate ? new Date(stage.endDate).toLocaleDateString() : 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+                {!mergeMode && (
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedStage(stage);
+                        setActivityTypeDialog(true);
+                      }}
+                    >
+                      {t('add_activity')}
+                    </Button>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        setEditingStage(stage);
+                        setNewStage({
+                          name: stage.name || '',
+                          countryId: stage.countryId?.toString() || '',
+                          startDate: stage.startDate ? stage.startDate.split('T')[0] : '',
+                          endDate: stage.endDate ? stage.endDate.split('T')[0] : ''
+                        });
+                        const country = countries.find(c => c.id === stage.countryId);
+                        setSelectedCountry(country || null);
+                        setStageDialog(true);
+                      }}
+                    >
+                      {t('edit')}
+                    </Button>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      color="error"
+                      onClick={async () => {
+                        if (window.confirm(t('delete_stage_confirm'))) {
+                          try {
+                            await deleteStage(stage.id);
+                            await loadStagesData();
+                          } catch (error) {
+                            console.error('Failed to delete stage:', error);
+                          }
+                        }
+                      }}
+                    >
+                      {t('delete')}
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+              
+              {stage.activities && stage.activities.length > 0 ? (
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{t('activity_name')}</TableCell>
+                        <TableCell>{t('type')}</TableCell>
+                        <TableCell>{t('city')}</TableCell>
+                        <TableCell>{t('start_time')}</TableCell>
+                        <TableCell>{t('end_time')}</TableCell>
+                        <TableCell>{t('cost')}</TableCell>
+                        <TableCell>{t('actions')}</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                {t('no_activities')}
-              </Typography>
-            )}
-          </Paper>
-        ))}
+                    </TableHead>
+                    <TableBody>
+                      {[...stage.activities].sort((a, b) => {
+                        if (!a.startDateTime && !b.startDateTime) return 0;
+                        if (!a.startDateTime) return 1;
+                        if (!b.startDateTime) return -1;
+                        return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime();
+                      }).map((activity) => {
+                        const isMultiDay = activity.startDateTime && activity.endDateTime && 
+                          (new Date(activity.endDateTime).getTime() - new Date(activity.startDateTime).getTime()) > (24 * 60 * 60 * 1000);
+                        const isGrouped = Boolean(activity.groupId);
+                        
+                        return (
+                          <TableRow 
+                            key={activity.id}
+                            sx={{
+                              backgroundColor: isGrouped ? 'rgba(25, 118, 210, 0.08)' : 'inherit',
+                              borderLeft: isMultiDay ? '4px solid #1976d2' : 'none'
+                            }}
+                          >
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {activity.name}
+                                {isMultiDay && (
+                                  <Box 
+                                    sx={{ 
+                                      fontSize: '0.75rem', 
+                                      fontWeight: 'bold',
+                                      px: 1,
+                                      py: 0.25,
+                                      borderRadius: 1,
+                                      bgcolor: 'primary.main',
+                                      color: 'white'
+                                    }}
+                                  >
+                                    Multi-jour
+                                  </Box>
+                                )}
+                                {isGrouped && (
+                                  <Box 
+                                    sx={{ 
+                                      fontSize: '0.75rem', 
+                                      fontWeight: 'bold',
+                                      px: 1,
+                                      py: 0.25,
+                                      borderRadius: 1,
+                                      bgcolor: 'success.main',
+                                      color: 'white'
+                                    }}
+                                  >
+                                    Groupé
+                                  </Box>
+                                )}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              {activityTypes.find(type => type.id === activity.activityTypeId)?.label || t('na')}
+                            </TableCell>
+                            <TableCell>{activity.city || t('na')}</TableCell>
+                            <TableCell>
+                              {activity.startDateTime ? new Date(activity.startDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
+                            </TableCell>
+                            <TableCell>
+                              {activity.endDateTime ? new Date(activity.endDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
+                            </TableCell>
+                            <TableCell>
+                              {activity.cost ? `$${activity.cost}` : t('na')}
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button 
+                                  size="small" 
+                                  variant="outlined"
+                                  onClick={() => handleEditActivity(activity, stage)}
+                                >
+                                  {t('edit')}
+                                </Button>
+                                <Button 
+                                  size="small" 
+                                  variant="outlined" 
+                                  color="error"
+                                  onClick={async () => {
+                                    if (window.confirm(t('delete_activity_confirm'))) {
+                                      try {
+                                        await deleteActivity(activity.id);
+                                        await loadStagesData();
+                                      } catch (error) {
+                                        console.error('Failed to delete activity:', error);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {t('delete')}
+                                </Button>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  {t('no_activities')}
+                </Typography>
+              )}
+            </Paper>
+          ))
+        )}
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <Button

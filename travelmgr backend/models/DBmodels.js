@@ -389,6 +389,28 @@ Activity.init({
     type: DataTypes.STRING(100),
     allowNull: true,
     field: 'car_type'
+  },
+  // Continuous activity fields
+  groupId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'group_id'
+  },
+  isGroupMaster: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'is_group_master'
+  },
+  checkInTime: {
+    type: DataTypes.TIME,
+    allowNull: true,
+    field: 'check_in_time'
+  },
+  checkOutTime: {
+    type: DataTypes.TIME,
+    allowNull: true,
+    field: 'check_out_time'
   }
 }, {
   sequelize,

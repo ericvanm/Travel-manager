@@ -72,3 +72,18 @@ export const mergeStages = async (stageIds: number[], newName: string): Promise<
   const response = await api.post('/stages/merge', { stageIds, newName });
   return response.data;
 };
+
+export const structureTrip = async (tripId: number): Promise<{ message: string }> => {
+  const response = await api.post(`/activities/structure-trip/${tripId}`);
+  return response.data;
+};
+
+export const getTripTimeline = async (tripId: number) => {
+  const response = await api.get(`/activities/timeline/${tripId}`);
+  return response.data;
+};
+
+export const analyzeDuplicates = async (tripId: number) => {
+  const response = await api.get(`/activities/analyze-duplicates/${tripId}`);
+  return response.data;
+};
