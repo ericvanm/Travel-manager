@@ -61,8 +61,6 @@ const countries = [
   { name: 'Israel', code: 'IL', timezone: 'Asia/Jerusalem', translations: { en: 'Israel', fr: 'Israël', nl: 'Israël', es: 'Israel' } },
   { name: 'Jordan', code: 'JO', timezone: 'Asia/Amman', translations: { en: 'Jordan', fr: 'Jordanie', nl: 'Jordanië', es: 'Jordania' } },
   { name: 'Lebanon', code: 'LB', timezone: 'Asia/Beirut', translations: { en: 'Lebanon', fr: 'Liban', nl: 'Libanon', es: 'Líbano' } },
-  { name: 'Belgium', code: 'BE', timezone: 'Europe/Brussels', translations: { en: 'Belgium', fr: 'Belgique', nl: 'België', es: 'Bélgica' } },
-  { name: 'Netherlands', code: 'NL', timezone: 'Europe/Amsterdam', translations: { en: 'Netherlands', fr: 'Pays-Bas', nl: 'Nederland', es: 'Países Bajos' } },
   { name: 'Eswatini', code: 'SZ', timezone: 'Africa/Mbabane', translations: { en: 'Eswatini', fr: 'Eswatini', nl: 'Eswatini', es: 'Esuatini' } }
 ]
 
