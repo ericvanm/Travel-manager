@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Trip, Activity } from '../types'
+import { Activity } from '../types'
 
 interface AIAnalysisResult {
   extractedText: string

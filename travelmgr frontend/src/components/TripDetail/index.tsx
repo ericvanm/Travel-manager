@@ -78,7 +78,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     loadStagesData();
     loadActivityTypes();
     loadTimeline();
-  }, [tripId]);
+  }, [tripId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadTripData = async () => {
     try {
