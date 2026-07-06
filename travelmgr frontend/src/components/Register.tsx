@@ -27,8 +27,9 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
     try {
       const user = await register(data);
       setUser(user);
-    } catch (err) {
-      setError('Registration failed');
+    } catch (err: any) {
+      const message = err.response?.data?.error || err.message || 'Registration failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
