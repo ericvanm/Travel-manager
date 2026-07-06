@@ -14,22 +14,16 @@ interface TripActionsMenuProps {
 
 const handleExportCSV = async (trip: Trip) => {
   try {
-    const response = await fetch(`http://localhost:8080/api/trips/${trip.id}`, {
-      credentials: 'include'
-    });
-    const tripData = await response.json();
-    
     const stagesResponse = await fetch(`http://localhost:8080/api/stages/trip/${trip.id}`, {
       credentials: 'include'
     });
     const stages = await stagesResponse.json();
     
-    // Get activity types for mapping
     const activityTypesResponse = await fetch('http://localhost:8080/api/activity-types', {
       credentials: 'include'
     });
     const activityTypes = await activityTypesResponse.json();
-    const activityTypeMap = new Map(activityTypes.map(at => [at.id, at.label]));
+    const activityTypeMap = new Map(activityTypes.map((at: { id: number; label: string }) => [at.id, at.label]));
     
     const csvData = [];
     
@@ -52,7 +46,7 @@ const handleExportCSV = async (trip: Trip) => {
       const activities = await activitiesResponse.json();
       
       if (activities.length > 0) {
-        activities.forEach(activity => {
+        activities.forEach((activity: any) => {
           csvData.push([
             trip.name || '',
             trip.description || '',

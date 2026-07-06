@@ -30,7 +30,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [importDialog, setImportDialog] = useState(false);
-  const [importType, setImportType] = useState<'ICS' | 'CSV' | 'AI'>('ICS');
+  const [importType, setImportType] = useState<'ICS' | 'CSV'>('ICS');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [aiImportDialog, setAiImportDialog] = useState(false);
@@ -94,35 +94,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
-  };
-
-  const handleICSImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    try {
-      const content = await file.text();
-      const response = await fetch('http://localhost:8080/api/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ icsContent: content, userId: user?.id })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Import successful:', result);
-        await loadTrips();
-      } else {
-        const errorText = await response.text();
-        console.error('Import failed:', response.status, errorText);
-        alert(`Import failed: ${response.status} - ${errorText}`);
-      }
-    } catch (error) {
-      console.error('Import error:', error);
-    }
-    
-    event.target.value = '';
   };
 
   const handleCloseDialog = () => {

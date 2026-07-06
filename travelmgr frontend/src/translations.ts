@@ -253,13 +253,6 @@ export const translations = {
     'enter_trip_name': 'Entrez un nom pour le nouveau voyage',
     'new_trip_created': 'Un nouveau voyage sera créé avec les données du fichier {type}.',
     
-    // Import Dialog
-    'import_file': 'Importer fichier {type}',
-    'file': 'Fichier',
-    'import': 'Importer',
-    'enter_trip_name': 'Entrez un nom pour le nouveau voyage',
-    'new_trip_created': 'Un nouveau voyage sera créé avec les données du fichier {type}.',
-    
     // Errors
     'trip_name_exists': 'Un voyage avec ce nom existe déjà. Veuillez choisir un autre nom.',
     'trip_save_error': 'Une erreur est survenue lors de la sauvegarde du voyage.',
