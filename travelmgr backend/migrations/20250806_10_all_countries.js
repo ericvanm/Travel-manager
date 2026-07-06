@@ -1,6 +1,16 @@
 const { DataTypes } = require('sequelize')
 
 const countries = [
+  { name: 'France', code: 'FR', timezone: 'Europe/Paris', translations: { en: 'France', fr: 'France', nl: 'Frankrijk', es: 'Francia' } },
+  { name: 'Spain', code: 'ES', timezone: 'Europe/Madrid', translations: { en: 'Spain', fr: 'Espagne', nl: 'Spanje', es: 'España' } },
+  { name: 'Italy', code: 'IT', timezone: 'Europe/Rome', translations: { en: 'Italy', fr: 'Italie', nl: 'Italië', es: 'Italia' } },
+  { name: 'Germany', code: 'DE', timezone: 'Europe/Berlin', translations: { en: 'Germany', fr: 'Allemagne', nl: 'Duitsland', es: 'Alemania' } },
+  { name: 'Belgium', code: 'BE', timezone: 'Europe/Brussels', translations: { en: 'Belgium', fr: 'Belgique', nl: 'België', es: 'Bélgica' } },
+  { name: 'Netherlands', code: 'NL', timezone: 'Europe/Amsterdam', translations: { en: 'Netherlands', fr: 'Pays-Bas', nl: 'Nederland', es: 'Países Bajos' } },
+  { name: 'United Kingdom', code: 'GB', timezone: 'Europe/London', translations: { en: 'United Kingdom', fr: 'Royaume-Uni', nl: 'Verenigd Koninkrijk', es: 'Reino Unido' } },
+  { name: 'Portugal', code: 'PT', timezone: 'Europe/Lisbon', translations: { en: 'Portugal', fr: 'Portugal', nl: 'Portugal', es: 'Portugal' } },
+  { name: 'Switzerland', code: 'CH', timezone: 'Europe/Zurich', translations: { en: 'Switzerland', fr: 'Suisse', nl: 'Zwitserland', es: 'Suiza' } },
+  { name: 'Austria', code: 'AT', timezone: 'Europe/Vienna', translations: { en: 'Austria', fr: 'Autriche', nl: 'Oostenrijk', es: 'Austria' } },
   { name: 'Afghanistan', code: 'AF', timezone: 'Asia/Kabul', translations: { en: 'Afghanistan', fr: 'Afghanistan', nl: 'Afghanistan', es: 'Afganistán' } },
   { name: 'Albania', code: 'AL', timezone: 'Europe/Tirane', translations: { en: 'Albania', fr: 'Albanie', nl: 'Albanië', es: 'Albania' } },
   { name: 'Algeria', code: 'DZ', timezone: 'Africa/Algiers', translations: { en: 'Algeria', fr: 'Algérie', nl: 'Algerije', es: 'Argelia' } },
@@ -58,15 +68,15 @@ const countries = [
 
 module.exports = {
   up: async ({ context: queryInterface }) => {
-    // Clear existing data first
+    // Clear existing country translations first
     await queryInterface.bulkDelete('translations', { entity_type: 'country' }, {})
-    await queryInterface.bulkDelete('countries', { id: { [require('sequelize').Op.gt]: 10 } }, {})
+    // Clear ALL countries and restart fresh
+    await queryInterface.bulkDelete('countries', null, {})
     
-    let countryId = 11
+    let countryId = 1
     const translations = []
     
     for (const country of countries) {
-      // Insert country
       await queryInterface.bulkInsert('countries', [{
         id: countryId,
         name: country.name,
@@ -76,7 +86,6 @@ module.exports = {
         updated_at: new Date()
       }])
       
-      // Add translations
       translations.push(
         { language_id: 1, entity_type: 'country', entity_id: countryId, field_name: 'name', translated_text: country.translations.en, created_at: new Date(), updated_at: new Date() },
         { language_id: 2, entity_type: 'country', entity_id: countryId, field_name: 'name', translated_text: country.translations.fr, created_at: new Date(), updated_at: new Date() },
