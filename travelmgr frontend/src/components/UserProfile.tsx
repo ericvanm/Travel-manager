@@ -62,7 +62,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
     setSuccess(null);
     
     try {
-      const response = await fetch('http://localhost:8080/api/auth/profile', {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${backendUrl}/auth/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -105,7 +106,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
     setSuccess(null);
     
     try {
-      const response = await fetch('http://localhost:8080/api/auth/change-password', {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${backendUrl}/auth/change-password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
