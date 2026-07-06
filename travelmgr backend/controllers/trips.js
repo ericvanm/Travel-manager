@@ -191,20 +191,25 @@ router.post('/:id/import-csv', async (req, res) => {
   try {
     const { csvContent } = req.body
     const tripId = req.params.id
-    
-    console.log('Starting CSV import for trip:', tripId)
-    
+    const warnings = []
+
+    console.log(`[CSV Import] Trip ${tripId} - starting import`)
+
+    if (!csvContent) {
+      return res.status(400).json({ error: 'CSV content is required' })
+    }
+
     // Parse CSV
     const lines = csvContent.split('\n').filter(line => line.trim())
     if (lines.length < 2) {
       return res.status(400).json({ error: 'CSV file is empty or invalid' })
     }
-    
+
     const headers = parseCSVLine(lines[0])
     const rows = lines.slice(1)
-    
-    console.log('CSV headers:', headers)
-    console.log('CSV rows count:', rows.length)
+
+    console.log(`[CSV Import] Headers: ${headers.join(', ')}`)
+    console.log(`[CSV Import] Data rows: ${rows.length}`)
     
     // Update trip information from first row
     if (rows.length > 0) {
@@ -243,7 +248,12 @@ router.post('/:id/import-csv', async (req, res) => {
       if (!data['Activity Name']) continue
       
       const activityType = await ActivityType.findOne({ where: { label: data['Activity Type'] } })
-      if (!activityType) continue
+      if (!activityType) {
+        const msg = `Row ${i + 2}: unknown activity type "${data['Activity Type']}" for "${data['Activity Name']}" - skipped`
+        console.warn(`[CSV Import] ${msg}`)
+        warnings.push(msg)
+        continue
+      }
       
       const timezone = data['Stage Timezone'] || 'UTC'
       const startDateTime = parseCSVDate(data['Activity Start DateTime'], timezone)
@@ -326,6 +336,7 @@ router.post('/:id/import-csv', async (req, res) => {
     
     // Sort all activities by date
     allActivities.sort((a, b) => a.startDateTime.getTime() - b.startDateTime.getTime())
+    console.log(`[CSV Import] Activities to import: ${allActivities.length} (hotels merged: ${hotelGroups.size})`)
     
     // Group activities into non-overlapping stages
     const finalStages = []
@@ -379,6 +390,7 @@ router.post('/:id/import-csv', async (req, res) => {
         endDate: stageData.endDate
       })
       importedStages++
+      console.log(`[CSV Import] Created stage "${stageData.name}" with ${stageData.activities.length} activities`)
       
       // Create activities for this stage
       for (const activityData of stageData.activities) {
@@ -417,15 +429,16 @@ router.post('/:id/import-csv', async (req, res) => {
       }
     }
     
-    console.log(`Import completed: ${importedStages} stages, ${importedActivities} activities`)
-    
-    res.json({ 
+    console.log(`[CSV Import] Done: ${importedStages} stages, ${importedActivities} activities, ${warnings.length} warnings`)
+
+    res.json({
       message: `CSV imported successfully: ${importedStages} stages, ${importedActivities} activities`,
       importedStages,
-      importedActivities
+      importedActivities,
+      warnings
     })
   } catch (error) {
-    console.error('Error importing CSV:', error)
+    console.error('[CSV Import] Fatal error:', error)
     res.status(500).json({ error: 'Failed to import CSV', details: error.message })
   }
 })

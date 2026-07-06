@@ -51,6 +51,7 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
     setIsAnalyzing(true)
     setAnalysisResult(null)
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api'
     try {
       console.log('Uploading file:', file.name, file.type, file.size)
       const formData = new FormData()
@@ -58,7 +59,7 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
       formData.append('tripId', tripId.toString())
       console.log('FormData created, sending to API...')
 
-      const response = await fetch('http://localhost:8080/api/ai-import/analyze', {
+      const response = await fetch(`${backendUrl}/ai-import/analyze`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -107,10 +108,11 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
 
     setIsExecuting(true)
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api'
     try {
       const confirmedActions = selectedActions.map(index => analysisResult.actionPlan[index])
 
-      const response = await fetch('http://localhost:8080/api/ai-import/execute', {
+      const response = await fetch(`${backendUrl}/ai-import/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

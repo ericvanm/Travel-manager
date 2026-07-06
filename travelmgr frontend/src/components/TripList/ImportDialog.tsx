@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, Alert
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, Alert, Collapse
 } from '@mui/material';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -11,6 +11,7 @@ interface ImportDialogProps {
   importType: 'ICS' | 'CSV';
   fileName: string;
   error?: string | null;
+  details?: string[] | null;
   onErrorClear?: () => void;
 }
 
@@ -21,10 +22,12 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   importType,
   fileName,
   error,
+  details,
   onErrorClear
 }) => {
   const { t } = useLanguage();
   const [tripName, setTripName] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleConfirm = () => {
     if (tripName.trim()) {
@@ -34,6 +37,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
   const handleClose = () => {
     setTripName('');
+    setShowDetails(false);
     onClose();
   };
 
@@ -54,8 +58,23 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           </Typography>
         </Box>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              details && details.length > 0 ? (
+                <Button color="inherit" size="small" onClick={() => setShowDetails(v => !v)}>
+                  {showDetails ? t('hide_details') || 'Masquer' : t('details') || 'Détails'}
+                </Button>
+              ) : undefined
+            }
+          >
             {error}
+            <Collapse in={showDetails}>
+              <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2, fontSize: '0.8rem' }}>
+                {details?.map((d, i) => <li key={i}>{d}</li>)}
+              </Box>
+            </Collapse>
           </Alert>
         )}
         <TextField
