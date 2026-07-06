@@ -40,4 +40,4 @@ jobs:
       - run: npm run lint
       - run: npm run build
         env:
-          VITE_BACKEND_URL: https://example.onrender.com/api
+          VITE_BACKEND_URL: https://travel-manager-wl5x.onrender.com/api
