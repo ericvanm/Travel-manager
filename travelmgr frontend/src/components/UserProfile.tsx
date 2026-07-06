@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Box, Typography, FormControl, InputLabel, Select, MenuItem, Alert, Tabs, Tab
+  Box, FormControl, InputLabel, Select, MenuItem, Alert, Tabs, Tab
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
