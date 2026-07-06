@@ -5,13 +5,16 @@ const { User } = require('../models/DBmodels')
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
-  console.log('Session in verifyToken:', req.session)
+  // Support session-based auth (login.js sets isLoggedIn)
+  if (req.session && req.session.isLoggedIn && req.session.user) {
+    req.user = req.session.user  // { id, username, name }
+    return next()
+  }
+  // Support JWT token in session (users.js login sets token)
   const token = req.session && req.session.token
   if (!token) {
-    console.log('No token found in session')
     return res.status(401).json({ error: 'Access denied' })
   }
-  
   try {
     const decoded = jwt.verify(token, process.env.SECRET)
     req.user = decoded
