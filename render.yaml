@@ -1,0 +1,36 @@
+# Render Blueprint — backend + PostgreSQL
+# https://render.com/docs/blueprint-spec
+#
+# Déploiement :
+#   1. Connecter le repo GitHub sur https://dashboard.render.com/blueprints
+#   2. Après déploiement Vercel, ajouter l'URL frontend dans CORS_ORIGINS
+#      (ex. https://travel-manager.vercel.app)
+
+databases:
+  - name: travel-mgr-db
+    databaseName: travel_mgr
+    user: travel_mgr
+    plan: free
+
+services:
+  - type: web
+    name: travel-manager-api
+    runtime: node
+    rootDir: travelmgr backend
+    plan: free
+    buildCommand: npm install && npm rebuild bcrypt --build-from-source
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travel-mgr-db
+          property: connectionString
+      - key: SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: USE_OPENAI
+        value: "false"

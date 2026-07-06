@@ -15,17 +15,25 @@ const accommodationTypesRouter = require('./controllers/accommodationTypes')
 const expenseCategoriesRouter = require('./controllers/expenseCategories')
 const notificationTypesRouter = require('./controllers/notificationTypes')
 const { connectToDatabase, sequelize } = require('./utils/db')
-const { SECRET } = require('./utils/config');
+const { SECRET, ENVIR } = require('./utils/config')
+
+const isProduction = ENVIR === 'production'
+
+const defaultOrigins = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000']
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
+  : defaultOrigins
+
+if (isProduction) {
+  app.set('trust proxy', 1)
+}
 
 app.use(cors({
-  origin: function (origin, callback) {
-    console.log('CORS Origin:', origin);
-    const allowedOrigins = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'];
+  origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      callback(null, true)
     } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Not allowed by CORS'))
     }
   },
   credentials: true,
@@ -33,9 +41,20 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }))
 app.use((require('express')).json())
+
+const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/travel_manager'
+const sessionStoreConfig = isProduction
+  ? {
+      conObject: {
+        connectionString: databaseUrl,
+        ssl: { rejectUnauthorized: false }
+      }
+    }
+  : { conString: databaseUrl }
+
 app.use(session({
   store: new pgSession({
-    conString: process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/travel_manager',
+    ...sessionStoreConfig,
     tableName: 'session',
     createTableIfMissing: true
   }),
@@ -43,14 +62,18 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 7,  // 7 days session timeout
+    maxAge: 1000 * 60 * 60 * 24 * 7,
     httpOnly: true,
-    secure: false,  // set to true in production with HTTPS
-    sameSite: 'lax'
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax'
   }
 }))
 app.use(middleware.requestLogger)
 app.use(middleware.tokenExtractor)
+
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
 
 // Travel Manager routes
 app.use('/api/auth', usersRouter)
