@@ -36,19 +36,28 @@ const runMigrations = async () => {
   })
 }
 
-const connectToDatabase = async () => {
-  try {
-    await sequelize.authenticate()
+let connectionPromise = null
 
-    await runMigrations()
-    console.log('connected to the database')
-  } catch (err) {
-    console.log('failed to connect to the database')
-    console.log(err)
-    return process.exit(1)
+const connectToDatabase = () => {
+  if (!connectionPromise) {
+    connectionPromise = (async () => {
+      try {
+        await sequelize.authenticate()
+        await runMigrations()
+        console.log('connected to the database')
+      } catch (err) {
+        connectionPromise = null
+        console.log('failed to connect to the database')
+        console.log(err)
+        if (config.ENVIR === 'test') {
+          throw err
+        }
+        process.exit(1)
+      }
+    })()
   }
 
-  return null
+  return connectionPromise
 }
 
-module.exports = { connectToDatabase, sequelize }
+module.exports = { connectToDatabase, sequelize, runMigrations }

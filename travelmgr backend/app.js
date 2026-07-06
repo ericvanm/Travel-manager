@@ -14,10 +14,11 @@ const transportTypesRouter = require('./controllers/transportTypes')
 const accommodationTypesRouter = require('./controllers/accommodationTypes')
 const expenseCategoriesRouter = require('./controllers/expenseCategories')
 const notificationTypesRouter = require('./controllers/notificationTypes')
-const { connectToDatabase, sequelize } = require('./utils/db')
-const { SECRET, ENVIR } = require('./utils/config')
+const { connectToDatabase } = require('./utils/db')
+const { SECRET, ENVIR, DB_URI } = require('./utils/config')
 
 const isProduction = ENVIR === 'production'
+const isTest = ENVIR === 'test'
 
 const defaultOrigins = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000']
 const allowedOrigins = process.env.CORS_ORIGINS
@@ -46,22 +47,24 @@ app.use(cors({
 }))
 app.use((require('express')).json())
 
-const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/travel_manager'
-const sessionStoreConfig = isProduction
-  ? {
-      conObject: {
-        connectionString: databaseUrl,
-        ssl: { rejectUnauthorized: false }
-      }
-    }
-  : { conString: databaseUrl }
+const databaseUrl = DB_URI || process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/travel_manager'
+const sessionStore = isTest
+  ? undefined
+  : new pgSession({
+      ...(isProduction
+        ? {
+            conObject: {
+              connectionString: databaseUrl,
+              ssl: { rejectUnauthorized: false }
+            }
+          }
+        : { conString: databaseUrl }),
+      tableName: 'session',
+      createTableIfMissing: true
+    })
 
 app.use(session({
-  store: new pgSession({
-    ...sessionStoreConfig,
-    tableName: 'session',
-    createTableIfMissing: true
-  }),
+  store: sessionStore,
   secret: SECRET,
   resave: false,
   saveUninitialized: false,

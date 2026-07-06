@@ -8,11 +8,30 @@ on:
 
 jobs:
   backend:
-    name: Backend build
+    name: Backend lint & test
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: travelmgr backend
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: travel_mgr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      SECRET: ci-test-secret
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/travel_mgr_test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/travel_mgr_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,9 +40,11 @@ jobs:
           cache: npm
           cache-dependency-path: travelmgr backend/package-lock.json
       - run: npm ci
+      - run: npm run lint
+      - run: npm test
 
   frontend:
-    name: Frontend lint & build
+    name: Frontend lint, typecheck & build
     runs-on: ubuntu-latest
     defaults:
       run:
