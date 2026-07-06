@@ -131,7 +131,15 @@ export const translations = {
     'username_exists': 'Username already exists. Please choose another username.',
     'current_password_incorrect': 'Current password is incorrect.',
     'new_password_invalid': 'New password must be at least 3 characters long.',
-    'password_change_error': 'An error occurred while changing the password.'
+    'password_change_error': 'An error occurred while changing the password.',
+    'login': 'Login',
+    'register': 'Register',
+    'password': 'Password',
+    'logging_in': 'Logging in...',
+    'registering': 'Registering...',
+    'no_account': "Don't have an account? Register",
+    'have_account': 'Already have an account? Login',
+    'invalid_credentials': 'Invalid credentials'
   },
   fr: {
     // Profile
@@ -264,7 +272,15 @@ export const translations = {
     'username_exists': 'Ce nom d\'utilisateur existe déjà. Veuillez en choisir un autre.',
     'current_password_incorrect': 'Le mot de passe actuel est incorrect.',
     'new_password_invalid': 'Le nouveau mot de passe doit contenir au moins 3 caractères.',
-    'password_change_error': 'Une erreur est survenue lors du changement de mot de passe.'
+    'password_change_error': 'Une erreur est survenue lors du changement de mot de passe.',
+    'login': 'Connexion',
+    'register': 'Inscription',
+    'password': 'Mot de passe',
+    'logging_in': 'Connexion...',
+    'registering': 'Inscription...',
+    'no_account': "Pas de compte ? S'inscrire",
+    'have_account': 'Déjà un compte ? Se connecter',
+    'invalid_credentials': 'Identifiants invalides'
   },
   es: {
     // Profile
@@ -397,7 +413,15 @@ export const translations = {
     'username_exists': 'Este nombre de usuario ya existe. Por favor, elija otro.',
     'current_password_incorrect': 'La contraseña actual es incorrecta.',
     'new_password_invalid': 'La nueva contraseña debe tener al menos 3 caracteres.',
-    'password_change_error': 'Se produjo un error al cambiar la contraseña.'
+    'password_change_error': 'Se produjo un error al cambiar la contraseña.',
+    'login': 'Iniciar sesión',
+    'register': 'Registrarse',
+    'password': 'Contraseña',
+    'logging_in': 'Iniciando sesión...',
+    'registering': 'Registrando...',
+    'no_account': '¿No tienes cuenta? Regístrate',
+    'have_account': '¿Ya tienes cuenta? Inicia sesión',
+    'invalid_credentials': 'Credenciales inválidas'
   },
   nl: {
     // Profile
@@ -530,7 +554,15 @@ export const translations = {
     'username_exists': 'Deze gebruikersnaam bestaat al. Kies een andere gebruikersnaam.',
     'current_password_incorrect': 'Het huidige wachtwoord is onjuist.',
     'new_password_invalid': 'Het nieuwe wachtwoord moet minstens 3 tekens lang zijn.',
-    'password_change_error': 'Er is een fout opgetreden bij het wijzigen van het wachtwoord.'
+    'password_change_error': 'Er is een fout opgetreden bij het wijzigen van het wachtwoord.',
+    'login': 'Inloggen',
+    'register': 'Registreren',
+    'password': 'Wachtwoord',
+    'logging_in': 'Inloggen...',
+    'registering': 'Registreren...',
+    'no_account': 'Geen account? Registreren',
+    'have_account': 'Al een account? Inloggen',
+    'invalid_credentials': 'Ongeldige inloggegevens'
   }
 };
 
