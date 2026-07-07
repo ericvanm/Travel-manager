@@ -1,6 +1,6 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { sanitizeParams } = require('../utils/log-sanitizer')
+const { sanitizeParams, redactConnectionUrl } = require('../utils/log-sanitizer')
 
 describe('log-sanitizer', () => {
   test('redacts sensitive keys in objects', () => {
@@ -24,5 +24,15 @@ describe('log-sanitizer', () => {
     }])
     assert.strictEqual(result.items[0].apiKey, '[REDACTED]')
     assert.strictEqual(result.meta.authorization, '[REDACTED]')
+  })
+
+  test('redacts database connection URLs', () => {
+    const url = 'postgres://postgres:secretpass@db.example.com:5432/travel_mgr'
+    const redacted = redactConnectionUrl(url)
+    assert.strictEqual(redacted, 'postgres://db.example.com:5432/travel_mgr')
+    assert.ok(!redacted.includes('secretpass'))
+
+    const [, sanitizedUrl] = sanitizeParams(['connecting to', url])
+    assert.strictEqual(sanitizedUrl, redacted)
   })
 })
