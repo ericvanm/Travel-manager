@@ -1,5 +1,4 @@
 const { Sequelize, QueryTypes } = require('sequelize')
-const logger = require('./utils/logger')
 const config = require('./utils/config')
 
 
