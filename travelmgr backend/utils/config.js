@@ -10,7 +10,7 @@ const SECRET = process.env.SECRET
 
 console.log('PORT:', PORT)
 console.log('NODE_ENV:', ENVIR)
-console.log('DATABASE_URL:', DB_URI)
+
 
 module.exports = {
   DB_URI: DB_URI,

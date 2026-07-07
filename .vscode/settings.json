@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "ericvanm",
+        "projectKey": "ericvanm_Travel-manager"
+    }
+}
