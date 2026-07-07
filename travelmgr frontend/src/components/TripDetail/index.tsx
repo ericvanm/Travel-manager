@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
 } from '@mui/material';
 import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
-import { Trip, Stage, Activity, Country, ActivityType } from '../../types';
+import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, DuplicateActivity, TimelineActivityStatus, TimelineDay, emptyActivityForm } from '../../types';
 import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates } from '../../services/trips';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -12,6 +12,18 @@ import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
 import MergeStagesDialog from './MergeStagesDialog';
+
+const TIMELINE_STATUS_COLORS: Record<TimelineActivityStatus, string> = {
+  starts: 'success.main',
+  ends: 'error.main',
+  continues: 'warning.main',
+};
+
+const TIMELINE_STATUS_LABELS: Record<TimelineActivityStatus, string> = {
+  starts: 'Début',
+  ends: 'Fin',
+  continues: 'En cours',
+};
 
 interface TripDetailProps {
   tripId: number;
@@ -23,7 +35,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   const { t } = useLanguage();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
-  const [timeline, setTimeline] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<TimelineDay[]>([]);
   const [currentViewMode, setCurrentViewMode] = useState<'timeline' | 'stages'>(viewMode);
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
   const { countries, isLoading: countriesLoading } = useCountries();
@@ -44,34 +56,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [selectedActivityType, setSelectedActivityType] = useState<string>('');
-  const [newActivity, setNewActivity] = useState({
-    name: '',
-    activityTypeId: '',
-    startDateTime: '',
-    endDateTime: '',
-    city: '',
-    cost: '',
-    airline: '',
-    flightNumber: '',
-    departureAirport: '',
-    arrivalAirport: '',
-    seat: '',
-    confirmationCode: '',
-    gate: '',
-    terminal: '',
-    address: '',
-    phone: '',
-    checkInDate: '',
-    checkOutDate: '',
-    confirmationNumber: '',
-    roomType: '',
-    company: '',
-    pickupLocation: '',
-    dropoffLocation: '',
-    pickupDate: '',
-    dropoffDate: '',
-    carType: ''
-  });
+  const [newActivity, setNewActivity] = useState<ActivityFormState>(emptyActivityForm());
 
   useEffect(() => {
     loadTripData();
@@ -79,6 +64,77 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     loadActivityTypes();
     loadTimeline();
   }, [tripId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const buildActivityPayload = (form: ActivityFormState, stageId: number): ActivityInput => {
+    const activityTypeId = parseInt(form.activityTypeId)
+    const activityData: ActivityInput = {
+      name: form.name,
+      stageId,
+      activityTypeId,
+      startDateTime: form.startDateTime || null,
+      endDateTime: form.endDateTime || null,
+      city: form.city || null,
+      cost: form.cost ? parseFloat(form.cost) : null,
+      confirmationNumber: form.confirmationNumber || null,
+    }
+
+    if (activityTypeId === 6) {
+      activityData.airline = form.airline || null
+      activityData.flightNumber = form.flightNumber || null
+      activityData.departureAirport = form.departureAirport || null
+      activityData.arrivalAirport = form.arrivalAirport || null
+      activityData.seat = form.seat || null
+      activityData.confirmationCode = form.confirmationCode || null
+      activityData.gate = form.gate || null
+      activityData.terminal = form.terminal || null
+    }
+
+    if (activityTypeId === 7) {
+      activityData.checkInDate = form.checkInDate || null
+      activityData.checkOutDate = form.checkOutDate || null
+      activityData.address = form.address || null
+      activityData.phone = form.phone || null
+      activityData.confirmationNumber = form.confirmationNumber || null
+      activityData.roomType = form.roomType || null
+    }
+
+    return activityData
+  }
+
+  const buildActivityUpdatePayload = (form: ActivityFormState): Partial<Activity> => {
+    const activityTypeId = parseInt(form.activityTypeId)
+    const activityData: Partial<Activity> = {
+      name: form.name,
+      activityTypeId,
+      startDateTime: form.startDateTime || null,
+      endDateTime: form.endDateTime || null,
+      city: form.city || null,
+      cost: form.cost ? parseFloat(form.cost) : null,
+      confirmationNumber: form.confirmationNumber || null,
+    }
+
+    if (activityTypeId === 6) {
+      activityData.airline = form.airline || null
+      activityData.flightNumber = form.flightNumber || null
+      activityData.departureAirport = form.departureAirport || null
+      activityData.arrivalAirport = form.arrivalAirport || null
+      activityData.seat = form.seat || null
+      activityData.confirmationCode = form.confirmationCode || null
+      activityData.gate = form.gate || null
+      activityData.terminal = form.terminal || null
+    }
+
+    if (activityTypeId === 7) {
+      activityData.checkInDate = form.checkInDate || null
+      activityData.checkOutDate = form.checkOutDate || null
+      activityData.address = form.address || null
+      activityData.phone = form.phone || null
+      activityData.confirmationNumber = form.confirmationNumber || null
+      activityData.roomType = form.roomType || null
+    }
+
+    return activityData
+  }
 
   const loadTripData = async () => {
     try {
@@ -167,41 +223,10 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     if (!newActivity.name.trim() || !newActivity.activityTypeId || !selectedStage) return;
     
     try {
-      const activityData = {
-        name: newActivity.name,
-        stageId: selectedStage.id,
-        activityTypeId: parseInt(newActivity.activityTypeId),
-        startDateTime: newActivity.startDateTime || null,
-        endDateTime: newActivity.endDateTime || null,
-        city: newActivity.city || null,
-        cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
-        confirmationNumber: newActivity.confirmationNumber || null
-      };
-
-      if (parseInt(newActivity.activityTypeId) === 6) {
-        activityData.airline = newActivity.airline || null;
-        activityData.flightNumber = newActivity.flightNumber || null;
-        activityData.departureAirport = newActivity.departureAirport || null;
-        activityData.arrivalAirport = newActivity.arrivalAirport || null;
-        activityData.seat = newActivity.seat || null;
-        activityData.confirmationCode = newActivity.confirmationCode || null;
-        activityData.gate = newActivity.gate || null;
-        activityData.terminal = newActivity.terminal || null;
-      }
-
-      if (parseInt(newActivity.activityTypeId) === 7) {
-        activityData.checkInDate = newActivity.checkInDate || null;
-        activityData.checkOutDate = newActivity.checkOutDate || null;
-        activityData.address = newActivity.address || null;
-        activityData.phone = newActivity.phone || null;
-        activityData.confirmationNumber = newActivity.confirmationNumber || null;
-        activityData.roomType = newActivity.roomType || null;
-      }
-
-      await createActivity(activityData);
+      await createActivity(buildActivityPayload(newActivity, selectedStage.id));
       await loadStagesData();
       setActivityDialog(false);
-      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
+      setNewActivity(emptyActivityForm());
       setSelectedStage(null);
     } catch (error) {
       console.error('Failed to create activity:', error);
@@ -212,41 +237,11 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     if (!newActivity.name.trim() || !newActivity.activityTypeId || !editingActivity) return;
     
     try {
-      const activityData = {
-        name: newActivity.name,
-        activityTypeId: parseInt(newActivity.activityTypeId),
-        startDateTime: newActivity.startDateTime || null,
-        endDateTime: newActivity.endDateTime || null,
-        city: newActivity.city || null,
-        cost: newActivity.cost ? parseFloat(newActivity.cost) : null,
-        confirmationNumber: newActivity.confirmationNumber || null
-      };
-
-      if (parseInt(newActivity.activityTypeId) === 6) {
-        activityData.airline = newActivity.airline || null;
-        activityData.flightNumber = newActivity.flightNumber || null;
-        activityData.departureAirport = newActivity.departureAirport || null;
-        activityData.arrivalAirport = newActivity.arrivalAirport || null;
-        activityData.seat = newActivity.seat || null;
-        activityData.confirmationCode = newActivity.confirmationCode || null;
-        activityData.gate = newActivity.gate || null;
-        activityData.terminal = newActivity.terminal || null;
-      }
-
-      if (parseInt(newActivity.activityTypeId) === 7) {
-        activityData.checkInDate = newActivity.checkInDate || null;
-        activityData.checkOutDate = newActivity.checkOutDate || null;
-        activityData.address = newActivity.address || null;
-        activityData.phone = newActivity.phone || null;
-        activityData.confirmationNumber = newActivity.confirmationNumber || null;
-        activityData.roomType = newActivity.roomType || null;
-      }
-
-      await updateActivity(editingActivity.id, activityData);
+      await updateActivity(editingActivity.id, buildActivityUpdatePayload(newActivity));
       await loadStagesData();
       setActivityDialog(false);
       setEditingActivity(null);
-      setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
+      setNewActivity(emptyActivityForm());
     } catch (error) {
       console.error('Failed to update activity:', error);
     }
@@ -256,16 +251,19 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     setEditingActivity(activity);
     setSelectedStage(stage);
     const timezone = stage.Country?.timezone || 'UTC';
-    const formatDateTimeForInput = (dateTime) => {
+    const formatDateTimeForInput = (dateTime: string | null | undefined): string => {
       if (!dateTime) return '';
       const date = new Date(dateTime);
       return date.toLocaleString('sv-SE', { timeZone: timezone }).slice(0, 16);
     };
-    const formatDateForInput = (dateTime) => {
+    const formatDateForInput = (dateTime: string | null | undefined): string => {
       if (!dateTime) return '';
       const date = new Date(dateTime);
       return date.toLocaleDateString('sv-SE', { timeZone: timezone });
     };
+
+    const checkInSource = activity.checkInDate || activity.startDateTime;
+    const checkOutSource = activity.checkOutDate || activity.endDateTime;
 
     setNewActivity({
       name: activity.name || '',
@@ -282,10 +280,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       confirmationCode: activity.confirmationCode || '',
       gate: activity.gate || '',
       terminal: activity.terminal || '',
-      checkInDate: activity.activityTypeId === 7 ? formatDateForInput(activity.checkInDate || activity.startDateTime) : '',
-      checkOutDate: activity.activityTypeId === 7 ? formatDateForInput(activity.checkOutDate || activity.endDateTime) : '',
-      checkInTime: activity.activityTypeId === 7 && (activity.checkInDate || activity.startDateTime) ? new Date(activity.checkInDate || activity.startDateTime).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5) : '',
-      checkOutTime: activity.activityTypeId === 7 && (activity.checkOutDate || activity.endDateTime) ? new Date(activity.checkOutDate || activity.endDateTime).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5) : '',
+      checkInDate: activity.activityTypeId === 7 ? formatDateForInput(checkInSource) : '',
+      checkOutDate: activity.activityTypeId === 7 ? formatDateForInput(checkOutSource) : '',
+      checkInTime: activity.activityTypeId === 7 && checkInSource
+        ? new Date(checkInSource).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5)
+        : '',
+      checkOutTime: activity.activityTypeId === 7 && checkOutSource
+        ? new Date(checkOutSource).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5)
+        : '',
       address: activity.address || '',
       phone: activity.phone || '',
       confirmationNumber: activity.confirmationNumber || '',
@@ -342,7 +344,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       let confirmMessage = t('structure_trip_confirm');
       if (duplicateAnalysis.count > 0) {
         confirmMessage += `\n\n${duplicateAnalysis.count} doublons détectés :\n`;
-        duplicateAnalysis.duplicates.slice(0, 5).forEach((dup, index) => {
+        duplicateAnalysis.duplicates.slice(0, 5).forEach((dup: DuplicateActivity, index: number) => {
           confirmMessage += `${index + 1}. ${dup.name} (${dup.type}) - ${dup.stage}\n`;
         });
         if (duplicateAnalysis.count > 5) {
@@ -466,17 +468,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
               {day.activities.length > 0 ? (
                 <Box sx={{ pl: 2 }}>
                   {day.activities.map((activity, index) => {
-                    const statusColor = {
-                      starts: 'success.main',
-                      ends: 'error.main',
-                      continues: 'warning.main'
-                    }[activity.status];
-                    
-                    const statusText = {
-                      starts: 'Début',
-                      ends: 'Fin', 
-                      continues: 'En cours'
-                    }[activity.status];
+                    const statusColor = TIMELINE_STATUS_COLORS[activity.status];
+                    const statusText = TIMELINE_STATUS_LABELS[activity.status];
                     
                     return (
                       <Box 
@@ -801,7 +794,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             setActivityDialog(false);
             setEditingActivity(null);
             setSelectedActivityType('');
-            setNewActivity({ name: '', activityTypeId: '', startDateTime: '', endDateTime: '', city: '', cost: '', airline: '', flightNumber: '', departureAirport: '', arrivalAirport: '', seat: '', confirmationCode: '', gate: '', terminal: '', address: '', phone: '', checkInDate: '', checkOutDate: '', confirmationNumber: '', roomType: '', company: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', dropoffDate: '', carType: '' });
+            setNewActivity(emptyActivityForm());
           }}
           editingActivity={editingActivity}
           selectedStage={selectedStage}

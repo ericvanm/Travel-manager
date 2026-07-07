@@ -1,5 +1,5 @@
 import api from './auth';
-import { Trip, Stage, Activity, Country, ActivityType } from '../types';
+import { Trip, Stage, Activity, ActivityInput, Country, ActivityType, TimelineDay, DuplicateAnalysis } from '../types';
 
 export const getTrips = async (): Promise<Trip[]> => {
   const response = await api.get('/trips');
@@ -54,7 +54,7 @@ export const deleteStage = async (id: number): Promise<void> => {
   await api.delete(`/stages/${id}`);
 };
 
-export const createActivity = async (activity: Omit<Activity, 'id'>): Promise<Activity> => {
+export const createActivity = async (activity: ActivityInput): Promise<Activity> => {
   const response = await api.post('/activities', activity);
   return response.data;
 };
@@ -78,12 +78,12 @@ export const structureTrip = async (tripId: number): Promise<{ message: string }
   return response.data;
 };
 
-export const getTripTimeline = async (tripId: number) => {
+export const getTripTimeline = async (tripId: number): Promise<TimelineDay[]> => {
   const response = await api.get(`/activities/timeline/${tripId}`);
   return response.data;
 };
 
-export const analyzeDuplicates = async (tripId: number) => {
+export const analyzeDuplicates = async (tripId: number): Promise<DuplicateAnalysis> => {
   const response = await api.get(`/activities/analyze-duplicates/${tripId}`);
   return response.data;
 };

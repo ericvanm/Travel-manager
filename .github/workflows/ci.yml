@@ -58,6 +58,7 @@ jobs:
           cache-dependency-path: travelmgr frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm run tsc
       - run: npm run build
         env:
           VITE_BACKEND_URL: https://travel-manager-wl5x.onrender.com/api

@@ -25,10 +25,10 @@ export interface Trip {
   id: number;
   name: string;
   description?: string;
-  startDate?: string;
-  endDate?: string;
-  budget?: number;
-  currency?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  budget?: number | null;
+  currency?: string | null;
   stages?: Stage[];
 }
 
@@ -37,9 +37,10 @@ export interface Stage {
   tripId: number;
   countryId: number;
   name?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   activities?: Activity[];
+  Country?: Country;
 }
 
 export interface Activity {
@@ -48,39 +49,144 @@ export interface Activity {
   activityTypeId: number;
   name?: string;
   bookingCode?: string;
-  startDateTime?: string;
-  endDateTime?: string;
+  startDateTime?: string | null;
+  endDateTime?: string | null;
   addressLine?: string;
-  city?: string;
+  city?: string | null;
   country?: string;
   comments?: string;
   notes?: string;
-  cost?: number;
-  // Continuous activity fields
+  cost?: number | null;
   groupId?: string;
   isGroupMaster?: boolean;
-  // Hotel specific fields
-  address?: string;
-  phone?: string;
-  checkInDate?: string;
-  checkOutDate?: string;
-  checkInTime?: string;
-  checkOutTime?: string;
-  confirmationNumber?: string;
-  // Flight specific fields
-  airline?: string;
-  flightNumber?: string;
-  departureAirport?: string;
-  arrivalAirport?: string;
+  address?: string | null;
+  phone?: string | null;
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  confirmationNumber?: string | null;
+  airline?: string | null;
+  flightNumber?: string | null;
+  departureAirport?: string | null;
+  arrivalAirport?: string | null;
+  seat?: string | null;
+  confirmationCode?: string | null;
+  gate?: string | null;
+  terminal?: string | null;
+  roomType?: string | null;
+  company?: string | null;
+  pickupLocation?: string | null;
+  dropoffLocation?: string | null;
+  pickupDate?: string | null;
+  dropoffDate?: string | null;
+  carType?: string | null;
 }
+
+export type ActivityInput = Omit<Activity, 'id'>;
+
+export interface ActivityFormState {
+  name: string;
+  activityTypeId: string;
+  startDateTime: string;
+  endDateTime: string;
+  city: string;
+  cost: string;
+  airline: string;
+  flightNumber: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  seat: string;
+  confirmationCode: string;
+  gate: string;
+  terminal: string;
+  address: string;
+  phone: string;
+  checkInDate: string;
+  checkOutDate: string;
+  checkInTime: string;
+  checkOutTime: string;
+  confirmationNumber: string;
+  roomType: string;
+  company: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  pickupDate: string;
+  dropoffDate: string;
+  carType: string;
+}
+
+export const emptyActivityForm = (): ActivityFormState => ({
+  name: '',
+  activityTypeId: '',
+  startDateTime: '',
+  endDateTime: '',
+  city: '',
+  cost: '',
+  airline: '',
+  flightNumber: '',
+  departureAirport: '',
+  arrivalAirport: '',
+  seat: '',
+  confirmationCode: '',
+  gate: '',
+  terminal: '',
+  address: '',
+  phone: '',
+  checkInDate: '',
+  checkOutDate: '',
+  checkInTime: '',
+  checkOutTime: '',
+  confirmationNumber: '',
+  roomType: '',
+  company: '',
+  pickupLocation: '',
+  dropoffLocation: '',
+  pickupDate: '',
+  dropoffDate: '',
+  carType: '',
+});
 
 export interface Country {
   id: number;
   name: string;
   code: string;
+  timezone?: string;
 }
 
 export interface ActivityType {
   id: number;
   label: string;
+}
+
+export type TimelineActivityStatus = 'starts' | 'ends' | 'continues';
+
+export interface TimelineStageRef {
+  id: number;
+  name?: string;
+}
+
+export interface TimelineActivity extends Activity {
+  status: TimelineActivityStatus;
+  stage?: TimelineStageRef;
+}
+
+export interface TimelineDay {
+  date: string;
+  stage?: TimelineStageRef;
+  activities: TimelineActivity[];
+}
+
+export interface DuplicateActivity {
+  id: number;
+  name?: string;
+  type: string;
+  stage: string;
+  startDateTime?: string | null;
+  endDateTime?: string | null;
+}
+
+export interface DuplicateAnalysis {
+  duplicates: DuplicateActivity[];
+  count: number;
 }

@@ -7,7 +7,7 @@
     "start": "node index.js",
     "dev": "cross-env NODE_ENV=development nodemon index.js",
     "lint": "eslint . --max-warnings 0",
-    "test": "cross-env NODE_ENV=test node --test --test-concurrency=1 tests/*.test.js",
+    "test": "cross-env NODE_ENV=test node --test --test-concurrency=1 tests/auth.test.js tests/trips.test.js",
     "start:test": "cross-env NODE_ENV=test node index.js"
   },
   "author": "",

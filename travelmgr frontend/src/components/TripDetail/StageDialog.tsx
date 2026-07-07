@@ -54,7 +54,7 @@ const StageDialog: React.FC<StageDialogProps> = ({
           options={countries || []}
           getOptionLabel={(option) => option?.name || ''}
           value={selectedCountry}
-          onChange={(event, newValue) => {
+          onChange={(_event, newValue) => {
             setSelectedCountry(newValue);
             setNewStage({ ...newStage, countryId: newValue ? newValue.id.toString() : '' });
           }}
