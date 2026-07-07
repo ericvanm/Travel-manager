@@ -1,7 +1,7 @@
 FROM node:18
 
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 --gid nodejs nodejs
+  && adduser --system --uid 1001 --gid 1001 nodejs
 
 WORKDIR /usr/src/app
 
