@@ -1,0 +1,30 @@
+# SonarQube Community Edition — analyse locale
+#
+# Démarrage :
+#   docker compose -f docker-compose.sonar.yml up -d
+#
+# UI : http://localhost:9000  (admin / admin au premier lancement)
+#
+# Créer le projet "travel-manager" (projectKey identique à sonar-project.properties),
+# puis générer un token et lancer :
+#   docker run --rm -e SONAR_HOST_URL=http://host.docker.internal:9000 \
+#     -e SONAR_TOKEN=<token> -v "${PWD}:/usr/src" sonarsource/sonar-scanner-cli
+
+services:
+  sonarqube:
+    image: sonarqube:community
+    container_name: travel-mgr-sonarqube
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
