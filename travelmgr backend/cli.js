@@ -4,7 +4,7 @@ const config = require('./utils/config')
 
 
 const url = config.DB_URI
-const sslToUse = config.ENVIR === 'production' ? true : false
+const sslToUse = config.ENVIR === 'production'
 
 
 logger.info('connecting to', url)
@@ -24,7 +24,7 @@ const main = async () => {
 try {
     await sequelize.authenticate()
     const blogs = await sequelize.query("SELECT * FROM blogs", { type: QueryTypes.SELECT })
-    blogs.map(blog => {
+    blogs.forEach(blog => {
         console.log(`${blog.author}: '${blog.title}', ${blog.likes} likes`)
     })
    
