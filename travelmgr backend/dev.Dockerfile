@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --ignore-scripts
 
 COPY index.js app.js cli.js run-migration.js ./
 COPY controllers ./controllers
