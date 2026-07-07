@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { Country } from '../types';
 import { getCountries } from '../services/trips';
 
@@ -40,8 +40,10 @@ export const CountriesProvider: React.FC<CountriesProviderProps> = ({ children }
     loadCountries();
   }, []);
 
+  const value = useMemo(() => ({ countries, isLoading }), [countries, isLoading]);
+
   return (
-    <CountriesContext.Provider value={{ countries, isLoading }}>
+    <CountriesContext.Provider value={value}>
       {children}
     </CountriesContext.Provider>
   );

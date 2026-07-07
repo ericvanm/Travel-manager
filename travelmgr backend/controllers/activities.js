@@ -187,7 +187,7 @@ router.delete('/:id', async (req, res) => {
 // GET analyze duplicates for a trip
 router.get('/analyze-duplicates/:tripId', async (req, res) => {
   try {
-    const tripId = parseInt(req.params.tripId)
+    const tripId = Number.parseInt(req.params.tripId, 10)
     
     // Get all stages for the trip
     const stages = await Stage.findAll({
@@ -238,7 +238,7 @@ router.get('/analyze-duplicates/:tripId', async (req, res) => {
 // POST structure trip - apply continuous activities
 router.post('/structure-trip/:tripId', async (req, res) => {
   try {
-    const tripId = parseInt(req.params.tripId)
+    const tripId = Number.parseInt(req.params.tripId, 10)
     // Get all stages for the trip
     const stages = await Stage.findAll({
       where: { tripId },
@@ -278,7 +278,8 @@ router.post('/structure-trip/:tripId', async (req, res) => {
       logger.log(`Removed ${duplicatesRemoved} duplicate activities from trip ${tripId}`)
     }
     
-    const message = `${structuredCount} activities structured across multiple stages${duplicatesRemoved > 0 ? `, ${duplicatesRemoved} duplicates removed` : ''}`
+    const duplicateSuffix = duplicatesRemoved > 0 ? `, ${duplicatesRemoved} duplicates removed` : ''
+    const message = `${structuredCount} activities structured across multiple stages${duplicateSuffix}`
     res.json({ message })
   } catch (error) {
     console.error('Error structuring trip:', error)
@@ -289,7 +290,7 @@ router.post('/structure-trip/:tripId', async (req, res) => {
 // GET trip timeline - activities organized by date
 router.get('/timeline/:tripId', async (req, res) => {
   try {
-    const tripId = parseInt(req.params.tripId)
+    const tripId = Number.parseInt(req.params.tripId, 10)
     
     // Get all stages for the trip
     const stages = await Stage.findAll({

@@ -9,8 +9,8 @@ const extractAllMatches = (text, pattern) => {
   return matches
 }
 
-const buildFlightActivities = (text, dates) => {
-  const pattern = /(?:vol|flight)\s*([A-Z]{2,3}\s*\d{3,4})|([A-Z]{3})\s*(?:to|vers|→)\s*([A-Z]{3})/gi
+const buildFlightNumberActivities = (text, dates) => {
+  const pattern = /(?:vol|flight)\s+([A-Z]{2,3}\s*\d{3,4})/gi
   return extractAllMatches(text, pattern).map((match) => ({
     type: 'flight',
     name: match[0],
@@ -18,23 +18,49 @@ const buildFlightActivities = (text, dates) => {
     endDateTime: dates[0] ? `${dates[0]}T15:00:00Z` : new Date().toISOString(),
     details: {
       flightNumber: match[1] || '',
-      departure: match[2] || '',
-      arrival: match[3] || ''
+      departure: '',
+      arrival: ''
     },
     confidence: 0.7
   }))
 }
 
-const buildHotelActivities = (text, dates) => {
-  const pattern = /(?:hôtel|hotel|check.?in|check.?out)\s*:?\s*([^\n\r]{5,50})/gi
+const buildFlightRouteActivities = (text, dates) => {
+  const pattern = /([A-Z]{3})\s+(?:to|vers|→)\s+([A-Z]{3})/gi
   return extractAllMatches(text, pattern).map((match) => ({
+    type: 'flight',
+    name: match[0],
+    startDateTime: dates[0] ? `${dates[0]}T12:00:00Z` : new Date().toISOString(),
+    endDateTime: dates[0] ? `${dates[0]}T15:00:00Z` : new Date().toISOString(),
+    details: {
+      flightNumber: '',
+      departure: match[1] || '',
+      arrival: match[2] || ''
+    },
+    confidence: 0.7
+  }))
+}
+
+const buildFlightActivities = (text, dates) => [
+  ...buildFlightNumberActivities(text, dates),
+  ...buildFlightRouteActivities(text, dates)
+]
+
+const buildHotelActivities = (text, dates) => {
+  const patterns = [
+    /(?:hôtel|hotel)\s*:?\s+([^\n\r]{5,50})/gi,
+    /check-?in\s*:?\s+([^\n\r]{5,50})/gi,
+    /check-?out\s*:?\s+([^\n\r]{5,50})/gi
+  ]
+
+  return patterns.flatMap((pattern) => extractAllMatches(text, pattern).map((match) => ({
     type: 'hotel',
     name: match[1].trim(),
     startDateTime: dates[0] ? `${dates[0]}T15:00:00Z` : new Date().toISOString(),
     endDateTime: dates[1] ? `${dates[1]}T11:00:00Z` : new Date().toISOString(),
     details: {},
     confidence: 0.6
-  }))
+  })))
 }
 
 const buildFallbackActivity = (text, dates) => ({
@@ -49,9 +75,9 @@ const buildFallbackActivity = (text, dates) => ({
 const uniqueValues = (values) => [...new Set(values)]
 
 const analyzeWithPatterns = (text) => {
-  const datePattern = /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})|(\d{4}-\d{2}-\d{2})/g
-  const locationPattern = /(?:à|in|at)\s+([A-Z][a-zA-ZÀ-ÿ\s]{2,30})/g
-  const reservationPattern = /(?:réservation|booking|confirmation|ref)\s*:?\s*([A-Z0-9]{4,15})/gi
+  const datePattern = /(\d{1,2}[/\-.]\d{1,2}[/\-.]\d{2,4})|(\d{4}-\d{2}-\d{2})/g
+  const locationPattern = /(?:à|in|at)\s+([A-Z][\wÀ-ÿ ]{2,30})/g
+  const reservationPattern = /(?:réservation|booking|confirmation|ref):?\s+([A-Z0-9]{4,15})/gi
 
   const dates = extractAllMatches(text, datePattern).map((match) => match[0])
   const locations = extractAllMatches(text, locationPattern).map((match) => match[1].trim())

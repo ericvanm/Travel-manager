@@ -4,6 +4,7 @@ import {
 } from '@mui/material';
 import { ActivityType, Stage } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { combineDateAndTime, getDatePart, getTimePart } from '../../utils/dateTimeInputHelpers';
 
 interface ActivityDialogProps {
   open: boolean;
@@ -187,10 +188,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                value={newActivity.startDateTime ? (newActivity.startDateTime.includes('T') ? newActivity.startDateTime.split('T')[0] : newActivity.startDateTime.split(' ')[0]) : ''}
+                value={getDatePart(newActivity.startDateTime)}
                 onChange={(e) => {
-                  const time = newActivity.startDateTime ? (newActivity.startDateTime.includes('T') ? newActivity.startDateTime.split('T')[1] : newActivity.startDateTime.split(' ')[1] || '09:00') : '09:00';
-                  setNewActivity({ ...newActivity, startDateTime: e.target.value ? `${e.target.value}T${time}` : '' });
+                  const time = getTimePart(newActivity.startDateTime, '09:00');
+                  setNewActivity({ ...newActivity, startDateTime: combineDateAndTime(e.target.value, time) });
                 }}
                 sx={{ flex: 1 }}
               />
@@ -200,10 +201,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
                 type="time"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                value={newActivity.startDateTime ? (newActivity.startDateTime.includes('T') ? newActivity.startDateTime.split('T')[1] || '09:00' : newActivity.startDateTime.split(' ')[1] || '09:00') : '09:00'}
+                value={getTimePart(newActivity.startDateTime, '09:00')}
                 onChange={(e) => {
-                  const date = newActivity.startDateTime ? (newActivity.startDateTime.includes('T') ? newActivity.startDateTime.split('T')[0] : newActivity.startDateTime.split(' ')[0]) : '';
-                  setNewActivity({ ...newActivity, startDateTime: date ? `${date}T${e.target.value}` : '' });
+                  const date = getDatePart(newActivity.startDateTime);
+                  setNewActivity({ ...newActivity, startDateTime: combineDateAndTime(date, e.target.value) });
                 }}
                 sx={{ width: 120 }}
               />
@@ -215,10 +216,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
                 type="date"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                value={newActivity.endDateTime ? (newActivity.endDateTime.includes('T') ? newActivity.endDateTime.split('T')[0] : newActivity.endDateTime.split(' ')[0]) : ''}
+                value={getDatePart(newActivity.endDateTime)}
                 onChange={(e) => {
-                  const time = newActivity.endDateTime ? (newActivity.endDateTime.includes('T') ? newActivity.endDateTime.split('T')[1] : newActivity.endDateTime.split(' ')[1] || '18:00') : '18:00';
-                  setNewActivity({ ...newActivity, endDateTime: e.target.value ? `${e.target.value}T${time}` : '' });
+                  const time = getTimePart(newActivity.endDateTime, '18:00');
+                  setNewActivity({ ...newActivity, endDateTime: combineDateAndTime(e.target.value, time) });
                 }}
                 sx={{ flex: 1 }}
               />
@@ -228,10 +229,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
                 type="time"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                value={newActivity.endDateTime ? (newActivity.endDateTime.includes('T') ? newActivity.endDateTime.split('T')[1] || '18:00' : newActivity.endDateTime.split(' ')[1] || '18:00') : '18:00'}
+                value={getTimePart(newActivity.endDateTime, '18:00')}
                 onChange={(e) => {
-                  const date = newActivity.endDateTime ? (newActivity.endDateTime.includes('T') ? newActivity.endDateTime.split('T')[0] : newActivity.endDateTime.split(' ')[0]) : '';
-                  setNewActivity({ ...newActivity, endDateTime: date ? `${date}T${e.target.value}` : '' });
+                  const date = getDatePart(newActivity.endDateTime);
+                  setNewActivity({ ...newActivity, endDateTime: combineDateAndTime(date, e.target.value) });
                 }}
                 sx={{ width: 120 }}
               />

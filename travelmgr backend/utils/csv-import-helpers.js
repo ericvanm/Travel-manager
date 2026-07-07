@@ -72,7 +72,7 @@ const buildNonHotelActivity = (data, activityType, timezone) => ({
   endDateTime: parseCSVDate(data['Activity End DateTime'], timezone),
   stageName: data['Stage Name'],
   city: data['Activity City'],
-  cost: data['Activity Cost'] ? parseFloat(data['Activity Cost']) : null,
+  cost: data['Activity Cost'] ? Number.parseFloat(data['Activity Cost']) : null,
   airline: data.Airline,
   flightNumber: data['Flight Number'],
   departureAirport: data['Departure Airport'],

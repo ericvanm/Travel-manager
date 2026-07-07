@@ -38,10 +38,15 @@ interface Props {
   onImportComplete: () => void
 }
 
+const getActionKey = (action: ActionPlan) => {
+  const name = action.newActivity?.name || action.existingActivity?.name || 'activity'
+  return `${action.type}-${action.activityId ?? name}-${action.reason}`
+}
+
 export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null)
-  const [selectedActions, setSelectedActions] = useState<number[]>([])
+  const [selectedActionKeys, setSelectedActionKeys] = useState<string[]>([])
   const [isExecuting, setIsExecuting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -73,7 +78,7 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
       const result = await response.json()
       console.log('API Response:', result)
       setAnalysisResult(result)
-      setSelectedActions(result.actionPlan.map((_: any, index: number) => index))
+      setSelectedActionKeys(result.actionPlan.map((action: ActionPlan) => getActionKey(action)))
     } catch (error) {
       console.error('Erreur analyse:', error)
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
@@ -95,22 +100,24 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
     e.preventDefault()
   }
 
-  const toggleActionSelection = (index: number) => {
-    setSelectedActions(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
+  const toggleActionSelection = (actionKey: string) => {
+    setSelectedActionKeys(prev =>
+      prev.includes(actionKey)
+        ? prev.filter(key => key !== actionKey)
+        : [...prev, actionKey]
     )
   }
 
   const executeActions = async () => {
-    if (!analysisResult || selectedActions.length === 0) return
+    if (!analysisResult || selectedActionKeys.length === 0) return
 
     setIsExecuting(true)
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api'
     try {
-      const confirmedActions = selectedActions.map(index => analysisResult.actionPlan[index])
+      const confirmedActions = analysisResult.actionPlan.filter((action) =>
+        selectedActionKeys.includes(getActionKey(action))
+      )
 
       const response = await fetch(`${backendUrl}/ai-import/execute`, {
         method: 'POST',
@@ -130,7 +137,7 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
       alert(`${result.results.length} activité(s) traitée(s) avec succès`)
       
       setAnalysisResult(null)
-      setSelectedActions([])
+      setSelectedActionKeys([])
       onImportComplete()
     } catch (error) {
       console.error('Erreur exécution:', error)
@@ -140,16 +147,30 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
     }
   }
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleDropZoneKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      openFilePicker()
+    }
+  }
+
   return (
     <div className="ai-document-import">
       <h3>Import Documentaire IA</h3>
       
       {/* Zone de dépôt */}
-      <div 
+      <div
+        role="button"
+        tabIndex={0}
         className="drop-zone"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={openFilePicker}
+        onKeyDown={handleDropZoneKeyDown}
         style={{
           border: '2px dashed #ccc',
           borderRadius: '8px',
@@ -213,22 +234,24 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
             <h4>Actions proposées</h4>
             <p>Sélectionnez les actions à exécuter:</p>
             
-            {analysisResult.actionPlan.map((action, index) => (
+            {analysisResult.actionPlan.map((action) => {
+              const actionKey = getActionKey(action)
+              return (
               <div 
-                key={index}
+                key={actionKey}
                 style={{
                   border: '1px solid #ddd',
                   borderRadius: '8px',
                   padding: '15px',
                   marginBottom: '10px',
-                  backgroundColor: selectedActions.includes(index) ? '#e8f5e8' : '#f9f9f9'
+                  backgroundColor: selectedActionKeys.includes(actionKey) ? '#e8f5e8' : '#f9f9f9'
                 }}
               >
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <input
                     type="checkbox"
-                    checked={selectedActions.includes(index)}
-                    onChange={() => toggleActionSelection(index)}
+                    checked={selectedActionKeys.includes(actionKey)}
+                    onChange={() => toggleActionSelection(actionKey)}
                   />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
@@ -256,28 +279,29 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
                   </div>
                 </label>
               </div>
-            ))}
+              )
+            })}
 
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
               <button
                 onClick={executeActions}
-                disabled={selectedActions.length === 0 || isExecuting}
+                disabled={selectedActionKeys.length === 0 || isExecuting}
                 style={{
                   padding: '10px 20px',
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: selectedActions.length === 0 ? 'not-allowed' : 'pointer'
+                  cursor: selectedActionKeys.length === 0 ? 'not-allowed' : 'pointer'
                 }}
               >
-                {isExecuting ? 'Exécution...' : `Exécuter ${selectedActions.length} action(s)`}
+                {isExecuting ? 'Exécution...' : `Exécuter ${selectedActionKeys.length} action(s)`}
               </button>
               
               <button
                 onClick={() => {
                   setAnalysisResult(null)
-                  setSelectedActions([])
+                  setSelectedActionKeys([])
                 }}
                 style={{
                   padding: '10px 20px',

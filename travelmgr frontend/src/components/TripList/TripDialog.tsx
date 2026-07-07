@@ -36,6 +36,13 @@ const TripDialog: React.FC<TripDialogProps> = ({
       onErrorClear();
     }
   };
+  const getSaveButtonLabel = () => {
+    if (loading) {
+      return editingTrip ? t('updating') : t('creating');
+    }
+    return editingTrip ? t('update') : t('create');
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{editingTrip ? t('edit_trip') : t('create_new_trip')}</DialogTitle>
@@ -68,7 +75,7 @@ const TripDialog: React.FC<TripDialogProps> = ({
       <DialogActions>
         <Button onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={onSave} disabled={loading}>
-          {loading ? (editingTrip ? t('updating') : t('creating')) : (editingTrip ? t('update') : t('create'))}
+          {getSaveButtonLabel()}
         </Button>
       </DialogActions>
     </Dialog>

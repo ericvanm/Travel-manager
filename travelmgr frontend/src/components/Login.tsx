@@ -54,7 +54,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
         />
         <TextField
           fullWidth
-          label={t('password')}
+          label={t('password_label')}
           type="password"
           value={credentials.password}
           onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}

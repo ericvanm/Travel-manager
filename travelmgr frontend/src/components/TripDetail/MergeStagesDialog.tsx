@@ -39,7 +39,6 @@ const MergeStagesDialog: React.FC<MergeStagesDialogProps> = ({
     setCustomName('');
   };
 
-  const stageNames = selectedStages.map(stage => stage.name || `Stage ${stage.id}`);
   const isValid = nameOption === 'existing' ? selectedName : customName.trim();
 
   return (
@@ -50,9 +49,9 @@ const MergeStagesDialog: React.FC<MergeStagesDialogProps> = ({
           Vous allez fusionner {selectedStages.length} étapes consécutives :
         </Typography>
         <Box sx={{ mb: 3, pl: 2 }}>
-          {stageNames.map((name, index) => (
-            <Typography key={index} variant="body2">
-              • {name}
+          {selectedStages.map((stage) => (
+            <Typography key={stage.id} variant="body2">
+              • {stage.name || `Stage ${stage.id}`}
             </Typography>
           ))}
         </Box>
@@ -77,11 +76,14 @@ const MergeStagesDialog: React.FC<MergeStagesDialogProps> = ({
               onChange={(e) => setSelectedName(e.target.value)}
               label="Sélectionner un nom"
             >
-              {stageNames.map((name, index) => (
-                <MenuItem key={index} value={name}>
-                  {name}
-                </MenuItem>
-              ))}
+              {selectedStages.map((stage) => {
+                const name = stage.name || `Stage ${stage.id}`;
+                return (
+                  <MenuItem key={stage.id} value={name}>
+                    {name}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
         ) : (

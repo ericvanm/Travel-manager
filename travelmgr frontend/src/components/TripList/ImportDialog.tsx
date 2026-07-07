@@ -72,7 +72,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             {error}
             <Collapse in={showDetails}>
               <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2, fontSize: '0.8rem' }}>
-                {details?.map((d, i) => <li key={i}>{d}</li>)}
+                {details?.map((detail) => <li key={detail}>{detail}</li>)}
               </Box>
             </Collapse>
           </Alert>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -33,17 +33,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const handleSetUser = (user: User | null) => {
-    setUser(user);
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
+  const handleSetUser = useCallback((nextUser: User | null) => {
+    setUser(nextUser);
+    if (nextUser) {
+      localStorage.setItem('user', JSON.stringify(nextUser));
     } else {
       localStorage.removeItem('user');
     }
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, setUser: handleSetUser, isLoading }),
+    [user, handleSetUser, isLoading]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, setUser: handleSetUser, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

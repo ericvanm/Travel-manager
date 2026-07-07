@@ -129,7 +129,7 @@ const updateTripFromFirstRow = async (TripModel, tripId, headers, firstRowValues
     description: firstRowData['Trip Description'] || trip.description,
     startDate: parseCSVDate(firstRowData['Trip Start Date']) || trip.startDate,
     endDate: parseCSVDate(firstRowData['Trip End Date']) || trip.endDate,
-    budget: firstRowData['Trip Budget'] ? parseFloat(firstRowData['Trip Budget']) : trip.budget,
+    budget: firstRowData['Trip Budget'] ? Number.parseFloat(firstRowData['Trip Budget']) : trip.budget,
     currency: firstRowData['Trip Currency'] || trip.currency
   })
 }
@@ -180,7 +180,7 @@ const importStagesToDatabase = async (models, tripId, finalStages, fallbackCount
     const stageCountry = await models.Country.findOne({ where: { name: 'South Africa' } }) || fallbackCountry
     const stage = await models.Stage.create({
       name: stageData.name,
-      tripId: parseInt(tripId, 10),
+      tripId: Number.parseInt(tripId, 10),
       countryId: stageCountry ? stageCountry.id : null,
       startDate: stageData.startDate,
       endDate: stageData.endDate

@@ -37,7 +37,7 @@ const tokenExtractor = (request, response, next) => {
   const sessionData = request.session
   console.log("sessionData", sessionData)
   // check if session stil valid
-  if (sessionData && sessionData.isLoggedIn) {
+  if (sessionData?.isLoggedIn) {
 
     request.user = sessionData.user.id
   }

@@ -6,12 +6,12 @@ const { User } = require('../models/DBmodels')
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
   // Support session-based auth (login.js sets isLoggedIn)
-  if (req.session && req.session.isLoggedIn && req.session.user) {
+  if (req.session?.isLoggedIn && req.session.user) {
     req.user = req.session.user  // { id, username, name }
     return next()
   }
   // Support JWT token in session (users.js login sets token)
-  const token = req.session && req.session.token
+  const token = req.session?.token
   if (!token) {
     return res.status(401).json({ error: 'Access denied' })
   }

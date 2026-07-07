@@ -118,7 +118,7 @@ router.post('/merge', async (req, res) => {
       return res.status(400).json({ error: 'Au moins 2 étapes sont requises pour la fusion' })
     }
     
-    if (!newName || !newName.trim()) {
+    if (!newName?.trim()) {
       return res.status(400).json({ error: 'Le nom de la nouvelle étape est requis' })
     }
 
@@ -181,23 +181,12 @@ router.post('/merge', async (req, res) => {
 
     // Move all activities to the merged stage and sort them chronologically
     let totalActivities = 0
-    const allActivities = []
-    
+
     for (const stage of stages) {
       const activities = await Activity.findAll({ where: { stageId: stage.id } })
       totalActivities += activities.length
-      allActivities.push(...activities)
     }
-    
-    // Sort activities by startDateTime (nulls last)
-    allActivities.sort((a, b) => {
-      if (!a.startDateTime && !b.startDateTime) return 0
-      if (!a.startDateTime) return 1
-      if (!b.startDateTime) return -1
-      return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
-    })
-    
-    // Update all activities to the merged stage
+
     await Activity.update(
       { stageId: mergedStage.id },
       { where: { stageId: stages.map(s => s.id) } }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { getTranslation } from '../translations';
 
 interface LanguageContextType {
@@ -14,15 +14,23 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return localStorage.getItem('language') || 'en';
   });
 
-  const setLanguage = (lang: string) => {
+  const setLanguage = useCallback((lang: string) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
-  };
+  }, []);
 
-  const t = (key: string, params?: Record<string, any>) => getTranslation(key, language, params);
+  const t = useCallback(
+    (key: string, params?: Record<string, any>) => getTranslation(key, language, params),
+    [language]
+  );
+
+  const value = useMemo(
+    () => ({ language, setLanguage, t }),
+    [language, setLanguage, t]
+  );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

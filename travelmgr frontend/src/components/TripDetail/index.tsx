@@ -56,7 +56,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   }, [tripId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const buildActivityPayload = (form: ActivityFormState, stageId: number): ActivityInput => {
-    const activityTypeId = parseInt(form.activityTypeId)
+    const activityTypeId = Number.parseInt(form.activityTypeId, 10)
     const activityData: ActivityInput = {
       name: form.name,
       stageId,
@@ -64,7 +64,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       startDateTime: form.startDateTime || null,
       endDateTime: form.endDateTime || null,
       city: form.city || null,
-      cost: form.cost ? parseFloat(form.cost) : null,
+      cost: form.cost ? Number.parseFloat(form.cost) : null,
       confirmationNumber: form.confirmationNumber || null,
     }
 
@@ -92,14 +92,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   }
 
   const buildActivityUpdatePayload = (form: ActivityFormState): Partial<Activity> => {
-    const activityTypeId = parseInt(form.activityTypeId)
+    const activityTypeId = Number.parseInt(form.activityTypeId, 10)
     const activityData: Partial<Activity> = {
       name: form.name,
       activityTypeId,
       startDateTime: form.startDateTime || null,
       endDateTime: form.endDateTime || null,
       city: form.city || null,
-      cost: form.cost ? parseFloat(form.cost) : null,
+      cost: form.cost ? Number.parseFloat(form.cost) : null,
       confirmationNumber: form.confirmationNumber || null,
     }
 
@@ -292,12 +292,12 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     setActivityDialog(true);
   };
 
-  const handleStageSelection = (stageId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedStageIds(prev => [...prev, stageId]);
-    } else {
-      setSelectedStageIds(prev => prev.filter(id => id !== stageId));
-    }
+  const selectStage = (stageId: number) => {
+    setSelectedStageIds(prev => [...prev, stageId]);
+  };
+
+  const deselectStage = (stageId: number) => {
+    setSelectedStageIds(prev => prev.filter(id => id !== stageId));
   };
 
   const areStagesConsecutive = (stageIds: number[]): boolean => {
@@ -467,7 +467,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                   {mergeMode && (
                     <Checkbox
                       checked={selectedStageIds.includes(stage.id)}
-                      onChange={(e) => handleStageSelection(stage.id, e.target.checked)}
+                      onChange={(e) => (e.target.checked ? selectStage(stage.id) : deselectStage(stage.id))}
                     />
                   )}
                   <Box>

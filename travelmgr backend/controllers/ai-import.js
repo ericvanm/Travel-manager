@@ -3,9 +3,16 @@ const multer = require('multer')
 const { Trip, Stage, Activity, ActivityType, Country } = require('../models/DBmodels')
 
 // Configuration upload
-const upload = multer({ 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: {
+    fileSize: MAX_UPLOAD_BYTES,
+    files: 1,
+    fields: 10,
+    fieldSize: 1024
+  },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'text/plain']
     cb(null, allowedTypes.includes(file.mimetype))

@@ -40,7 +40,7 @@ const mostBlogs   = (blogs) => {
           mostBlogs = { author: blog.author, blogs: 1 }
         }
       }else {
-        const nbBlogs = parseInt(authorBlog[indexAuthor].blogs)+1
+        const nbBlogs = Number.parseInt(authorBlog[indexAuthor].blogs, 10) + 1
         //console.log('nbBlogs',nbBlogs, authorBlog[indexAuthor].blogs )
         authorBlog[indexAuthor] = { author: blog.author, blogs: nbBlogs }
         if (nbBlogs > mostBlogs.blogs) {
@@ -69,7 +69,7 @@ const mostLikes     = (blogs) => {
         mostLikes = { author: blog.author, likes: blog.likes }
       }
     }else {
-      const nbLikes = parseInt(authorBlog[indexAuthor].likes)+blog.likes
+      const nbLikes = Number.parseInt(authorBlog[indexAuthor].likes, 10) + blog.likes
       //console.log('nbBlogs',nbBlogs, authorBlog[indexAuthor].blogs )
       authorBlog[indexAuthor] = { author: blog.author, likes: nbLikes }
       if (nbLikes > mostLikes.likes) {
