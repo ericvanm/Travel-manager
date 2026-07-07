@@ -6,7 +6,9 @@ const {
   groupEventsByStage,
   convertToActivity,
   resolveStageName,
-  groupActivitiesIntoStages
+  groupActivitiesIntoStages,
+  collectActivitiesFromStages,
+  processStageActivities
 } = require('../utils/ics-import-helpers')
 
 const SAMPLE_ICS = `BEGIN:VCALENDAR
@@ -83,5 +85,60 @@ describe('ics-import-helpers', () => {
     assert.strictEqual(stages.length, 2)
     assert.strictEqual(stages[0].activities.length, 2)
     assert.strictEqual(stages[1].activities.length, 1)
+  })
+
+  test('convertToActivity detects flights and car rentals', () => {
+    const flight = convertToActivity({
+      SUMMARY: 'AF123',
+      DESCRIPTION: 'Terminal 2 [Flight] Gate A CDG to JFK AA 123',
+      DTSTART: '20250601T120000Z',
+      DTEND: '20250601T180000Z'
+    })
+    assert.strictEqual(flight.activityTypeId, 6)
+
+    const car = convertToActivity({
+      SUMMARY: 'Pick Up Rental Car: Europcar',
+      DTSTART: '20250602T100000Z',
+      DTEND: '20250602T110000Z',
+      LOCATION: 'Airport'
+    })
+    assert.strictEqual(car.activityTypeId, 8)
+  })
+
+  test('collectActivitiesFromStages sorts activities by date', () => {
+    const events = parseICS(SAMPLE_ICS)
+    const stageGroups = groupEventsByStage(events)
+    const collected = collectActivitiesFromStages(stageGroups)
+    assert.ok(collected.length >= 1)
+    assert.ok(collected[0].date instanceof Date)
+  })
+
+  test('processStageActivities creates hotel and regular activities', async () => {
+    const created = []
+    const Activity = {
+      create: async (data) => {
+        created.push(data)
+        return data
+      }
+    }
+    const stage = { id: 1 }
+    const activities = [
+      {
+        SUMMARY: 'Check-in: Hotel ABC',
+        DTSTART: '20250602',
+        LOCATION: 'Paris'
+      },
+      {
+        SUMMARY: 'Louvre visit',
+        DTSTART: '20250603T100000Z',
+        DTEND: '20250603T120000Z',
+        LOCATION: 'Paris'
+      }
+    ]
+
+    await processStageActivities(Activity, stage, activities, convertToActivity)
+    assert.strictEqual(created.length, 2)
+    assert.ok(created.some((item) => item.activityTypeId === 7))
+    assert.ok(created.some((item) => item.activityTypeId === 1))
   })
 })

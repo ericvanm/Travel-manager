@@ -76,4 +76,4 @@ const sanitizeObject = (obj) => {
 
 const sanitizeParams = (params) => params.map(sanitizeValue)
 
-module.exports = { sanitizeParams, redactConnectionUrl, buildDatabaseLogContext }
+module.exports = { sanitizeParams, sanitizeObject, redactConnectionUrl, buildDatabaseLogContext }

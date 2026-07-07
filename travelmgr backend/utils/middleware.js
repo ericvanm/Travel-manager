@@ -3,8 +3,7 @@ const jwt = require('jsonwebtoken')
 const { SECRET } = require('./config')
 
 const requestLogger = (request, response, next) => {
-  logger.info('Method:', request.method)
-  logger.info('Path:', request.path)
+  logger.info('HTTP request received')
   next()
 }
 

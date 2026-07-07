@@ -7,7 +7,7 @@ const { Umzug, SequelizeStorage } = require('umzug')
 const url = config.DB_URI
 const sslToUse = config.ENVIR === 'production' ? true : false
 
-logger.info('connecting to database', config.DB_LOG_CONTEXT)
+logger.infoWithContext('connecting to database', config.DB_LOG_CONTEXT)
 
 const sequelize = new Sequelize(url, {
   dialectOptions: sslToUse ? {

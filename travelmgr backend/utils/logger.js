@@ -1,36 +1,34 @@
-const { sanitizeParams } = require('./log-sanitizer')
+const { sanitizeObject } = require('./log-sanitizer')
 
-const isSafePrimitive = (value) => (
-  value === null
-  || value === undefined
-  || typeof value === 'number'
-  || typeof value === 'boolean'
-)
+const assertStaticMessage = (message) => String(message)
 
-const toSafeLogValue = (value) => {
-  if (isSafePrimitive(value)) {
-    return value
+const info = (message) => {
+  console.log(assertStaticMessage(message))
+}
+
+const infoWithContext = (message, context) => {
+  console.log(assertStaticMessage(message), JSON.stringify(sanitizeObject(context)))
+}
+
+const infoWithCounts = (message, ...counts) => {
+  const safeCounts = counts.filter(
+    (value) => typeof value === 'number' || typeof value === 'boolean'
+  )
+  console.log(assertStaticMessage(message), ...safeCounts.map(String))
+}
+
+const error = (message, err) => {
+  const baseMessage = assertStaticMessage(message)
+  if (err instanceof Error) {
+    console.error(baseMessage, err.message)
+    return
   }
-
-  if (typeof value === 'string') {
-    return sanitizeParams([value])[0]
-  }
-
-  return sanitizeParams([value])[0]
-}
-
-const writeLog = (writer, ...params) => {
-  writer(...params.map(toSafeLogValue))
-}
-
-const info = (...params) => {
-  writeLog(console.log, ...params)
-}
-
-const error = (...params) => {
-  writeLog(console.error, ...params)
+  console.error(baseMessage)
 }
 
 module.exports = {
-  info, error
+  info,
+  infoWithContext,
+  infoWithCounts,
+  error
 }

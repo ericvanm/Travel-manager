@@ -1,6 +1,6 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { sanitizeParams, redactConnectionUrl, buildDatabaseLogContext } = require('../utils/log-sanitizer')
+const { sanitizeParams, sanitizeObject, redactConnectionUrl, buildDatabaseLogContext } = require('../utils/log-sanitizer')
 
 describe('log-sanitizer', () => {
   test('redacts sensitive keys in objects', () => {
@@ -49,5 +49,11 @@ describe('log-sanitizer', () => {
     })
     assert.ok(!JSON.stringify(context).includes('secretpass'))
     assert.ok(!JSON.stringify(context).includes('postgres:secretpass'))
+  })
+
+  test('sanitizeObject redacts sensitive keys', () => {
+    const sanitized = sanitizeObject({ username: 'alice', token: 'abc' })
+    assert.strictEqual(sanitized.username, 'alice')
+    assert.strictEqual(sanitized.token, '[REDACTED]')
   })
 })

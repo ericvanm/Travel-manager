@@ -82,7 +82,7 @@ const checkContinuousActivity = async (stageId, startDateTime, endDateTime) => {
 // POST new activity
 router.post('/', async (req, res) => {
   try {
-    logger.log('Creating activity with data:', req.body)
+    logger.info('Creating activity')
     
     let activityData = { ...req.body }
 
@@ -275,7 +275,7 @@ router.post('/structure-trip/:tripId', async (req, res) => {
         where: { id: { [Op.in]: duplicatesToRemove } }
       })
       duplicatesRemoved = duplicatesToRemove.length
-      logger.log(`Removed ${duplicatesRemoved} duplicate activities from trip ${tripId}`)
+      logger.infoWithCounts('Removed duplicate activities', duplicatesRemoved)
     }
     
     const duplicateSuffix = duplicatesRemoved > 0 ? `, ${duplicatesRemoved} duplicates removed` : ''

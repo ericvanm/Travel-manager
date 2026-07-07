@@ -216,7 +216,7 @@ router.post('/:id/import-csv', async (req, res) => {
 
     const headers = parseCSVLine(lines[0])
     const rows = lines.slice(1)
-    logger.info('[CSV Import] data rows:', rows.length)
+    logger.infoWithCounts('[CSV Import] data rows', rows.length)
 
     if (rows.length > 0) {
       await updateTripFromFirstRow(Trip, tripId, headers, parseCSVLine(rows[0]))
@@ -224,7 +224,7 @@ router.post('/:id/import-csv', async (req, res) => {
 
     const { allActivities, warnings: rowWarnings, hotelCount } = await parseCsvActivities(ActivityType, headers, rows)
     warnings.push(...rowWarnings)
-    logger.info('[CSV Import] activities to import:', allActivities.length, 'hotels merged:', hotelCount)
+    logger.infoWithCounts('[CSV Import] activities to import', allActivities.length, hotelCount)
 
     const country = await Country.findOne({ where: { name: 'South Africa' } })
       || await Country.findOne({ where: { code: 'ZA' } })
@@ -236,7 +236,7 @@ router.post('/:id/import-csv', async (req, res) => {
       country
     )
 
-    logger.info('[CSV Import] done:', importedStages, 'stages,', importedActivities, 'activities,', warnings.length, 'warnings')
+    logger.infoWithCounts('[CSV Import] done', importedStages, importedActivities, warnings.length)
     res.json({
       message: `CSV imported successfully: ${importedStages} stages, ${importedActivities} activities`,
       importedStages,
