@@ -25,6 +25,17 @@ LOCATION:Cape Town
 END:VEVENT
 END:VCALENDAR`
 
+const SAMPLE_CSV = `"Trip Name","Trip Description","Trip Start Date","Trip End Date","Trip Budget","Trip Currency","Stage Name","Stage Country","Stage Start Date","Stage End Date","Stage Timezone","Activity Name","Activity Type","Activity Start DateTime","Activity End DateTime","Activity City","Activity Cost","Airline","Flight Number","Departure Airport","Arrival Airport","Seat","Gate","Terminal","Hotel Address","Hotel Phone","Check-in Date","Check-out Date","Room Type","Confirmation Number","Car Company","Pickup Location","Dropoff Location","Pickup Date","Dropoff Date","Car Type"
+"Test Trip","Description","07/11/2025","08/11/2025","","","Paris","South Africa","07/11/2025","07/11/2025","UTC","Louvre visit","Restaurant","2025-11-07T10:00:00.000Z","2025-11-07T12:00:00.000Z","Paris","","","","","","","","","","","","","","","","","","","",""`
+
+const loadSampleCsv = () => {
+  const csvPath = path.join(__dirname, '../../tests/Cape_Town__South_Africa__November_2025_export.csv')
+  if (fs.existsSync(csvPath)) {
+    return fs.readFileSync(csvPath, 'utf-8')
+  }
+  return SAMPLE_CSV
+}
+
 before(async () => {
   await connectToDatabase()
   app = require('../app')
@@ -72,8 +83,7 @@ describe('import API', () => {
 
   test('imports CSV into an existing trip', async () => {
     const trip = await createTrip({ name: 'CSV Trip' })
-    const csvPath = path.join(__dirname, '../../tests/Cape_Town__South_Africa__November_2025_export.csv')
-    const csvContent = fs.readFileSync(csvPath, 'utf-8')
+    const csvContent = loadSampleCsv()
 
     const response = await api.post(`/api/trips/${trip.id}/import-csv`).send({ csvContent })
     assert.strictEqual(response.status, 200)

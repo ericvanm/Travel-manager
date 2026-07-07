@@ -2,7 +2,7 @@ const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const supertest = require('supertest')
 const { connectToDatabase } = require('../utils/db')
-const { resetDatabase, createTrip, createStage, createActivity } = require('./setup')
+const { resetDatabase, getDefaultCountryId, createTrip, createStage, createActivity } = require('./setup')
 
 let app
 let api
@@ -20,9 +20,11 @@ beforeEach(async () => {
 describe('stages API', () => {
   test('creates, lists, updates and deletes a stage', async () => {
     const trip = await createTrip({ name: 'Stage Trip' })
+    const countryId = await getDefaultCountryId()
     const created = await api.post('/api/stages').send({
       name: 'Paris',
       tripId: trip.id,
+      countryId,
       startDate: '2025-06-01',
       endDate: '2025-06-05'
     })

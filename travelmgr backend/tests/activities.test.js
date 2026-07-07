@@ -55,14 +55,15 @@ describe('activities API', () => {
       stageId: stage.id,
       activityTypeId: 7,
       checkInDate: '2025-06-01T15:00:00Z',
-      checkOutDate: '2025-06-03T11:00:00Z',
+      checkOutDate: '2025-06-01T18:00:00Z',
       address: '1 Main Street'
     })
     assert.strictEqual(created.status, 200)
+    const activity = Array.isArray(created.body) ? created.body[0] : created.body
 
-    const updated = await api.put(`/api/activities/${created.body.id}`).send({
-      checkInDate: '2025-06-02T15:00:00Z',
-      checkOutDate: '2025-06-04T11:00:00Z'
+    const updated = await api.put(`/api/activities/${activity.id}`).send({
+      checkInDate: '2025-06-01T16:00:00Z',
+      checkOutDate: '2025-06-01T19:00:00Z'
     })
     assert.strictEqual(updated.status, 200)
     assert.ok(Array.isArray(updated.body))

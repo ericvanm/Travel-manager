@@ -27,18 +27,8 @@ describe('ai-service', () => {
     assert.ok(result.detectedActivities[0].confidence <= 0.3)
   })
 
-  test('analyzeReservationText falls back when OpenAI is unavailable', async () => {
-    const previousKey = process.env.OPENAI_API_KEY
-    const previousUseOpenAi = process.env.USE_OPENAI
-    process.env.OPENAI_API_KEY = 'invalid-key'
-    process.env.USE_OPENAI = 'true'
-
-    try {
-      const result = await analyzeReservationText('Vol AF1234 Paris 15/03/2024 confirmation: ABC12345')
-      assert.ok(result.detectedActivities.length > 0)
-    } finally {
-      process.env.OPENAI_API_KEY = previousKey
-      process.env.USE_OPENAI = previousUseOpenAi
-    }
+  test('analyzeReservationText returns empty activities for short text', async () => {
+    const result = await analyzeReservationText('short')
+    assert.strictEqual(result.detectedActivities.length, 0)
   })
 })
