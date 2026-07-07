@@ -8,6 +8,7 @@ const {
   resetGroupedActivity,
   updateGroupedActivities
 } = require('../utils/activity-update-helpers')
+const logger = require('../utils/logger')
 
 // GET all activities for a stage
 router.get('/stage/:stageId', async (req, res) => {
@@ -81,7 +82,7 @@ const checkContinuousActivity = async (stageId, startDateTime, endDateTime) => {
 // POST new activity
 router.post('/', async (req, res) => {
   try {
-    console.log('Creating activity with data:', req.body)
+    logger.log('Creating activity with data:', req.body)
     
     let activityData = { ...req.body }
 
@@ -238,14 +239,11 @@ router.get('/analyze-duplicates/:tripId', async (req, res) => {
 router.post('/structure-trip/:tripId', async (req, res) => {
   try {
     const tripId = parseInt(req.params.tripId)
-    console.log('Structuring trip:', tripId)
-    
     // Get all stages for the trip
     const stages = await Stage.findAll({
       where: { tripId },
       order: [['startDate', 'ASC']]
     })
-    console.log('Found stages:', stages.length)
     
     if (stages.length === 0) {
       return res.json({ message: '0 activities structured across multiple stages' })
@@ -256,46 +254,28 @@ router.post('/structure-trip/:tripId', async (req, res) => {
     const allActivities = await Activity.findAll({
       where: { stageId: { [Op.in]: stageIds } }
     })
-    console.log('Found all activities:', allActivities.length)
-    
     let structuredCount = 0
     let duplicatesRemoved = 0
-    
-    // First pass: identify and remove duplicates from ALL activities
+
     const processedActivities = new Map()
     const duplicatesToRemove = []
-    
-    console.log('=== DUPLICATE DETECTION DEBUG ===')
+
     for (const activity of allActivities) {
-      // Key without stageId to detect true duplicates across stages
       const key = `${activity.name || 'unnamed'}-${activity.activityTypeId}-${activity.startDateTime || 'no-start'}-${activity.endDateTime || 'no-end'}-${activity.address || ''}-${activity.confirmationNumber || ''}`
-      console.log(`Activity ID ${activity.id}: ${activity.name}`)
-      console.log(`  Key: ${key}`)
-      console.log(`  Stage: ${activity.stageId}, Type: ${activity.activityTypeId}`)
-      console.log(`  Start: ${activity.startDateTime}, End: ${activity.endDateTime}`)
-      console.log(`  Address: ${activity.address || 'none'}, Confirmation: ${activity.confirmationNumber || 'none'}`)
-      
+
       if (processedActivities.has(key)) {
         duplicatesToRemove.push(activity.id)
-        console.log(`  >>> DUPLICATE FOUND! Will remove ID ${activity.id}`)
       } else {
         processedActivities.set(key, activity)
-        console.log(`  >>> First occurrence, keeping`)
       }
-      console.log('---')
     }
-    console.log('=== END DUPLICATE DETECTION DEBUG ===')
-    
-    // Remove duplicates
+
     if (duplicatesToRemove.length > 0) {
-      console.log(`Removing ${duplicatesToRemove.length} duplicates:`, duplicatesToRemove)
       await Activity.destroy({
         where: { id: { [Op.in]: duplicatesToRemove } }
       })
       duplicatesRemoved = duplicatesToRemove.length
-      console.log('Removed', duplicatesRemoved, 'duplicate activities')
-    } else {
-      console.log('No duplicates found to remove')
+      logger.log(`Removed ${duplicatesRemoved} duplicate activities from trip ${tripId}`)
     }
     
     const message = `${structuredCount} activities structured across multiple stages${duplicatesRemoved > 0 ? `, ${duplicatesRemoved} duplicates removed` : ''}`

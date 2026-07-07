@@ -8,10 +8,6 @@ const DB_URI = process.env.NODE_ENV === 'test'
 const ENVIR = process.env.NODE_ENV
 const SECRET = process.env.SECRET
 
-console.log('PORT:', PORT)
-console.log('NODE_ENV:', ENVIR)
-
-
 module.exports = {
   DB_URI: DB_URI,
   PORT,
