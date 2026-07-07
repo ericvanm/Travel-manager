@@ -5,12 +5,12 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 RUN npm install
-RUN npm install connect-pg-simple uuid
 
-COPY . .
-
-RUN npm rebuild bcrypt --build-from-source
-
+COPY index.js app.js cli.js run-migration.js ./
+COPY controllers ./controllers
+COPY models ./models
+COPY migrations ./migrations
+COPY utils ./utils
 
 EXPOSE 3001
 

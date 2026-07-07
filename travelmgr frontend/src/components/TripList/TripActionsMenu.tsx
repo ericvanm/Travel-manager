@@ -2,6 +2,9 @@ import React from 'react';
 import { Menu, MenuItem } from '@mui/material';
 import { Trip } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { exportTripToCsv } from './tripCsvExport';
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
 
 interface TripActionsMenuProps {
   anchorEl: HTMLElement | null;
@@ -12,114 +15,6 @@ interface TripActionsMenuProps {
   onDelete: (tripId: number) => void;
 }
 
-const handleExportCSV = async (trip: Trip) => {
-  try {
-    const stagesResponse = await fetch(`http://localhost:8080/api/stages/trip/${trip.id}`, {
-      credentials: 'include'
-    });
-    const stages = await stagesResponse.json();
-    
-    const activityTypesResponse = await fetch('http://localhost:8080/api/activity-types', {
-      credentials: 'include'
-    });
-    const activityTypes = await activityTypesResponse.json();
-    const activityTypeMap = new Map(activityTypes.map((at: { id: number; label: string }) => [at.id, at.label]));
-    
-    const csvData = [];
-    
-    // Headers
-    csvData.push([
-      'Trip Name', 'Trip Description', 'Trip Start Date', 'Trip End Date', 'Trip Budget', 'Trip Currency',
-      'Stage Name', 'Stage Country', 'Stage Start Date', 'Stage End Date', 'Stage Timezone',
-      'Activity Name', 'Activity Type', 'Activity Start DateTime', 'Activity End DateTime', 'Activity City', 'Activity Cost',
-      'Airline', 'Flight Number', 'Departure Airport', 'Arrival Airport', 'Seat', 'Gate', 'Terminal',
-      'Hotel Address', 'Hotel Phone', 'Check-in Date', 'Check-out Date', 'Room Type', 'Confirmation Number',
-      'Car Company', 'Pickup Location', 'Dropoff Location', 'Pickup Date', 'Dropoff Date', 'Car Type'
-    ]);
-
-    // Data rows
-    for (const stage of stages) {
-      // Fetch activities for this stage
-      const activitiesResponse = await fetch(`http://localhost:8080/api/activities/stage/${stage.id}`, {
-        credentials: 'include'
-      });
-      const activities = await activitiesResponse.json();
-      
-      if (activities.length > 0) {
-        activities.forEach((activity: any) => {
-          csvData.push([
-            trip.name || '',
-            trip.description || '',
-            trip.startDate ? new Date(trip.startDate).toLocaleDateString() : '',
-            trip.endDate ? new Date(trip.endDate).toLocaleDateString() : '',
-            trip.budget || '',
-            trip.currency || '',
-            stage.name || '',
-            stage.Country?.name || '',
-            stage.startDate ? new Date(stage.startDate).toLocaleDateString() : '',
-            stage.endDate ? new Date(stage.endDate).toLocaleDateString() : '',
-            stage.Country?.timezone || 'UTC',
-            activity.name || '',
-            activity.ActivityType?.label || activityTypeMap.get(activity.activityTypeId) || '',
-            activity.startDateTime ? new Date(activity.startDateTime).toISOString() : '',
-            activity.endDateTime ? new Date(activity.endDateTime).toISOString() : '',
-            activity.city || '',
-            activity.cost || '',
-            activity.airline || '',
-            activity.flightNumber || '',
-            activity.departureAirport || '',
-            activity.arrivalAirport || '',
-            activity.seat || '',
-            activity.gate || '',
-            activity.terminal || '',
-            activity.address || '',
-            activity.phone || '',
-            activity.checkInDate ? new Date(activity.checkInDate).toISOString() : '',
-            activity.checkOutDate ? new Date(activity.checkOutDate).toISOString() : '',
-            activity.roomType || '',
-            activity.confirmationNumber || activity.confirmationCode || '',
-            activity.company || '',
-            activity.pickupLocation || '',
-            activity.dropoffLocation || '',
-            activity.pickupDate ? new Date(activity.pickupDate).toISOString().split('T')[0] : '',
-            activity.dropoffDate ? new Date(activity.dropoffDate).toISOString().split('T')[0] : '',
-            activity.carType || ''
-          ]);
-        });
-      } else {
-        csvData.push([
-          trip.name || '',
-          trip.description || '',
-          trip.startDate ? new Date(trip.startDate).toLocaleDateString() : '',
-          trip.endDate ? new Date(trip.endDate).toLocaleDateString() : '',
-          trip.budget || '',
-          trip.currency || '',
-          stage.name || '',
-          stage.Country?.name || '',
-          stage.startDate ? new Date(stage.startDate).toLocaleDateString() : '',
-          stage.endDate ? new Date(stage.endDate).toLocaleDateString() : '',
-          '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''
-        ]);
-      }
-    }
-
-    // Convert to CSV string
-    const csvContent = csvData.map(row => 
-      row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
-    ).join('\n');
-
-    // Download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${trip.name.replace(/[^a-z0-9]/gi, '_')}_export.csv`;
-    link.click();
-  } catch (error) {
-    console.error('Export failed:', error);
-    alert('Export failed');
-  }
-};
-
 const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
   anchorEl,
   open,
@@ -129,7 +24,16 @@ const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
   onDelete
 }) => {
   const { t } = useLanguage();
-  
+
+  const handleExport = async (trip: Trip) => {
+    try {
+      await exportTripToCsv(trip, API_BASE_URL);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed');
+    }
+  };
+
   return (
     <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       <MenuItem onClick={() => {
@@ -142,7 +46,7 @@ const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
       </MenuItem>
       <MenuItem onClick={() => {
         if (selectedTrip) {
-          handleExportCSV(selectedTrip);
+          handleExport(selectedTrip);
         }
         onClose();
       }}>

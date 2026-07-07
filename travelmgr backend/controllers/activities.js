@@ -2,6 +2,12 @@ const router = require('express').Router()
 const { Activity, ActivityType, Stage, Trip } = require('../models/DBmodels')
 const { v4: uuidv4 } = require('uuid')
 const { Op } = require('sequelize')
+const {
+  applyHotelDateSync,
+  haveDatesChanged,
+  resetGroupedActivity,
+  updateGroupedActivities
+} = require('../utils/activity-update-helpers')
 
 // GET all activities for a stage
 router.get('/stage/:stageId', async (req, res) => {
@@ -133,68 +139,20 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Activity not found' })
     }
 
-    let updateData = { ...req.body }
+    const updateData = applyHotelDateSync({ ...req.body }, req.body, activity)
 
-    // For hotel activities (activityTypeId = 7), sync checkIn/checkOut dates with start/end dates
-    if (activity.activityTypeId === 7 || req.body.activityTypeId === 7) {
-      if (req.body.checkInDate) {
-        updateData.startDateTime = req.body.checkInDate
-      }
-      if (req.body.checkOutDate) {
-        updateData.endDateTime = req.body.checkOutDate
-      }
+    if (activity.groupId && haveDatesChanged(activity, updateData)) {
+      const updated = await resetGroupedActivity(Activity, activity, updateData)
+      return res.json(updated)
     }
 
-    // Check if dates have changed and need to recalculate continuous activity distribution
-    const datesChanged = (updateData.startDateTime && updateData.startDateTime !== activity.startDateTime) ||
-                        (updateData.endDateTime && updateData.endDateTime !== activity.endDateTime)
-    
-    if (activity.groupId && datesChanged) {
-      // Delete all activities in the group except the master
-      await Activity.destroy({
-        where: { 
-          groupId: activity.groupId,
-          isGroupMaster: false
-        }
-      })
-      
-      // Update the master activity with new dates and remove group info
-      await activity.update({
-        ...updateData,
-        groupId: null,
-        isGroupMaster: null
-      })
-      
-      res.json([activity])
-    } else if (activity.groupId) {
-      // Update all activities in the group with common fields (no date changes)
-      const groupActivities = await Activity.findAll({
-        where: { groupId: activity.groupId }
-      })
-      
-      const commonFields = {}
-      if (updateData.name !== undefined) commonFields.name = updateData.name
-      if (updateData.address !== undefined) commonFields.address = updateData.address
-      if (updateData.phone !== undefined) commonFields.phone = updateData.phone
-      if (updateData.confirmationNumber !== undefined) commonFields.confirmationNumber = updateData.confirmationNumber
-      if (updateData.cost !== undefined) commonFields.cost = updateData.cost
-      if (updateData.checkInTime !== undefined) commonFields.checkInTime = updateData.checkInTime
-      if (updateData.checkOutTime !== undefined) commonFields.checkOutTime = updateData.checkOutTime
-      if (updateData.company !== undefined) commonFields.company = updateData.company
-      if (updateData.carType !== undefined) commonFields.carType = updateData.carType
-      if (updateData.pickupDate !== undefined) commonFields.pickupDate = updateData.pickupDate
-      if (updateData.dropoffDate !== undefined) commonFields.dropoffDate = updateData.dropoffDate
-      
-      for (const groupActivity of groupActivities) {
-        await groupActivity.update(commonFields)
-      }
-      
-      res.json(groupActivities)
-    } else {
-      // Single activity - just update it
-      await activity.update(updateData)
-      res.json([activity])
+    if (activity.groupId) {
+      const groupActivities = await updateGroupedActivities(Activity, activity, updateData)
+      return res.json(groupActivities)
     }
+
+    await activity.update(updateData)
+    return res.json([activity])
   } catch (error) {
     console.error('Error updating activity:', error)
     res.status(500).json({ error: 'Failed to update activity' })

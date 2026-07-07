@@ -4,7 +4,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
 } from '@mui/material';
 import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
-import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, DuplicateActivity, TimelineActivityStatus, TimelineDay, emptyActivityForm } from '../../types';
+import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, TimelineDay, emptyActivityForm } from '../../types';
 import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates } from '../../services/trips';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -12,18 +12,8 @@ import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
 import MergeStagesDialog from './MergeStagesDialog';
-
-const TIMELINE_STATUS_COLORS: Record<TimelineActivityStatus, string> = {
-  starts: 'success.main',
-  ends: 'error.main',
-  continues: 'warning.main',
-};
-
-const TIMELINE_STATUS_LABELS: Record<TimelineActivityStatus, string> = {
-  starts: 'Début',
-  ends: 'Fin',
-  continues: 'En cours',
-};
+import { TimelineActivityRow } from './TimelineActivityRow';
+import { buildStructureConfirmMessage, buildStructureSuccessMessage } from './structureTripHelpers';
 
 interface TripDetailProps {
   tripId: number;
@@ -338,40 +328,24 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
 
   const handleStructureTrip = async () => {
     try {
-      // First, analyze duplicates
       const duplicateAnalysis = await analyzeDuplicates(tripId);
-      
-      let confirmMessage = t('structure_trip_confirm');
-      if (duplicateAnalysis.count > 0) {
-        confirmMessage += `\n\n${duplicateAnalysis.count} doublons détectés :\n`;
-        duplicateAnalysis.duplicates.slice(0, 5).forEach((dup: DuplicateActivity, index: number) => {
-          confirmMessage += `${index + 1}. ${dup.name} (${dup.type}) - ${dup.stage}\n`;
-        });
-        if (duplicateAnalysis.count > 5) {
-          confirmMessage += `... et ${duplicateAnalysis.count - 5} autres\n`;
-        }
-        confirmMessage += '\nCes doublons seront supprimés automatiquement.';
+      const confirmMessage = buildStructureConfirmMessage(t('structure_trip_confirm'), duplicateAnalysis);
+
+      if (!window.confirm(confirmMessage)) {
+        return;
       }
-      
-      if (window.confirm(confirmMessage)) {
-        const result = await structureTrip(tripId);
-        const count = result.message.match(/\d+/)?.[0] || '0';
-        if (count === '0' && duplicateAnalysis.count === 0) {
-          alert(t('structure_trip_no_activities'));
-        } else {
-          let successMessage = '';
-          if (count !== '0') {
-            successMessage += t('structure_trip_success', { count });
-          }
-          if (duplicateAnalysis.count > 0) {
-            if (successMessage) successMessage += '\n';
-            successMessage += `${duplicateAnalysis.count} doublons supprimés.`;
-          }
-          alert(successMessage || 'Voyage structuré avec succès.');
-          await loadStagesData();
-          await loadTimeline();
-        }
+
+      const result = await structureTrip(tripId);
+      const count = result.message.match(/\d+/)?.[0] || '0';
+
+      if (count === '0' && duplicateAnalysis.count === 0) {
+        alert(t('structure_trip_no_activities'));
+        return;
       }
+
+      alert(buildStructureSuccessMessage(count, duplicateAnalysis.count, t));
+      await loadStagesData();
+      await loadTimeline();
     } catch (error) {
       console.error('Failed to structure trip:', error);
       alert(t('structure_trip_error'));
@@ -467,70 +441,16 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
               
               {day.activities.length > 0 ? (
                 <Box sx={{ pl: 2 }}>
-                  {day.activities.map((activity, index) => {
-                    const statusColor = TIMELINE_STATUS_COLORS[activity.status];
-                    const statusText = TIMELINE_STATUS_LABELS[activity.status];
-                    
-                    return (
-                      <Box 
-                        key={`${activity.id}-${index}`} 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 2, 
-                          py: 1,
-                          borderLeft: `3px solid`,
-                          borderColor: statusColor,
-                          pl: 2,
-                          mb: 1,
-                          cursor: 'pointer',
-                          '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                          }
-                        }}
-                        onClick={() => {
-                          const activityStage = stages.find(s => s.id === activity.stageId);
-                          if (activityStage) {
-                            handleEditActivity(activity, activityStage);
-                          }
-                        }}
-                      >
-                        <Box sx={{ 
-                          minWidth: 60,
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          color: statusColor
-                        }}>
-                          {statusText}
-                        </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                            {activity.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {activityTypes.find(type => type.id === activity.activityTypeId)?.label || 'N/A'}
-                            {activity.city && ` • ${activity.city}`}
-                          </Typography>
-                        </Box>
-                        {activity.status === 'starts' && activity.startDateTime && (
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(activity.startDateTime).toLocaleTimeString('fr-FR', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </Typography>
-                        )}
-                        {activity.status === 'ends' && activity.endDateTime && (
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(activity.endDateTime).toLocaleTimeString('fr-FR', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </Typography>
-                        )}
-                      </Box>
-                    );
-                  })}
+                  {day.activities.map((activity, index) => (
+                    <TimelineActivityRow
+                      key={`${activity.id}-${index}`}
+                      activity={activity}
+                      index={index}
+                      activityTypes={activityTypes}
+                      stages={stages}
+                      onEdit={handleEditActivity}
+                    />
+                  ))}
                 </Box>
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', pl: 2 }}>
