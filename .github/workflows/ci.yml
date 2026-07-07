@@ -112,6 +112,6 @@ jobs:
         with:
           args: >
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=Travel-manager
+            -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_Travel-manager
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300

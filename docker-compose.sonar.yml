@@ -6,7 +6,7 @@
 #
 # UI : http://localhost:9000  (admin / admin au premier lancement)
 #
-# Créer le projet "Travel-manager" (projectKey case sensitive),
+# Créer le projet avec la clé ericvanm_Travel-manager (case sensitive),
 # puis générer un token et lancer :
 #   docker run --rm -e SONAR_HOST_URL=http://host.docker.internal:9000 \
 #     -e SONAR_TOKEN=<token> -v "${PWD}:/usr/src" sonarsource/sonar-scanner-cli
