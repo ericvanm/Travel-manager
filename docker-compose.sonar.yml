@@ -1,4 +1,5 @@
-# SonarQube Community Edition — analyse locale
+# SonarQube Community Edition — alternative self-hosted à SonarCloud
+# SonarCloud (cloud) : https://sonarcloud.io — voir sonar-project.properties
 #
 # Démarrage :
 #   docker compose -f docker-compose.sonar.yml up -d
