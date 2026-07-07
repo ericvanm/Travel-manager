@@ -10,6 +10,7 @@ const {
   groupActivitiesIntoStages,
   activityToRecord
 } = require('../utils/csv-import-helpers')
+const logger = require('../utils/logger')
 
 // GET all trips with details
 router.get('/', async (req, res) => {
@@ -203,7 +204,7 @@ router.post('/:id/import-csv', async (req, res) => {
     const tripId = req.params.id
     const warnings = []
 
-    console.log(`[CSV Import] Trip ${tripId} - starting import`)
+    logger.info('[CSV Import] starting import')
     if (!csvContent) {
       return res.status(400).json({ error: 'CSV content is required' })
     }
@@ -215,7 +216,7 @@ router.post('/:id/import-csv', async (req, res) => {
 
     const headers = parseCSVLine(lines[0])
     const rows = lines.slice(1)
-    console.log(`[CSV Import] Data rows: ${rows.length}`)
+    logger.info('[CSV Import] data rows:', rows.length)
 
     if (rows.length > 0) {
       await updateTripFromFirstRow(Trip, tripId, headers, parseCSVLine(rows[0]))
@@ -223,7 +224,7 @@ router.post('/:id/import-csv', async (req, res) => {
 
     const { allActivities, warnings: rowWarnings, hotelCount } = await parseCsvActivities(ActivityType, headers, rows)
     warnings.push(...rowWarnings)
-    console.log(`[CSV Import] Activities to import: ${allActivities.length} (hotels merged: ${hotelCount})`)
+    logger.info('[CSV Import] activities to import:', allActivities.length, 'hotels merged:', hotelCount)
 
     const country = await Country.findOne({ where: { name: 'South Africa' } })
       || await Country.findOne({ where: { code: 'ZA' } })
@@ -235,7 +236,7 @@ router.post('/:id/import-csv', async (req, res) => {
       country
     )
 
-    console.log(`[CSV Import] Done: ${importedStages} stages, ${importedActivities} activities, ${warnings.length} warnings`)
+    logger.info('[CSV Import] done:', importedStages, 'stages,', importedActivities, 'activities,', warnings.length, 'warnings')
     res.json({
       message: `CSV imported successfully: ${importedStages} stages, ${importedActivities} activities`,
       importedStages,

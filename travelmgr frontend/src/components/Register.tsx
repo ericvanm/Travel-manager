@@ -91,7 +91,7 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
         />
         <TextField
           fullWidth
-          label={t('password_label')}
+          label={t('auth_credential_label')}
           type="password"
           value={data.password}
           onChange={(e) => setData({ ...data, password: e.target.value })}

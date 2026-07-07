@@ -1,4 +1,6 @@
-const app = require('express')()
+const express = require('express')
+const app = express()
+app.disable('x-powered-by')
 const session = require('express-session')
 const pgSession = require('connect-pg-simple')(session)
 const cors = require('cors')
@@ -45,7 +47,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }))
-app.use((require('express')).json())
+app.use(express.json())
 
 const databaseUrl = DB_URI || process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/travel_manager'
 const sessionStore = isTest
