@@ -252,6 +252,39 @@ const createHotelActivity = async (Activity, stage, hotelName, hotel) => {
   })
 }
 
+const registerLodgingEvent = (hotelGroups, event, activityData) => {
+  const hotelName = activityData.name
+  if (!hotelGroups.has(hotelName)) {
+    hotelGroups.set(hotelName, { checkIn: null, checkOut: null, address: activityData.address })
+  }
+
+  const hotel = hotelGroups.get(hotelName)
+  if (event.SUMMARY.includes('Check-in:')) {
+    hotel.checkIn = activityData
+    hotel.address = activityData.address
+    return
+  }
+
+  if (event.SUMMARY.includes('Check-out:')) {
+    hotel.checkOut = activityData
+    if (!hotel.address) {
+      hotel.address = activityData.address
+    }
+  }
+}
+
+const createOtherActivity = async (Activity, stage, activityData) => {
+  await Activity.create({
+    name: activityData.name,
+    stageId: stage.id,
+    activityTypeId: activityData.activityTypeId,
+    startDateTime: activityData.startDateTime,
+    endDateTime: activityData.endDateTime,
+    city: activityData.city,
+    cost: null
+  })
+}
+
 const processStageActivities = async (Activity, stage, activities, convertActivity) => {
   const hotelGroups = new Map()
   const otherActivities = []
@@ -259,18 +292,7 @@ const processStageActivities = async (Activity, stage, activities, convertActivi
   for (const event of activities) {
     const activityData = convertActivity(event)
     if (activityData.type === 'lodging') {
-      const hotelName = activityData.name
-      if (!hotelGroups.has(hotelName)) {
-        hotelGroups.set(hotelName, { checkIn: null, checkOut: null, address: activityData.address })
-      }
-      const hotel = hotelGroups.get(hotelName)
-      if (event.SUMMARY.includes('Check-in:')) {
-        hotel.checkIn = activityData
-        hotel.address = activityData.address
-      } else if (event.SUMMARY.includes('Check-out:')) {
-        hotel.checkOut = activityData
-        if (!hotel.address) hotel.address = activityData.address
-      }
+      registerLodgingEvent(hotelGroups, event, activityData)
       continue
     }
     otherActivities.push({ event, activityData })
@@ -281,15 +303,7 @@ const processStageActivities = async (Activity, stage, activities, convertActivi
   }
 
   for (const { activityData } of otherActivities) {
-    await Activity.create({
-      name: activityData.name,
-      stageId: stage.id,
-      activityTypeId: activityData.activityTypeId,
-      startDateTime: activityData.startDateTime,
-      endDateTime: activityData.endDateTime,
-      city: activityData.city,
-      cost: null
-    })
+    await createOtherActivity(Activity, stage, activityData)
   }
 }
 

@@ -7,8 +7,6 @@ const url = config.DB_URI
 const sslToUse = config.ENVIR === 'production'
 
 
-logger.info('connecting to', url)
-
 const sequelize = new Sequelize(url, {
   dialectOptions: sslToUse ? {
     ssl: {
