@@ -113,10 +113,5 @@ jobs:
           args: >
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=travel-manager
-
-      - name: SonarCloud quality gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
