@@ -1,14 +1,13 @@
 const Sequelize = require('sequelize')
 const config = require('../utils/config')
 const logger = require('../utils/logger')
-const { redactConnectionUrl } = require('./log-sanitizer')
 
 const { Umzug, SequelizeStorage } = require('umzug')
 // eslint-disable-next-line no-undef
 const url = config.DB_URI
 const sslToUse = config.ENVIR === 'production' ? true : false
 
-logger.info('connecting to database at', redactConnectionUrl(url))
+logger.info('connecting to database', config.DB_LOG_CONTEXT)
 
 const sequelize = new Sequelize(url, {
   dialectOptions: sslToUse ? {

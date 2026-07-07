@@ -15,6 +15,30 @@ const redactConnectionUrl = (url) => {
   }
 }
 
+const buildDatabaseLogContext = (dbUri, environment) => {
+  const context = { environment: environment || 'unknown' }
+
+  if (typeof dbUri !== 'string' || !CONNECTION_URL.test(dbUri)) {
+    return context
+  }
+
+  try {
+    const parsed = new URL(dbUri)
+    context.host = parsed.hostname
+    if (parsed.port) {
+      context.port = parsed.port
+    }
+    const database = parsed.pathname.replace(/^\//, '')
+    if (database) {
+      context.database = database
+    }
+  } catch {
+    // Keep environment-only context when the URI cannot be parsed.
+  }
+
+  return context
+}
+
 const sanitizeValue = (value) => {
   if (value === null || value === undefined) {
     return value
@@ -52,4 +76,4 @@ const sanitizeObject = (obj) => {
 
 const sanitizeParams = (params) => params.map(sanitizeValue)
 
-module.exports = { sanitizeParams, redactConnectionUrl }
+module.exports = { sanitizeParams, redactConnectionUrl, buildDatabaseLogContext }
