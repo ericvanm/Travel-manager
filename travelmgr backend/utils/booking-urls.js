@@ -11,10 +11,10 @@ const suggestTransportBookingUrl = (transport) => {
       ? `https://www.google.com/travel/flights?q=Flights%20${encodeQuery(q)}`
       : 'https://www.google.com/travel/flights'
   }
-  if (mode === 'train') {
+  if (mode === 'train' || transport.activityType === 'train' || transport.activityTypeId === 9) {
     return 'https://www.thetrainline.com'
   }
-  if (mode === 'bus') {
+  if (mode === 'bus' || transport.activityType === 'bus' || transport.activityTypeId === 10) {
     return 'https://www.flixbus.com'
   }
   if (mode === 'car' || transport.activityType === 'car_rental') {
@@ -43,6 +43,15 @@ const suggestActivityBookingUrl = (activity) => {
   }
   if (type === 'hotel') {
     return suggestAccommodationBookingUrl(activity)
+  }
+  if (type === 'train') {
+    return 'https://www.thetrainline.com'
+  }
+  if (type === 'bus') {
+    return 'https://www.flixbus.com'
+  }
+  if (type === 'public_transport') {
+    return `https://www.google.com/search?q=${encodeQuery(`${label} public transport tickets`)}`
   }
   return `https://www.google.com/search?q=${encodeQuery(`${label} book tickets`)}`
 }

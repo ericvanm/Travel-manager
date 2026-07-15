@@ -10,12 +10,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import TripDialog from './TripDialog';
 import TripTable from './TripTable';
-import TripActionsMenu from './TripActionsMenu';
 import ImportMenu from './ImportMenu';
 import ImportDialog from './ImportDialog';
 import { AIDocumentImport } from '../AIDocumentImport';
 import AITripPlanning from '../AITripPlanning';
+import AITripAdapt from '../AITripAdapt';
 import UserProfile from '../UserProfile';
+import { exportTripToCsv } from './tripCsvExport';
+import { getTripConsistencySummary, TripConsistencySummary } from '../../services/tripConsistency';
 
 interface TripListProps {
   onTripSelect: (trip: Trip) => void;
@@ -28,7 +30,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [loading, setLoading] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [importDialog, setImportDialog] = useState(false);
   const [importType, setImportType] = useState<'ICS' | 'CSV'>('ICS');
@@ -38,6 +39,9 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [aiImportDialog, setAiImportDialog] = useState(false);
   const [aiImportTripId, setAiImportTripId] = useState<number | null>(null);
   const [aiPlanningDialog, setAiPlanningDialog] = useState(false);
+  const [aiAdaptDialog, setAiAdaptDialog] = useState(false);
+  const [adaptTrip, setAdaptTrip] = useState<Trip | null>(null);
+  const [consistencySummaries, setConsistencySummaries] = useState<TripConsistencySummary[]>([]);
   const [profileDialog, setProfileDialog] = useState(false);
   const { user, setUser } = useAuth();
   const { t } = useLanguage();
@@ -48,12 +52,20 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
 
   const loadTrips = async () => {
     try {
-      const data = await getTrips();
+      const [data, summaries] = await Promise.all([
+        getTrips(),
+        getTripConsistencySummary().catch(() => [] as TripConsistencySummary[])
+      ]);
       setTrips(data);
+      setConsistencySummaries(summaries);
     } catch (error) {
       console.error('Failed to load trips:', error);
     }
   };
+
+  const consistencyByTripId = Object.fromEntries(
+    consistencySummaries.map((s) => [s.tripId, s])
+  );
 
   const handleCreateTrip = async () => {
     if (!newTrip.name.trim()) return;
@@ -113,9 +125,24 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     setOpen(true);
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, trip: Trip) => {
+  const handleExportTrip = async (trip: Trip) => {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
+    try {
+      await exportTripToCsv(trip, backendUrl);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert(t('export_failed'));
+    }
+  };
+
+  const handleImportCsvClick = (trip: Trip) => {
     setSelectedTrip(trip);
-    setAnchorEl(event.currentTarget);
+    document.getElementById('csv-file-input')?.click();
+  };
+
+  const handleAdaptAi = (trip: Trip) => {
+    setAdaptTrip(trip);
+    setAiAdaptDialog(true);
   };
 
   const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,8 +304,13 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
 
         <TripTable
           trips={trips}
+          consistencyByTripId={consistencyByTripId}
           onTripSelect={onTripSelect}
-          onMenuClick={handleMenuClick}
+          onEdit={handleEditTrip}
+          onExport={handleExportTrip}
+          onImportCsv={handleImportCsvClick}
+          onDelete={handleDeleteTrip}
+          onAdaptAi={handleAdaptAi}
         />
 
         <Fab
@@ -302,15 +334,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           onErrorClear={() => setError(null)}
         />
 
-        <TripActionsMenu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-          selectedTrip={selectedTrip}
-          onEdit={handleEditTrip}
-          onDelete={handleDeleteTrip}
-        />
-        
+
         <input
           id="csv-file-input"
           type="file"
@@ -418,6 +442,16 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
             await loadTrips();
             onTripSelect(trip);
           }}
+        />
+
+        <AITripAdapt
+          open={aiAdaptDialog}
+          trip={adaptTrip}
+          onClose={() => {
+            setAiAdaptDialog(false);
+            setAdaptTrip(null);
+          }}
+          onApplied={loadTrips}
         />
       </Box>
     </Box>

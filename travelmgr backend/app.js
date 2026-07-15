@@ -99,6 +99,7 @@ app.use('/api/notification-types', notificationTypesRouter)
 app.use('/api/import', require('./controllers/import'))
 app.use('/api/ai-import', require('./controllers/ai-import'))
 app.use('/api/ai-planning', require('./controllers/ai-planning'))
+app.use('/api/ai-adapt', require('./controllers/ai-adapt'))
 
 connectToDatabase()
 

@@ -36,7 +36,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
     firstName: '',
     lastName: '',
     username: '',
-    email: ''
+    email: '',
+    defaultDepartureLocation: ''
   });
   
   const [passwordData, setPasswordData] = useState({
@@ -51,7 +52,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         username: user.username || '',
-        email: user.email || ''
+        email: user.email || '',
+        defaultDepartureLocation: user.defaultDepartureLocation || ''
       });
     }
   }, [user, open]);
@@ -194,6 +196,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
               ))}
             </Select>
           </FormControl>
+
+          <TextField
+            label={t('default_departure_location')}
+            fullWidth
+            margin="dense"
+            value={profile.defaultDepartureLocation}
+            onChange={(e) => setProfile({ ...profile, defaultDepartureLocation: e.target.value })}
+            helperText={t('default_departure_location_help')}
+          />
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>

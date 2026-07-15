@@ -3,18 +3,30 @@ import {
   Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
 } from '@mui/material';
-import { ArrowBack, Add, MergeType, AccountTree, Map as MapIcon } from '@mui/icons-material';
+import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
 import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, TimelineDay, emptyActivityForm } from '../../types';
-import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates, reserveActivity } from '../../services/trips';
+import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates, reserveActivity, updateTrip, deleteTrip } from '../../services/trips';
+import { ACTIVITY_TYPE, isGroundTransportActivityType } from '../../utils/activityTypes';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
 import TripMapDialog from './TripMapDialog';
+import TripBudgetSummary from './TripBudgetSummary';
+import TripBudgetDetailDialog from './TripBudgetDetailDialog';
 import MergeStagesDialog from './MergeStagesDialog';
 import { TimelineActivityRow } from './TimelineActivityRow';
 import { buildStructureConfirmMessage, buildStructureSuccessMessage } from './structureTripHelpers';
+import TripActionsToolbar from '../shared/TripActionsToolbar';
+import AITripAdapt from '../AITripAdapt';
+import TripDialog from '../TripList/TripDialog';
+import { exportTripToCsv } from '../TripList/tripCsvExport';
+import { formatDateLong } from '../../utils/localeHelpers';
+import TripConsistencyBanner from '../shared/TripConsistencyBanner';
+import TripConsistencyIndicator from '../shared/TripConsistencyIndicator';
+import { getTripConsistency, TripConsistencyReport } from '../../services/tripConsistency';
+import { resolveTripConsistency } from '../../services/ai-adapt';
 
 interface TripDetailProps {
   tripId: number;
@@ -23,7 +35,7 @@ interface TripDetailProps {
 }
 
 const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'timeline' }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
@@ -49,13 +61,43 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   const [selectedActivityType, setSelectedActivityType] = useState<string>('');
   const [newActivity, setNewActivity] = useState<ActivityFormState>(emptyActivityForm());
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
+  const [budgetDetailOpen, setBudgetDetailOpen] = useState(false);
+  const [editTripDialog, setEditTripDialog] = useState(false);
+  const [editTripForm, setEditTripForm] = useState({ name: '', description: '' });
+  const [editTripLoading, setEditTripLoading] = useState(false);
+  const [editTripError, setEditTripError] = useState<string | null>(null);
+  const [aiAdaptOpen, setAiAdaptOpen] = useState(false);
+  const [consistencyReport, setConsistencyReport] = useState<TripConsistencyReport | null>(null);
+  const [consistencyLoading, setConsistencyLoading] = useState(false);
+  const [resolvingConsistency, setResolvingConsistency] = useState(false);
+  const [resolvePreload, setResolvePreload] = useState<{
+    sessionId: number
+    adaptationRequest: string
+    proposedChanges: import('../../services/ai-adapt').ProposedAdaptation
+    reservedImpacts: import('../../services/ai-adapt').ReservedImpact[]
+    accommodationWarnings?: import('../../services/ai-adapt').AccommodationWarnings
+  } | null>(null);
+  const [resolveMode, setResolveMode] = useState(false);
 
   useEffect(() => {
     loadTripData();
     loadStagesData();
     loadActivityTypes();
     loadTimeline();
+    loadConsistency();
   }, [tripId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadConsistency = async () => {
+    setConsistencyLoading(true);
+    try {
+      const report = await getTripConsistency(tripId);
+      setConsistencyReport(report);
+    } catch (error) {
+      console.error('Failed to load trip consistency:', error);
+    } finally {
+      setConsistencyLoading(false);
+    }
+  };
 
   const buildActivityPayload = (form: ActivityFormState, stageId: number): ActivityInput => {
     const activityTypeId = Number.parseInt(form.activityTypeId, 10)
@@ -92,7 +134,48 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       activityData.roomType = form.roomType || null
     }
 
+    if (activityTypeId === ACTIVITY_TYPE.CAR_RENTAL) {
+      activityData.company = form.company || null
+      activityData.pickupLocation = form.pickupLocation || null
+      activityData.dropoffLocation = form.dropoffLocation || null
+      activityData.carType = form.carType || null
+      activityData.confirmationNumber = form.confirmationNumber || null
+    }
+
+    if (isGroundTransportActivityType(activityTypeId)) {
+      activityData.company = form.company || null
+      activityData.departureLocation = form.departureLocation || null
+      activityData.arrivalLocation = form.arrivalLocation || null
+      activityData.transportLine = form.transportLine || null
+      activityData.transportChanges = form.transportChanges
+        ? Number.parseInt(form.transportChanges, 10)
+        : null
+      activityData.confirmationNumber = form.confirmationNumber || null
+    }
+
     return activityData
+  }
+
+  const appendTransportFieldsToUpdate = (
+    activityData: Partial<Activity>,
+    form: ActivityFormState,
+    activityTypeId: number
+  ) => {
+    if (activityTypeId === ACTIVITY_TYPE.CAR_RENTAL) {
+      activityData.company = form.company || null
+      activityData.pickupLocation = form.pickupLocation || null
+      activityData.dropoffLocation = form.dropoffLocation || null
+      activityData.carType = form.carType || null
+    }
+    if (isGroundTransportActivityType(activityTypeId)) {
+      activityData.company = form.company || null
+      activityData.departureLocation = form.departureLocation || null
+      activityData.arrivalLocation = form.arrivalLocation || null
+      activityData.transportLine = form.transportLine || null
+      activityData.transportChanges = form.transportChanges
+        ? Number.parseInt(form.transportChanges, 10)
+        : null
+    }
   }
 
   const buildActivityUpdatePayload = (form: ActivityFormState): Partial<Activity> => {
@@ -125,9 +208,10 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       activityData.checkOutDate = form.checkOutDate || null
       activityData.address = form.address || null
       activityData.phone = form.phone || null
-      activityData.confirmationNumber = form.confirmationNumber || null
       activityData.roomType = form.roomType || null
     }
+
+    appendTransportFieldsToUpdate(activityData, form, activityTypeId)
 
     return activityData
   }
@@ -170,6 +254,125 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       setTimeline(timelineData);
     } catch (error) {
       console.error('Failed to load timeline:', error);
+    }
+  };
+
+  const reloadAll = async () => {
+    await loadTripData();
+    await loadStagesData();
+    await loadTimeline();
+    await loadConsistency();
+  };
+
+  const handleResolveConsistency = async () => {
+    setResolvingConsistency(true);
+    try {
+      const result = await resolveTripConsistency(tripId);
+      if (result.alreadyConsistent) {
+        if (result.consistency) setConsistencyReport(result.consistency);
+        else await loadConsistency();
+        return;
+      }
+      if (result.sessionId && result.proposedChanges) {
+        setResolvePreload({
+          sessionId: result.sessionId,
+          adaptationRequest: result.adaptationRequest || '',
+          proposedChanges: result.proposedChanges,
+          reservedImpacts: result.reservedImpacts || [],
+          accommodationWarnings: result.accommodationWarnings
+        });
+        setResolveMode(true);
+        setAiAdaptOpen(true);
+      }
+    } catch (error) {
+      console.error('Failed to resolve consistency:', error);
+      alert(t('trip_consistency_resolve_error'));
+    } finally {
+      setResolvingConsistency(false);
+    }
+  };
+
+  const handleAdaptAiOpen = () => {
+    setResolvePreload(null);
+    setResolveMode(false);
+    setAiAdaptOpen(true);
+  };
+
+  const handleExportTrip = async () => {
+    if (!trip) return;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
+    try {
+      await exportTripToCsv(trip, backendUrl);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert(t('export_failed'));
+    }
+  };
+
+  const handleImportCsvClick = () => {
+    document.getElementById(`csv-file-input-${tripId}`)?.click();
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
+    try {
+      const text = await file.text();
+      const response = await fetch(`${backendUrl}/trips/${tripId}/import-csv`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ csvContent: text })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`${t('import_csv_success')}: ${result.importedStages} ${t('stages').toLowerCase()}, ${result.importedActivities} ${t('activities').toLowerCase()}`);
+        await reloadAll();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        alert(`${t('import_csv_failed')}: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('[CSV Import] Network error:', error);
+      alert(t('import_csv_failed'));
+    }
+
+    event.target.value = '';
+  };
+
+  const handleEditTripOpen = () => {
+    if (!trip) return;
+    setEditTripForm({ name: trip.name, description: trip.description || '' });
+    setEditTripError(null);
+    setEditTripDialog(true);
+  };
+
+  const handleEditTripSave = async () => {
+    if (!editTripForm.name.trim()) return;
+    setEditTripLoading(true);
+    setEditTripError(null);
+    try {
+      const updated = await updateTrip(tripId, editTripForm);
+      setTrip(updated);
+      setEditTripDialog(false);
+    } catch (error) {
+      console.error('Failed to update trip:', error);
+      setEditTripError(t('trip_save_error'));
+    } finally {
+      setEditTripLoading(false);
+    }
+  };
+
+  const handleDeleteTrip = async () => {
+    if (!window.confirm(t('delete_trip_confirm'))) return;
+    try {
+      await deleteTrip(tripId);
+      onBack();
+    } catch (error) {
+      console.error('Failed to delete trip:', error);
     }
   };
 
@@ -296,6 +499,10 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       pickupDate: activity.pickupDate ? formatDateForInput(activity.pickupDate) : '',
       dropoffDate: activity.dropoffDate ? formatDateForInput(activity.dropoffDate) : '',
       carType: activity.carType || '',
+      departureLocation: activity.departureLocation || '',
+      arrivalLocation: activity.arrivalLocation || '',
+      transportLine: activity.transportLine || '',
+      transportChanges: activity.transportChanges != null ? String(activity.transportChanges) : '',
       reservationStatus: activity.reservationStatus || 'to_reserve',
       bookingUrl: activity.bookingUrl || ''
     });
@@ -396,25 +603,62 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {trip.name}
           </Typography>
-          <Button
+          {consistencyReport && (
+            <Box sx={{ mr: 1 }}>
+              <TripConsistencyIndicator
+                summary={{
+                  tripId: consistencyReport.tripId,
+                  health: consistencyReport.health,
+                  budgetStatus: consistencyReport.budget.status,
+                  issueCount: consistencyReport.issueCount,
+                  errorCount: consistencyReport.errorCount,
+                  warningCount: consistencyReport.warningCount
+                }}
+              />
+            </Box>
+          )}
+          <TripActionsToolbar
             color="inherit"
-            startIcon={<MapIcon />}
-            onClick={() => setMapDialogOpen(true)}
-            sx={{ mr: 1 }}
-          >
-            {t('trip_map_title')}
-          </Button>
+            onEdit={handleEditTripOpen}
+            onExport={handleExportTrip}
+            onImportCsv={handleImportCsvClick}
+            onAdaptAi={handleAdaptAiOpen}
+            onDelete={handleDeleteTrip}
+            onMap={() => setMapDialogOpen(true)}
+            showMap
+          />
         </Toolbar>
       </AppBar>
 
+      <input
+        id={`csv-file-input-${tripId}`}
+        type="file"
+        accept=".csv"
+        style={{ display: 'none' }}
+        onChange={handleImportCSV}
+      />
+
       <Box sx={{ p: 3 }}>
+        <TripConsistencyBanner
+          report={consistencyReport}
+          loading={consistencyLoading}
+          onResolve={handleResolveConsistency}
+          resolving={resolvingConsistency}
+        />
+
         <Typography variant="body1" paragraph>
           {trip.description}
         </Typography>
 
+        <TripBudgetSummary
+          trip={trip}
+          stages={stages}
+          onViewDetail={() => setBudgetDetailOpen(true)}
+        />
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, mb: 2 }}>
           <Typography variant="h5">
-            {currentViewMode === 'timeline' ? 'Chronologie du voyage' : t('stages')}
+            {currentViewMode === 'timeline' ? t('trip_timeline_title') : t('stages')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             {mergeMode && (
@@ -433,7 +677,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
               color="primary"
               onClick={() => setCurrentViewMode(currentViewMode === 'timeline' ? 'stages' : 'timeline')}
             >
-              {currentViewMode === 'timeline' ? 'Vue par étapes' : 'Vue chronologique'}
+              {currentViewMode === 'timeline' ? t('trip_view_stages') : t('trip_view_timeline')}
             </Button>
             <Button
               variant="outlined"
@@ -458,12 +702,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             <Paper key={day.date} sx={{ mb: 2, p: 2 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                  {new Date(day.date).toLocaleDateString('fr-FR', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+                  {formatDateLong(day.date, language)}
                 </Typography>
                 {day.stage && (
                   <Typography variant="body2" color="text.secondary">
@@ -487,7 +726,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                 </Box>
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', pl: 2 }}>
-                  Aucune activité prévue
+                  {t('trip_timeline_no_activities')}
                 </Typography>
               )}
             </Paper>
@@ -764,12 +1003,46 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           onClose={() => setMapDialogOpen(false)}
         />
 
+        <TripBudgetDetailDialog
+          open={budgetDetailOpen}
+          onClose={() => setBudgetDetailOpen(false)}
+          trip={trip}
+          stages={stages}
+        />
+
         <MergeStagesDialog
           open={mergeDialog}
           onClose={() => setMergeDialog(false)}
           selectedStages={selectedStages}
           onMerge={handleMergeStages}
         />
+
+        <TripDialog
+          open={editTripDialog}
+          onClose={() => setEditTripDialog(false)}
+          onSave={handleEditTripSave}
+          editingTrip={trip}
+          newTrip={editTripForm}
+          setNewTrip={setEditTripForm}
+          loading={editTripLoading}
+          error={editTripError}
+          onErrorClear={() => setEditTripError(null)}
+        />
+
+        {trip && (
+          <AITripAdapt
+            open={aiAdaptOpen}
+            trip={trip}
+            resolveMode={resolveMode}
+            preloadedSession={resolvePreload}
+            onClose={() => {
+              setAiAdaptOpen(false);
+              setResolvePreload(null);
+              setResolveMode(false);
+            }}
+            onApplied={reloadAll}
+          />
+        )}
       </Box>
     </Box>
   );

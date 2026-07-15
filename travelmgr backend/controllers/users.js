@@ -54,7 +54,8 @@ router.post('/login', async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      language: user.language || 'en'
+      language: user.language || 'en',
+      defaultDepartureLocation: user.defaultDepartureLocation || null
     })
   } catch (error) {
     console.error('Login error:', error)
@@ -119,7 +120,8 @@ router.get('/verify', verifyToken, async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      language: user.language || 'en'
+      language: user.language || 'en',
+      defaultDepartureLocation: user.defaultDepartureLocation || null
     })
   } catch (error) {
     res.status(500).json({ error: 'Verification failed' })
@@ -129,7 +131,7 @@ router.get('/verify', verifyToken, async (req, res) => {
 // Update profile
 router.put('/profile', verifyToken, async (req, res) => {
   try {
-    const { firstName, lastName, username, email, language } = req.body
+    const { firstName, lastName, username, email, language, defaultDepartureLocation } = req.body
     
     const user = await User.findByPk(req.user.id)
     if (!user) {
@@ -150,6 +152,9 @@ router.put('/profile', verifyToken, async (req, res) => {
       username: username || user.username,
       email: email || user.email,
       language: language || user.language,
+      defaultDepartureLocation: defaultDepartureLocation !== undefined
+        ? defaultDepartureLocation
+        : user.defaultDepartureLocation,
       name: `${firstName || user.firstName || ''} ${lastName || user.lastName || ''}`.trim() || user.username
     })
     
@@ -160,7 +165,8 @@ router.put('/profile', verifyToken, async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      language: user.language
+      language: user.language,
+      defaultDepartureLocation: user.defaultDepartureLocation || null
     })
   } catch (error) {
     console.error('Profile update error:', error)

@@ -27,6 +27,7 @@ import {
 } from '@mui/material'
 import { AutoAwesome, History } from '@mui/icons-material'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { Trip } from '../../types'
 import {
   TripPlanningFormData,
@@ -80,6 +81,7 @@ const renderMarkdownish = (text: string) =>
 
 export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }) => {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const [step, setStep] = useState<WizardStep>('form')
   const [formData, setFormData] = useState<TripPlanningFormData>(defaultFormData())
   const [sessionId, setSessionId] = useState<number | null>(null)
@@ -96,8 +98,14 @@ export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }
   useEffect(() => {
     if (open) {
       loadHistory()
+      if (user?.defaultDepartureLocation) {
+        setFormData((prev) => ({
+          ...prev,
+          departureLocation: user.defaultDepartureLocation || prev.departureLocation
+        }))
+      }
     }
-  }, [open])
+  }, [open, user?.defaultDepartureLocation])
 
   const loadHistory = async () => {
     try {

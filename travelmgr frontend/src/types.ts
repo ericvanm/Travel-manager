@@ -5,6 +5,8 @@ export interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
+  language?: string;
+  defaultDepartureLocation?: string | null;
 }
 
 export interface LoginCredentials {
@@ -90,6 +92,8 @@ export interface Activity {
   longitude?: number | null;
   departureLocation?: string | null;
   arrivalLocation?: string | null;
+  transportLine?: string | null;
+  transportChanges?: number | null;
 }
 
 export type ActivityInput = Omit<Activity, 'id'>;
@@ -125,6 +129,10 @@ export interface ActivityFormState {
   carType: string;
   reservationStatus: ReservationStatus;
   bookingUrl: string;
+  departureLocation: string;
+  arrivalLocation: string;
+  transportLine: string;
+  transportChanges: string;
 }
 
 export interface TripMapPoint {
@@ -143,6 +151,7 @@ export interface TripMapRouteSegment {
   transportMode?: string;
   estimatedCost?: number | null;
   label?: string;
+  isLocal?: boolean;
 }
 
 export interface TripMapData {
@@ -185,6 +194,10 @@ export const emptyActivityForm = (): ActivityFormState => ({
   carType: '',
   reservationStatus: 'to_reserve',
   bookingUrl: '',
+  departureLocation: '',
+  arrivalLocation: '',
+  transportLine: '',
+  transportChanges: '',
 });
 
 export interface Country {

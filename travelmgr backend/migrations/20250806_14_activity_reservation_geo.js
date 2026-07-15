@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize')
 const { addColumnIfNotExists, removeColumnIfExists } = require('../utils/migration-helpers')
 
 module.exports = {
-  up: async (queryInterface) => {
+  up: async ({ context: queryInterface }) => {
     await addColumnIfNotExists(queryInterface, 'activities', 'reservation_status', {
       type: DataTypes.STRING(20),
       allowNull: false,
@@ -34,7 +34,7 @@ module.exports = {
     })
   },
 
-  down: async (queryInterface) => {
+  down: async ({ context: queryInterface }) => {
     await removeColumnIfExists(queryInterface, 'trips', 'departure_location')
     await removeColumnIfExists(queryInterface, 'activities', 'arrival_location')
     await removeColumnIfExists(queryInterface, 'activities', 'departure_location')

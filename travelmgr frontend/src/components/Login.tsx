@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { setUser } = useAuth();
-  const { t } = useLanguage();
+  const { t, setLanguage } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +24,9 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
     try {
       const user = await login(credentials);
       setUser(user);
+      if (user.language) {
+        setLanguage(user.language);
+      }
     } catch {
       setError(t('invalid_credentials'));
     } finally {

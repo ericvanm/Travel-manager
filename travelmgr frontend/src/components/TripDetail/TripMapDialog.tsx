@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Dialog, DialogTitle, DialogContent, IconButton, CircularProgress, Box
+  Dialog, DialogTitle, DialogContent, IconButton, CircularProgress, Box, Alert
 } from '@mui/material'
 import { Close, Map as MapIcon } from '@mui/icons-material'
 import { getTripMapData } from '../../services/trips'
@@ -18,16 +18,22 @@ export const TripMapDialog: React.FC<Props> = ({ tripId, open, onClose }) => {
   const { t } = useLanguage()
   const [mapData, setMapData] = useState<TripMapData | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [focusMode, setFocusMode] = useState<MapFocusMode>('trip')
 
   useEffect(() => {
     if (!open) return
     setLoading(true)
+    setError(null)
     getTripMapData(tripId)
       .then(setMapData)
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        setError(t('trip_map_unavailable'))
+        setMapData(null)
+      })
       .finally(() => setLoading(false))
-  }, [tripId, open])
+  }, [tripId, open, t])
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -44,7 +50,10 @@ export const TripMapDialog: React.FC<Props> = ({ tripId, open, onClose }) => {
             <CircularProgress />
           </Box>
         )}
-        {!loading && mapData && (
+        {!loading && error && (
+          <Alert severity="warning">{error}</Alert>
+        )}
+        {!loading && !error && mapData && (
           <TravelMap
             mapPoints={mapData.mapPoints}
             routeSegments={mapData.routeSegments}

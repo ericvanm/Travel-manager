@@ -1,17 +1,25 @@
 const { geocodePlaces } = require('./geocoding')
 const { scheduleItinerary } = require('./itinerary-scheduler')
 const { suggestBookingUrl } = require('./booking-urls')
+const {
+  buildGeoQuery,
+  extractStageCity,
+  normalizeStageLocations,
+  ensureDailyAccommodation,
+  geocodeItineraryLocations,
+  haversineKm
+} = require('./itinerary-location-validator')
+const {
+  buildSynthesisPrompt,
+  buildItineraryPrompt,
+  getSystemMessage
+} = require('./ai-planning-prompts')
 
-const ACTIVITY_TYPE_MAP = {
-  restaurant: 1,
-  museum: 2,
-  tour: 3,
-  shopping: 4,
-  entertainment: 5,
-  flight: 6,
-  hotel: 7,
-  car_rental: 8
-}
+const {
+  ACTIVITY_TYPE_MAP,
+  ACTIVITY_TYPE_LABELS,
+  getActivityTypeId
+} = require('./activity-types')
 
 const REQUIRED_FORM_FIELDS = [
   'departureLocation',
@@ -250,6 +258,7 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
       accommodations: [{
         name: `Hébergement type ${formData.accommodationType} — ${stageName}`,
         type: formData.accommodationType,
+        city: stageName,
         checkInDate: stageStart,
         checkOutDate: addDays(stageEnd, 1),
         estimatedCost: lodgingBudget,
@@ -368,131 +377,14 @@ const parseJsonFromContent = (content) => {
   return JSON.parse(jsonText)
 }
 
-const buildPlanningPrompt = (formData, mode, previousItinerary, revisionFeedback) => {
-  const baseContext = `
-Tu es un agent de planification de voyages pour l'application Travel Manager.
-Réponds UNIQUEMENT en JSON valide, sans markdown autour.
-
-Données du voyage :
-- Lieu de départ : ${formData.departureLocation}
-- Zone / destination : ${formData.geographicZone}
-- Durée : ${formData.durationDays} jours
-- Date de départ souhaitée : ${formData.startDate || 'flexible'}
-- Style : ${formData.travelStyle}
-- Transport local sur place : ${formData.localTransport}
-- Hébergement : ${formData.accommodationType}
-- Budget total : ${formData.budget} ${formData.currency}
-`
-
+const buildPlanningPrompt = (formData, mode, previousItinerary, revisionFeedback, language = 'fr') => {
   if (mode === 'synthesis') {
-    return `${baseContext}
-
-Propose des moyens de transport depuis le lieu de départ vers la destination (avion, train, voiture, bus...) et vérifie la cohérence du voyage.
-
-Génère une synthèse avec cette structure exacte :
-{
-  "title": "string",
-  "summary": "string (paragraphe récapitulatif en français)",
-  "highlights": ["string"],
-  "warnings": ["string"],
-  "estimatedDailyBudget": number,
-  "outboundTransportOptions": [
-    { "mode": "flight|train|car|bus", "label": "string", "estimatedCost": number, "durationHint": "string" }
-  ],
-  "recommendedOutboundTransport": { "mode": "string", "label": "string", "estimatedCost": number, "durationHint": "string" }
-}`
+    return buildSynthesisPrompt(formData, language)
   }
-
-  const revisionBlock = revisionFeedback
-    ? `\nL'utilisateur demande une révision. Feedback : "${revisionFeedback}"\nItinéraire précédent : ${JSON.stringify(previousItinerary)}\n`
-    : ''
-
-  return `${baseContext}${revisionBlock}
-
-Génère un itinéraire complet avec budgets estimés pour CHAQUE élément et coordonnées géographiques approximatives (latitude/longitude).
-
-Structure JSON exacte :
-{
-  "title": "string",
-  "textItinerary": "string (markdown français, avec coûts indiqués)",
-  "imageKeywords": ["mot-clé1", "mot-clé2"],
-  "transportRoute": "string",
-  "outboundTransport": {
-    "mode": "flight|train|car|bus",
-    "label": "string",
-    "description": "string",
-    "estimatedCost": number,
-    "departureLocation": "string",
-    "arrivalLocation": "string",
-    "activityType": "flight|car_rental|tour"
-  },
-  "returnTransport": { "idem outboundTransport pour le retour, departureLocation = dernière étape sur place" },
-  "budgetBreakdown": [
-    { "category": "transport_outbound|transport_return|transport_local|accommodation|activity", "name": "string", "estimatedCost": number, "date": "YYYY-MM-DD optionnel" }
-  ],
-  "trip": { "name": "string", "description": "string", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "budget": number, "currency": "EUR" },
-  "stages": [
-    {
-      "name": "string",
-      "countryCode": "FR",
-      "startDate": "YYYY-MM-DD",
-      "endDate": "YYYY-MM-DD",
-      "latitude": number,
-      "longitude": number,
-      "arrivalTransport": {
-        "mode": "flight|train|car|bus",
-        "label": "string",
-        "description": "string",
-        "estimatedCost": number,
-        "departureLocation": "ville précédente ou lieu de départ",
-        "arrivalLocation": "ville de l'étape",
-        "activityType": "flight|car_rental|tour",
-        "startDateTime": "ISO8601",
-        "endDateTime": "ISO8601",
-        "reservationStatus": "to_reserve",
-        "bookingUrl": "string optionnel"
-      },
-      "activities": [
-        {
-          "name": "string",
-          "activityType": "museum|tour|restaurant|entertainment|hotel|flight|car_rental",
-          "startDateTime": "YYYY-MM-DDTHH:mm:ssZ",
-          "endDateTime": "YYYY-MM-DDTHH:mm:ssZ",
-          "city": "string",
-          "comments": "string",
-          "estimatedCost": number,
-          "latitude": number,
-          "longitude": number,
-          "reservationStatus": "to_reserve|reserved",
-          "bookingUrl": "string optionnel"
-        }
-      ],
-      "accommodations": [
-        {
-          "name": "string",
-          "type": "string",
-          "checkInDate": "YYYY-MM-DD",
-          "checkOutDate": "YYYY-MM-DD",
-          "estimatedCost": number,
-          "latitude": number,
-          "longitude": number,
-          "reservationStatus": "to_reserve|reserved",
-          "bookingUrl": "string optionnel"
-        }
-      ]
-    }
-  ]
+  return buildItineraryPrompt(formData, previousItinerary, revisionFeedback, language)
 }
 
-Règles obligatoires :
-- Chaque changement de lieu (étape) doit avoir un arrivalTransport depuis la ville précédente (sauf la 1ère qui utilise outboundTransport).
-- Le returnTransport part de la DERNIÈRE ville visitée, jamais d'une autre ville.
-- Toutes les activités d'une étape commencent APRÈS endDateTime de l'arrivalTransport de cette étape.
-- reservationStatus par défaut : "to_reserve" pour transports, activités et hébergements.
-La somme des estimatedCost doit rester proche du budget total.`
-}
-
-const callOpenAI = async (prompt) => {
+const callOpenAI = async (prompt, language = 'fr') => {
   const { OpenAI } = require('openai')
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
@@ -502,7 +394,7 @@ const callOpenAI = async (prompt) => {
     messages: [
       {
         role: 'system',
-        content: 'Tu es un expert en planification de voyages. Tu réponds uniquement en JSON valide avec budgets et coordonnées GPS.'
+        content: getSystemMessage(language)
       },
       { role: 'user', content: prompt }
     ],
@@ -517,10 +409,10 @@ const callOpenAI = async (prompt) => {
 const isOpenAIEnabled = () =>
   process.env.OPENAI_API_KEY && process.env.USE_OPENAI === 'true'
 
-const generateSynthesis = async (formData) => {
+const generateSynthesis = async (formData, language = 'fr') => {
   if (isOpenAIEnabled()) {
     try {
-      const result = await callOpenAI(buildPlanningPrompt(formData, 'synthesis'))
+      const result = await callOpenAI(buildPlanningPrompt(formData, 'synthesis', null, null, language), language)
       return { ...result, source: 'openai' }
     } catch (error) {
       console.error('OpenAI synthesis error:', error.message)
@@ -587,73 +479,109 @@ const ensureBudgetBreakdown = (itinerary, formData) => {
 const enrichItineraryGeoAndBudget = async (itinerary, formData) => {
   const enriched = { ...itinerary }
   enriched.budgetBreakdown = ensureBudgetBreakdown(enriched, formData)
+  const zone = formData.geographicZone || ''
 
-  const places = [
-    formData.departureLocation,
-    formData.geographicZone,
-    enriched.outboundTransport?.departureLocation,
-    enriched.outboundTransport?.arrivalLocation,
-    enriched.returnTransport?.departureLocation,
-    enriched.returnTransport?.arrivalLocation
-  ]
-
-  for (const stage of enriched.stages || []) {
-    places.push(stage.name)
-    for (const act of stage.activities || []) places.push(act.city || stage.name)
-    for (const acc of stage.accommodations || []) places.push(acc.name)
+  const queryEntries = []
+  const addQuery = (query, meta) => {
+    if (!query) return
+    queryEntries.push({ query, ...meta })
   }
 
-  const geoMap = await geocodePlaces(places)
+  addQuery(formData.departureLocation, { kind: 'departure' })
+  addQuery(formData.geographicZone, { kind: 'zone' })
 
-  const point = (label, type, extra = {}) => {
-    const coords = geoMap[label] || null
-    if (!coords) return null
-    return {
-      lat: coords.lat,
-      lng: coords.lng,
-      label,
-      type,
-      ...extra
+  for (const stage of enriched.stages || []) {
+    const stageCity = extractStageCity(stage, formData)
+    const stageQuery = buildGeoQuery({ city: stageCity, geographicZone: zone })
+    addQuery(stageQuery, { kind: 'stage', stage, stageQuery })
+
+    for (const act of stage.activities || []) {
+      const q = buildGeoQuery({
+        name: act.name,
+        city: act.city || stageCity,
+        stageName: stage.name,
+        geographicZone: zone
+      })
+      addQuery(q, { kind: 'activity', stage, item: act, query: q })
     }
+
+    for (const acc of stage.accommodations || []) {
+      const q = buildGeoQuery({
+        name: acc.name,
+        city: acc.city || stageCity,
+        stageName: stage.name,
+        geographicZone: zone
+      })
+      addQuery(q, { kind: 'accommodation', stage, item: acc, query: q })
+    }
+  }
+
+  const geoMap = await geocodePlaces(queryEntries.map((e) => e.query))
+  const stageAnchors = new Map()
+
+  for (const entry of queryEntries) {
+    if (entry.kind !== 'stage') continue
+    const coords = geoMap[entry.stageQuery]
+    if (coords) stageAnchors.set(entry.stage, coords)
+  }
+
+  const resolveCoords = (entry) => {
+    if (entry.item?.latitude != null && entry.item?.longitude != null) {
+      return { lat: entry.item.latitude, lng: entry.item.longitude }
+    }
+    let coords = geoMap[entry.query]
+    const anchor = stageAnchors.get(entry.stage)
+    if (coords && anchor && haversineKm(anchor, coords) > 150) {
+      coords = anchor
+    }
+    if (!coords && anchor) return anchor
+    return coords
+  }
+
+  const pointFromEntry = (label, type, entry, extra = {}) => {
+    const coords = resolveCoords(entry)
+    if (!coords) return null
+    return { lat: coords.lat, lng: coords.lng, label, type, ...extra }
   }
 
   const mapPoints = []
   const routeSegments = []
 
-  const depPoint = point(formData.departureLocation, 'departure', {
-    transportMode: enriched.outboundTransport?.mode,
-    estimatedCost: enriched.outboundTransport?.estimatedCost
-  })
+  const depCoords = geoMap[formData.departureLocation]
+  const depPoint = depCoords
+    ? { lat: depCoords.lat, lng: depCoords.lng, label: formData.departureLocation, type: 'departure',
+        transportMode: enriched.outboundTransport?.mode, estimatedCost: enriched.outboundTransport?.estimatedCost }
+    : null
   if (depPoint) mapPoints.push(depPoint)
 
   const stagePoints = []
   for (const stage of enriched.stages || []) {
+    const stageEntry = queryEntries.find((e) => e.kind === 'stage' && e.stage === stage)
     let stagePoint = null
     if (stage.latitude && stage.longitude) {
       stagePoint = { lat: stage.latitude, lng: stage.longitude, label: stage.name, type: 'stage' }
-    } else {
-      stagePoint = point(stage.name, 'stage')
+    } else if (stageEntry) {
+      stagePoint = pointFromEntry(stage.name, 'stage', stageEntry)
     }
     if (stagePoint) {
       stagePoints.push(stagePoint)
       mapPoints.push(stagePoint)
-    }
-
-    if (!stage.latitude && stagePoint) {
-      stage.latitude = stagePoint.lat
-      stage.longitude = stagePoint.lng
+      if (!stage.latitude) {
+        stage.latitude = stagePoint.lat
+        stage.longitude = stagePoint.lng
+      }
     }
 
     for (const act of stage.activities || []) {
-      let actPoint = null
-      if (act.latitude && act.longitude) {
-        actPoint = { lat: act.latitude, lng: act.longitude, label: act.name, type: 'activity', estimatedCost: act.estimatedCost, transportMode: act.activityType }
-      } else {
-        actPoint = point(act.city || stage.name, 'activity', { estimatedCost: act.estimatedCost, transportMode: act.activityType })
-      }
+      const entry = queryEntries.find((e) => e.kind === 'activity' && e.item === act)
+      if (!entry) continue
+      const actPoint = pointFromEntry(act.name, 'activity', entry, {
+        estimatedCost: act.estimatedCost,
+        transportMode: act.activityType
+      })
       if (actPoint) {
-        mapPoints.push({ ...actPoint, label: act.name })
-        if (!act.latitude && actPoint) {
+        mapPoints.push(actPoint)
+        if (!act.latitude) {
           act.latitude = actPoint.lat
           act.longitude = actPoint.lng
         }
@@ -661,17 +589,20 @@ const enrichItineraryGeoAndBudget = async (itinerary, formData) => {
     }
 
     for (const acc of stage.accommodations || []) {
-      let accPoint = null
-      if (acc.latitude && acc.longitude) {
-        accPoint = { lat: acc.latitude, lng: acc.longitude, label: acc.name, type: 'accommodation', estimatedCost: acc.estimatedCost }
-      } else {
-        accPoint = point(acc.name, 'accommodation', { estimatedCost: acc.estimatedCost })
+      const entry = queryEntries.find((e) => e.kind === 'accommodation' && e.item === acc)
+      if (!entry) continue
+      const accPoint = pointFromEntry(acc.name, 'accommodation', entry, { estimatedCost: acc.estimatedCost })
+      if (accPoint) {
+        mapPoints.push(accPoint)
+        if (!acc.latitude) {
+          acc.latitude = accPoint.lat
+          acc.longitude = accPoint.lng
+        }
       }
-      if (accPoint) mapPoints.push(accPoint)
     }
   }
 
-  const destPoint = stagePoints[0] || point(formData.geographicZone.split(',')[0].trim(), 'stage')
+  const destPoint = stagePoints[0] || null
   if (depPoint && destPoint && enriched.outboundTransport) {
     routeSegments.push({
       from: depPoint,
@@ -709,13 +640,14 @@ const enrichItineraryGeoAndBudget = async (itinerary, formData) => {
   return enriched
 }
 
-const generateItinerary = async (formData, revisionFeedback, previousItinerary) => {
+const generateItinerary = async (formData, revisionFeedback, previousItinerary, language = 'fr') => {
   let itinerary
 
   if (isOpenAIEnabled()) {
     try {
       itinerary = await callOpenAI(
-        buildPlanningPrompt(formData, 'itinerary', previousItinerary, revisionFeedback)
+        buildPlanningPrompt(formData, 'itinerary', previousItinerary, revisionFeedback, language),
+        language
       )
       itinerary = enrichItineraryImages(itinerary)
       itinerary.source = 'openai'
@@ -729,6 +661,9 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary) 
   }
 
   itinerary = scheduleItinerary(itinerary, formData)
+  itinerary = normalizeStageLocations(itinerary, formData)
+  itinerary = ensureDailyAccommodation(itinerary, formData)
+  itinerary = await geocodeItineraryLocations(itinerary, formData)
   itinerary = await enrichItineraryGeoAndBudget(itinerary, formData)
 
   if (itinerary.outboundTransport && !itinerary.outboundTransport.bookingUrl) {
@@ -741,8 +676,6 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary) 
   return itinerary
 }
 
-const getActivityTypeId = (type) => ACTIVITY_TYPE_MAP[type] || ACTIVITY_TYPE_MAP.tour
-
 module.exports = {
   validateFormData,
   generateSynthesis,
@@ -751,5 +684,6 @@ module.exports = {
   normalizeFormData,
   buildSynthesisText,
   suggestOutboundTransportOptions,
-  ACTIVITY_TYPE_MAP
+  ACTIVITY_TYPE_MAP,
+  ACTIVITY_TYPE_LABELS
 }

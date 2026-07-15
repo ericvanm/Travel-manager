@@ -2,6 +2,7 @@ const router = require('express').Router()
 const { Op } = require('sequelize')
 const { Trip, Stage, Activity, Transport, Accommodation, Expense, Country, ActivityType } = require('../models/DBmodels')
 const { buildTripMapData } = require('../utils/trip-map-service')
+const { getUserLanguage } = require('../utils/auth-helpers')
 const {
   parseCSVLine,
   parseCSVDate,
@@ -13,6 +14,33 @@ const {
   activityToRecord
 } = require('../utils/csv-import-helpers')
 const logger = require('../utils/logger')
+const { loadTripSnapshot } = require('../utils/trip-snapshot')
+const { validateTripConsistency, toSummary } = require('../utils/trip-consistency')
+
+// GET consistency summary for all trips (list indicators)
+router.get('/consistency/summary', async (req, res) => {
+  try {
+    const trips = await Trip.findAll({ order: [['updatedAt', 'DESC']] })
+    const summaries = []
+    for (const trip of trips) {
+      try {
+        const snapshot = await loadTripSnapshot(trip.id)
+        if (!snapshot) {
+          summaries.push({ tripId: trip.id, health: 'ok', budgetStatus: 'none', issueCount: 0, errorCount: 0, warningCount: 0 })
+        } else {
+          summaries.push(toSummary(validateTripConsistency(snapshot)))
+        }
+      } catch (err) {
+        console.error(`Consistency check failed for trip ${trip.id}:`, err.message)
+        summaries.push({ tripId: trip.id, health: 'warning', budgetStatus: 'none', issueCount: 0, errorCount: 0, warningCount: 0 })
+      }
+    }
+    res.json(summaries)
+  } catch (error) {
+    console.error('Error building consistency summary:', error)
+    res.status(500).json({ error: 'Failed to build consistency summary' })
+  }
+})
 
 // GET all trips with details
 router.get('/', async (req, res) => {
@@ -22,6 +50,22 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching trips:', error)
     res.status(500).json({ error: 'Failed to fetch trips' })
+  }
+})
+
+// GET trip consistency report
+router.get('/:id/consistency', async (req, res) => {
+  try {
+    const trip = await Trip.findByPk(req.params.id)
+    if (!trip) return res.status(404).json({ error: 'Trip not found' })
+
+    const snapshot = await loadTripSnapshot(trip.id)
+    if (!snapshot) return res.status(404).json({ error: 'Trip not found' })
+
+    res.json(validateTripConsistency(snapshot))
+  } catch (error) {
+    console.error('Error building trip consistency:', error)
+    res.status(500).json({ error: 'Failed to build trip consistency' })
   }
 })
 
@@ -35,7 +79,7 @@ router.get('/:id/map-data', async (req, res) => {
 
     const stages = await Stage.findAll({
       where: { tripId: trip.id },
-      include: [{ model: Country }],
+      include: [{ model: Country, as: 'Country' }],
       order: [['startDate', 'ASC']]
     })
 
@@ -44,11 +88,12 @@ router.get('/:id/map-data', async (req, res) => {
       ? await Activity.findAll({ where: { stageId: { [Op.in]: stageIds } } })
       : []
 
-    const mapData = await buildTripMapData(trip, stages, activities)
+    const language = await getUserLanguage(req, 'en')
+    const mapData = await buildTripMapData(trip, stages, activities, language)
     res.json(mapData)
   } catch (error) {
     console.error('Error building trip map:', error)
-    res.status(500).json({ error: 'Failed to build trip map' })
+    res.status(500).json({ error: 'Failed to build trip map', details: error.message })
   }
 })
 

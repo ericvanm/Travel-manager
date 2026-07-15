@@ -104,6 +104,11 @@ User.init({
     type: DataTypes.STRING,
     unique: true,
     allowNull: true
+  },
+  defaultDepartureLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'default_departure_location'
   }
 }, {
   sequelize,
@@ -445,6 +450,16 @@ Activity.init({
     type: DataTypes.STRING(255),
     allowNull: true,
     field: 'arrival_location'
+  },
+  transportLine: {
+    type: DataTypes.STRING(120),
+    allowNull: true,
+    field: 'transport_line'
+  },
+  transportChanges: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'transport_changes'
   }
 }, {
   sequelize,
@@ -1040,6 +1055,70 @@ User.hasMany(TripPlanningSession, { foreignKey: 'userId' })
 TripPlanningSession.belongsTo(User, { foreignKey: 'userId' })
 TripPlanningSession.belongsTo(Trip, { foreignKey: 'tripId' })
 
+// TripAdaptationSession model
+class TripAdaptationSession extends Model {}
+TripAdaptationSession.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'users', key: 'id' }
+  },
+  tripId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'trips', key: 'id' }
+  },
+  status: {
+    type: DataTypes.STRING(30),
+    allowNull: false,
+    defaultValue: 'draft'
+  },
+  tripSnapshot: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'trip_snapshot'
+  },
+  synthesis: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  adaptationRequest: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'adaptation_request'
+  },
+  proposedChanges: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'proposed_changes'
+  },
+  reservedImpacts: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: [],
+    field: 'reserved_impacts'
+  },
+  language: {
+    type: DataTypes.STRING(5),
+    allowNull: true,
+    defaultValue: 'fr'
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'tripAdaptationSession'
+})
+
+User.hasMany(TripAdaptationSession, { foreignKey: 'userId' })
+TripAdaptationSession.belongsTo(User, { foreignKey: 'userId' })
+TripAdaptationSession.belongsTo(Trip, { foreignKey: 'tripId' })
+
 // Relations for new models
 Stage.hasMany(Flight, { foreignKey: 'stageId' })
 Flight.belongsTo(Stage, { foreignKey: 'stageId' })
@@ -1054,5 +1133,5 @@ module.exports = {
   Language, Translation, User, Country, Trip, Stage, ActivityType, Activity,
   TransportType, Transport, AccommodationType, Accommodation,
   ExpenseCategory, Expense, NotificationType, Notification, TripList,
-  Flight, Lodging, CarRental, TripPlanningSession
+  Flight, Lodging, CarRental, TripPlanningSession, TripAdaptationSession
 }

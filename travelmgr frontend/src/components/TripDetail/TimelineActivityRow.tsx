@@ -2,17 +2,13 @@ import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { Activity, ActivityType, Stage, TimelineActivity, TimelineActivityStatus } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { formatTime } from '../../utils/localeHelpers';
+import { getAccommodationLocationLine, getTransportIdentificationLine, isTransportActivity } from '../../utils/activityDisplayHelpers';
 
 const TIMELINE_STATUS_COLORS: Record<TimelineActivityStatus, string> = {
   starts: 'success.main',
   ends: 'error.main',
   continues: 'warning.main',
-};
-
-const TIMELINE_STATUS_LABELS: Record<TimelineActivityStatus, string> = {
-  starts: 'Début',
-  ends: 'Fin',
-  continues: 'En cours',
 };
 
 interface TimelineActivityRowProps {
@@ -23,9 +19,6 @@ interface TimelineActivityRowProps {
   onEdit: (activity: Activity, stage: Stage) => void;
 }
 
-const formatActivityTime = (dateTime: string) =>
-  new Date(dateTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
 export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   activity,
   index,
@@ -33,10 +26,12 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   stages,
   onEdit,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const statusColor = TIMELINE_STATUS_COLORS[activity.status];
-  const statusText = TIMELINE_STATUS_LABELS[activity.status];
+  const statusText = t(`timeline_status_${activity.status}`);
   const activityTypeLabel = activityTypes.find((type) => type.id === activity.activityTypeId)?.label || 'N/A';
+  const accommodationLine = getAccommodationLocationLine(activity);
+  const transportLine = getTransportIdentificationLine(activity);
 
   const handleClick = () => {
     const activityStage = stages.find((stage) => stage.id === activity.stageId);
@@ -73,8 +68,28 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {activityTypeLabel}
-          {activity.city && ` • ${activity.city}`}
+          {activity.city && !accommodationLine && ` • ${activity.city}`}
         </Typography>
+        {accommodationLine && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            📍 {accommodationLine}
+          </Typography>
+        )}
+        {transportLine && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            ✈ {transportLine}
+          </Typography>
+        )}
+        {isTransportActivity(activity) && !transportLine && (activity.departureLocation || activity.arrivalLocation) && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            {activity.departureLocation || '—'} → {activity.arrivalLocation || '—'}
+          </Typography>
+        )}
+        {activity.cost != null && Number(activity.cost) > 0 && (
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>
+            {t('cost')}: {activity.cost}
+          </Typography>
+        )}
         {activity.reservationStatus && (
           <Chip
             size="small"
@@ -87,12 +102,12 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
       </Box>
       {activity.status === 'starts' && activity.startDateTime && (
         <Typography variant="body2" color="text.secondary">
-          {formatActivityTime(activity.startDateTime)}
+          {formatTime(activity.startDateTime, language)}
         </Typography>
       )}
       {activity.status === 'ends' && activity.endDateTime && (
         <Typography variant="body2" color="text.secondary">
-          {formatActivityTime(activity.endDateTime)}
+          {formatTime(activity.endDateTime, language)}
         </Typography>
       )}
     </Box>

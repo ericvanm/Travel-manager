@@ -1,26 +1,19 @@
 import React, { useEffect, useMemo } from 'react'
 import { Box, Typography, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet'
-import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapFocusMode, TripMapPoint, TripMapRouteSegment } from '../../types'
 import { useLanguage } from '../../contexts/LanguageContext'
-
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow
-})
+import { defaultLeafletIcon } from '../../utils/leafletIcons'
+import { getMapTileConfig, transportModeTranslationKey } from '../../utils/mapTiles'
+import { formatCurrencyAmount } from '../../utils/localeHelpers'
 
 const ROUTE_COLORS: Record<string, string> = {
   flight: '#1976d2',
   train: '#2e7d32',
   car: '#ed6c02',
   bus: '#9c27b0',
+  local: '#00838f',
   default: '#757575'
 }
 
@@ -68,7 +61,14 @@ export const TravelMap: React.FC<Props> = ({
   showFocusControls = false,
   height = 360
 }) => {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const tileConfig = getMapTileConfig(language)
+
+  const formatCost = (amount: number) => formatCurrencyAmount(amount, currency, language)
+  const transportLabel = (mode?: string | null) => {
+    const key = transportModeTranslationKey(mode)
+    return key ? t(key) : mode
+  }
 
   const { center, dedupedPoints } = useMemo(() => {
     const fromRoutes = routeSegments.flatMap((s) => [s.from, s.to])
@@ -119,8 +119,8 @@ export const TravelMap: React.FC<Props> = ({
       <Box sx={{ height, width: '100%', borderRadius: 1, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
         <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution={tileConfig.attribution}
+            url={tileConfig.url}
           />
           <MapBoundsController points={[...mapPoints, ...routeSegments.flatMap((s) => [s.from, s.to])]} focusMode={focusMode} />
 
@@ -132,10 +132,10 @@ export const TravelMap: React.FC<Props> = ({
                 [segment.to.lat, segment.to.lng]
               ]}
               pathOptions={{
-                color: ROUTE_COLORS[segment.transportMode || 'default'] || ROUTE_COLORS.default,
-                weight: 4,
-                opacity: 0.8,
-                dashArray: segment.transportMode === 'flight' ? '8 8' : undefined
+                color: ROUTE_COLORS[segment.isLocal ? 'local' : (segment.transportMode || 'default')] || ROUTE_COLORS.default,
+                weight: segment.isLocal ? 2 : 4,
+                opacity: segment.isLocal ? 0.65 : 0.8,
+                dashArray: segment.isLocal ? '4 8' : segment.transportMode === 'flight' ? '8 8' : undefined
               }}
             />
           ))}
@@ -157,7 +157,7 @@ export const TravelMap: React.FC<Props> = ({
                 >
                   <Popup>
                     <strong>{point.label}</strong>
-                    {point.estimatedCost != null && <div>{point.estimatedCost} {currency}</div>}
+                    {point.estimatedCost != null && <div>{formatCost(point.estimatedCost)}</div>}
                     {reservationLabel && <div>{reservationLabel}</div>}
                   </Popup>
                 </CircleMarker>
@@ -165,11 +165,15 @@ export const TravelMap: React.FC<Props> = ({
             }
 
             return (
-              <Marker key={`${point.type}-${point.label}-${point.lat}`} position={[point.lat, point.lng]}>
+              <Marker
+                key={`${point.type}-${point.label}-${point.lat}`}
+                position={[point.lat, point.lng]}
+                icon={defaultLeafletIcon}
+              >
                 <Popup>
                   <strong>{point.label}</strong>
                   <div>{t(`ai_planning_map_${point.type === 'transport' ? 'activity' : point.type}`)}</div>
-                  {point.transportMode && <Chip size="small" label={point.transportMode} sx={{ mt: 0.5 }} />}
+                  {point.transportMode && <Chip size="small" label={transportLabel(point.transportMode)} sx={{ mt: 0.5 }} />}
                   {point.estimatedCost != null && <div>{point.estimatedCost} {currency}</div>}
                   {reservationLabel && <div>{reservationLabel}</div>}
                 </Popup>
@@ -185,8 +189,8 @@ export const TravelMap: React.FC<Props> = ({
             <Chip
               key={`${segment.label}-${idx}`}
               size="small"
-              label={`${segment.label}${segment.estimatedCost != null ? ` — ${segment.estimatedCost} ${currency}` : ''}`}
-              sx={{ borderLeft: `4px solid ${ROUTE_COLORS[segment.transportMode || 'default'] || ROUTE_COLORS.default}` }}
+              label={`${segment.isLocal ? `${t('trip_map_local_route')}: ` : ''}${segment.label}${segment.estimatedCost != null ? ` — ${formatCost(segment.estimatedCost)}` : ''}`}
+              sx={{ borderLeft: `4px solid ${ROUTE_COLORS[segment.isLocal ? 'local' : (segment.transportMode || 'default')] || ROUTE_COLORS.default}` }}
               variant="outlined"
             />
           ))}

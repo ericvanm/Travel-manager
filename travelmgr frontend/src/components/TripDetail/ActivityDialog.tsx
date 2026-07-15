@@ -7,6 +7,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { ActivityType, ReservationStatus, Stage } from '../../types'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { combineDateAndTime, getDatePart, getTimePart } from '../../utils/dateTimeInputHelpers'
+import { ACTIVITY_TYPE, isGroundTransportActivityType } from '../../utils/activityTypes'
 
 interface ActivityDialogProps {
   open: boolean
@@ -34,6 +35,10 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
   const { t } = useLanguage()
   const activityType = activityTypes.find(at => at.id.toString() === newActivity.activityTypeId)?.label || ''
   const reservationStatus: ReservationStatus = newActivity.reservationStatus || 'to_reserve'
+  const typeId = Number.parseInt(newActivity.activityTypeId, 10)
+  const isGroundTransport = isGroundTransportActivityType(typeId)
+  const isCarRental = typeId === ACTIVITY_TYPE.CAR_RENTAL
+  const showGenericDates = typeId !== ACTIVITY_TYPE.HOTEL
 
   const handleOpenBookingSite = () => {
     if (newActivity.bookingUrl) {
@@ -101,7 +106,6 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
         />
         
-        {/* Flight fields */}
         {newActivity.activityTypeId === '6' && (
           <>
             <TextField 
@@ -141,7 +145,96 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           </>
         )}
         
-        {/* Hotel fields */}
+        {isCarRental && (
+          <>
+            <TextField
+              margin="dense"
+              label={t('rental_company')}
+              fullWidth
+              variant="outlined"
+              value={newActivity.company}
+              onChange={(e) => setNewActivity({ ...newActivity, company: e.target.value })}
+            />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                margin="dense"
+                label={t('pickup_location')}
+                variant="outlined"
+                sx={{ flex: 1 }}
+                value={newActivity.pickupLocation}
+                onChange={(e) => setNewActivity({ ...newActivity, pickupLocation: e.target.value })}
+              />
+              <TextField
+                margin="dense"
+                label={t('dropoff_location')}
+                variant="outlined"
+                sx={{ flex: 1 }}
+                value={newActivity.dropoffLocation}
+                onChange={(e) => setNewActivity({ ...newActivity, dropoffLocation: e.target.value })}
+              />
+            </Box>
+            <TextField
+              margin="dense"
+              label={t('car_type')}
+              fullWidth
+              variant="outlined"
+              value={newActivity.carType}
+              onChange={(e) => setNewActivity({ ...newActivity, carType: e.target.value })}
+            />
+          </>
+        )}
+
+        {isGroundTransport && (
+          <>
+            <TextField
+              margin="dense"
+              label={t('transport_operator')}
+              fullWidth
+              variant="outlined"
+              value={newActivity.company}
+              onChange={(e) => setNewActivity({ ...newActivity, company: e.target.value })}
+            />
+            <TextField
+              margin="dense"
+              label={t('transport_line')}
+              fullWidth
+              variant="outlined"
+              value={newActivity.transportLine}
+              onChange={(e) => setNewActivity({ ...newActivity, transportLine: e.target.value })}
+              helperText={t('transport_line_help')}
+            />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                margin="dense"
+                label={t('departure_station')}
+                variant="outlined"
+                sx={{ flex: 1 }}
+                value={newActivity.departureLocation}
+                onChange={(e) => setNewActivity({ ...newActivity, departureLocation: e.target.value })}
+              />
+              <TextField
+                margin="dense"
+                label={t('arrival_station')}
+                variant="outlined"
+                sx={{ flex: 1 }}
+                value={newActivity.arrivalLocation}
+                onChange={(e) => setNewActivity({ ...newActivity, arrivalLocation: e.target.value })}
+              />
+            </Box>
+            <TextField
+              margin="dense"
+              label={t('transport_changes')}
+              type="number"
+              fullWidth
+              variant="outlined"
+              inputProps={{ min: 0 }}
+              value={newActivity.transportChanges}
+              onChange={(e) => setNewActivity({ ...newActivity, transportChanges: e.target.value })}
+              helperText={t('transport_changes_help')}
+            />
+          </>
+        )}
+
         {newActivity.activityTypeId === '7' && (
           <>
             <TextField 
@@ -233,8 +326,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           onChange={(e) => setNewActivity({ ...newActivity, confirmationNumber: e.target.value })}
         />
         
-        {/* Generic Start/End Date fields for non-hotel activities */}
-        {newActivity.activityTypeId !== '7' && (
+        {showGenericDates && (
           <>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <TextField

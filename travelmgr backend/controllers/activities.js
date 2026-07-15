@@ -2,6 +2,7 @@ const router = require('express').Router()
 const { Activity, ActivityType, Stage, Trip } = require('../models/DBmodels')
 const { v4: uuidv4 } = require('uuid')
 const { Op } = require('sequelize')
+const { listDateRange, MAX_TRIP_DAYS } = require('../utils/date-only')
 const {
   applyHotelDateSync,
   haveDatesChanged,
@@ -341,14 +342,23 @@ router.get('/timeline/:tripId', async (req, res) => {
       return res.json([])
     }
     
-    const tripStart = new Date(Math.min(...validStages.map(s => new Date(s.startDate))))
-    const tripEnd = new Date(Math.max(...validStages.map(s => new Date(s.endDate))))
-    
+    const tripStart = new Date(Math.min(...validStages.map(s => new Date(s.startDate).getTime())))
+    const tripEnd = new Date(Math.max(...validStages.map(s => new Date(s.endDate).getTime())))
+
+    if (Number.isNaN(tripStart.getTime()) || Number.isNaN(tripEnd.getTime())) {
+      return res.json([])
+    }
+
+    const dayStrings = listDateRange(
+      tripStart.toISOString().slice(0, 10),
+      tripEnd.toISOString().slice(0, 10),
+      MAX_TRIP_DAYS
+    )
+
     const timeline = []
-    const currentDate = new Date(tripStart)
-    
-    while (currentDate <= tripEnd) {
-      const dateStr = currentDate.toISOString().split('T')[0]
+
+    for (const dateStr of dayStrings) {
+      const currentDate = new Date(`${dateStr}T12:00:00Z`)
       
       // Find stage for this date
       const currentStage = stages.find(stage => {
@@ -468,8 +478,6 @@ router.get('/timeline/:tripId', async (req, res) => {
         stage: currentStage ? { id: currentStage.id, name: currentStage.name } : null,
         activities: dayActivities
       })
-      
-      currentDate.setDate(currentDate.getDate() + 1)
     }
     
     res.json(timeline)

@@ -1,5 +1,4 @@
 const router = require('express').Router()
-const jwt = require('jsonwebtoken')
 const { Op } = require('sequelize')
 const {
   TripPlanningSession,
@@ -15,24 +14,7 @@ const {
   getActivityTypeId,
   normalizeFormData
 } = require('../utils/ai-planning-service')
-
-const optionalAuth = (req, _res, next) => {
-  if (req.session?.isLoggedIn && req.session.user) {
-    req.user = req.session.user
-    return next()
-  }
-  const token = req.session?.token
-  if (token) {
-    try {
-      req.user = jwt.verify(token, process.env.SECRET)
-    } catch {
-      req.user = null
-    }
-  }
-  next()
-}
-
-const getUserId = (req) => req.user?.id || null
+const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
 
 const findSessionForUser = async (sessionId, userId) => {
   const where = { id: sessionId }
@@ -146,12 +128,14 @@ const createTripFromItinerary = async (itinerary, formData = {}) => {
     }
 
     for (const accommodation of stageData.accommodations || []) {
+      const stageCity = (stageData.name || '').split('—')[0].split(',')[0].trim()
       await createActivityFromData(stage, {
         ...accommodation,
         activityType: 'hotel',
+        city: accommodation.city || stageCity || null,
         startDateTime: accommodation.checkInDate ? `${accommodation.checkInDate}T15:00:00Z` : null,
         endDateTime: accommodation.checkOutDate ? `${accommodation.checkOutDate}T11:00:00Z` : null,
-        comments: `Type: ${accommodation.type}. Suggestion IA — à confirmer.`
+        comments: accommodation.comments || `Type: ${accommodation.type || 'hôtel'}. Suggestion IA — à confirmer.`
       })
     }
 
@@ -251,7 +235,8 @@ router.post('/sessions/:id/validate', async (req, res) => {
       })
     }
 
-    const synthesis = await generateSynthesis(validation.formData)
+    const language = await getUserLanguage(req, 'fr')
+    const synthesis = await generateSynthesis(validation.formData, language)
     await session.update({
       formData: validation.formData,
       synthesis,
@@ -282,7 +267,8 @@ router.post('/sessions/:id/confirm-synthesis', async (req, res) => {
       return res.status(400).json({ error: 'Synthèse non disponible. Validez d\'abord le formulaire.' })
     }
 
-    const itinerary = await generateItinerary(session.formData)
+    const language = await getUserLanguage(req, 'fr')
+    const itinerary = await generateItinerary(session.formData, null, null, language)
     await session.update({
       itinerary,
       status: 'itinerary_generated',
@@ -312,10 +298,12 @@ router.post('/sessions/:id/revise', async (req, res) => {
       return res.status(404).json({ error: 'Session not found' })
     }
 
+    const language = await getUserLanguage(req, 'fr')
     const itinerary = await generateItinerary(
       session.formData,
       String(feedback).trim(),
-      session.itinerary
+      session.itinerary,
+      language
     )
 
     await session.update({
