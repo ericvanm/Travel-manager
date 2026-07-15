@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { Activity, ActivityType, Stage, TimelineActivity, TimelineActivityStatus } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const TIMELINE_STATUS_COLORS: Record<TimelineActivityStatus, string> = {
   starts: 'success.main',
@@ -32,6 +33,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   stages,
   onEdit,
 }) => {
+  const { t } = useLanguage();
   const statusColor = TIMELINE_STATUS_COLORS[activity.status];
   const statusText = TIMELINE_STATUS_LABELS[activity.status];
   const activityTypeLabel = activityTypes.find((type) => type.id === activity.activityTypeId)?.label || 'N/A';
@@ -73,6 +75,15 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
           {activityTypeLabel}
           {activity.city && ` • ${activity.city}`}
         </Typography>
+        {activity.reservationStatus && (
+          <Chip
+            size="small"
+            variant="outlined"
+            color={activity.reservationStatus === 'reserved' ? 'success' : 'warning'}
+            label={activity.reservationStatus === 'reserved' ? t('reservation_reserved') : t('reservation_to_book')}
+            sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+          />
+        )}
       </Box>
       {activity.status === 'starts' && activity.startDateTime && (
         <Typography variant="body2" color="text.secondary">

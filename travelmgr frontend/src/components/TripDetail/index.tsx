@@ -3,14 +3,15 @@ import {
   Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
 } from '@mui/material';
-import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
+import { ArrowBack, Add, MergeType, AccountTree, Map as MapIcon } from '@mui/icons-material';
 import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, TimelineDay, emptyActivityForm } from '../../types';
-import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates } from '../../services/trips';
+import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates, reserveActivity } from '../../services/trips';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
+import TripMapDialog from './TripMapDialog';
 import MergeStagesDialog from './MergeStagesDialog';
 import { TimelineActivityRow } from './TimelineActivityRow';
 import { buildStructureConfirmMessage, buildStructureSuccessMessage } from './structureTripHelpers';
@@ -47,6 +48,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [selectedActivityType, setSelectedActivityType] = useState<string>('');
   const [newActivity, setNewActivity] = useState<ActivityFormState>(emptyActivityForm());
+  const [mapDialogOpen, setMapDialogOpen] = useState(false);
 
   useEffect(() => {
     loadTripData();
@@ -66,6 +68,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       city: form.city || null,
       cost: form.cost ? Number.parseFloat(form.cost) : null,
       confirmationNumber: form.confirmationNumber || null,
+      reservationStatus: form.reservationStatus || 'to_reserve',
+      bookingUrl: form.bookingUrl || null,
     }
 
     if (activityTypeId === 6) {
@@ -101,6 +105,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       city: form.city || null,
       cost: form.cost ? Number.parseFloat(form.cost) : null,
       confirmationNumber: form.confirmationNumber || null,
+      reservationStatus: form.reservationStatus || 'to_reserve',
+      bookingUrl: form.bookingUrl || null,
     }
 
     if (activityTypeId === 6) {
@@ -215,6 +221,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     try {
       await createActivity(buildActivityPayload(newActivity, selectedStage.id));
       await loadStagesData();
+      await loadTimeline();
       setActivityDialog(false);
       setNewActivity(emptyActivityForm());
       setSelectedStage(null);
@@ -229,6 +236,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     try {
       await updateActivity(editingActivity.id, buildActivityUpdatePayload(newActivity));
       await loadStagesData();
+      await loadTimeline();
       setActivityDialog(false);
       setEditingActivity(null);
       setNewActivity(emptyActivityForm());
@@ -287,9 +295,26 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       dropoffLocation: activity.dropoffLocation || '',
       pickupDate: activity.pickupDate ? formatDateForInput(activity.pickupDate) : '',
       dropoffDate: activity.dropoffDate ? formatDateForInput(activity.dropoffDate) : '',
-      carType: activity.carType || ''
+      carType: activity.carType || '',
+      reservationStatus: activity.reservationStatus || 'to_reserve',
+      bookingUrl: activity.bookingUrl || ''
     });
     setActivityDialog(true);
+  };
+
+  const handleReserveActivity = async () => {
+    if (!editingActivity) return;
+    try {
+      await reserveActivity(editingActivity.id, {
+        reservationStatus: 'reserved',
+        bookingUrl: newActivity.bookingUrl || undefined,
+        confirmationNumber: newActivity.confirmationNumber || undefined
+      });
+      await loadStagesData();
+      await loadTimeline();
+    } catch (error) {
+      console.error('Failed to reserve activity:', error);
+    }
   };
 
   const selectStage = (stageId: number) => {
@@ -371,6 +396,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {trip.name}
           </Typography>
+          <Button
+            color="inherit"
+            startIcon={<MapIcon />}
+            onClick={() => setMapDialogOpen(true)}
+            sx={{ mr: 1 }}
+          >
+            {t('trip_map_title')}
+          </Button>
         </Toolbar>
       </AppBar>
 
@@ -722,6 +755,13 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           setNewActivity={setNewActivity}
           activityTypes={activityTypes}
           onSubmit={editingActivity ? handleUpdateActivity : handleCreateActivity}
+          onReserve={editingActivity ? handleReserveActivity : undefined}
+        />
+
+        <TripMapDialog
+          tripId={tripId}
+          open={mapDialogOpen}
+          onClose={() => setMapDialogOpen(false)}
         />
 
         <MergeStagesDialog

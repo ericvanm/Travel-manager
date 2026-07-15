@@ -21,13 +21,27 @@ services:
     build:
       context: ./travelmgr backend
       dockerfile: dev.Dockerfile
+    # Root in dev: Windows bind mounts + npm cache (nodejs user has HOME=/nonexistent)
+    user: "0:0"
     environment:
       DATABASE_URL: postgres://postgres:mypassword@db:5432/travel_mgr
       SECRET: dev-secret-key
       PORT: 3001
+      HOME: /root
+      NPM_CONFIG_CACHE: /tmp/.npm
+      CORS_ORIGINS: http://localhost:5173,http://localhost:8080,http://localhost:3000
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        if [ ! -d node_modules/bcryptjs ] || [ ! -f node_modules/.docker-installed ] || [ package-lock.json -nt node_modules/.docker-installed ]; then
+          echo "Installing backend dependencies..."
+          find node_modules -mindepth 1 -delete 2>/dev/null || true
+          npm ci --ignore-scripts --no-fund --no-audit
+          touch node_modules/.docker-installed
+        fi
+        exec npm run dev
     volumes:
       - ./travelmgr backend:/usr/src/app
-      - /usr/src/app/node_modules
       - backend_node_modules:/usr/src/app/node_modules
     container_name: travel-mgr-back-dev
     depends_on:
@@ -42,7 +56,8 @@ services:
       context: ./travelmgr frontend
       dockerfile: ./dev.Dockerfile
     environment:
-      VITE_BACKEND_URL: http://localhost:8080/api
+      # Appel direct du backend (évite CORS nginx + 502 masqué). Accès UI : http://localhost:8080 ou :5173
+      VITE_BACKEND_URL: http://localhost:3001/api
     volumes:
       - ./travelmgr frontend:/usr/src/app
       - /usr/src/app/node_modules

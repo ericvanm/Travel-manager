@@ -1,20 +1,23 @@
-import React from 'react';
+import React from 'react'
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box
-} from '@mui/material';
-import { ActivityType, Stage } from '../../types';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { combineDateAndTime, getDatePart, getTimePart } from '../../utils/dateTimeInputHelpers';
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box,
+  FormControl, InputLabel, Select, MenuItem, Chip, Link
+} from '@mui/material'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import { ActivityType, ReservationStatus, Stage } from '../../types'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { combineDateAndTime, getDatePart, getTimePart } from '../../utils/dateTimeInputHelpers'
 
 interface ActivityDialogProps {
-  open: boolean;
-  onClose: () => void;
-  editingActivity: any;
-  selectedStage: Stage | null;
-  newActivity: any;
-  setNewActivity: (activity: any) => void;
-  activityTypes: ActivityType[];
-  onSubmit: () => void;
+  open: boolean
+  onClose: () => void
+  editingActivity: any
+  selectedStage: Stage | null
+  newActivity: any
+  setNewActivity: (activity: any) => void
+  activityTypes: ActivityType[]
+  onSubmit: () => void
+  onReserve?: () => void
 }
 
 const ActivityDialog: React.FC<ActivityDialogProps> = ({
@@ -25,17 +28,69 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
   newActivity,
   setNewActivity,
   activityTypes,
-  onSubmit
+  onSubmit,
+  onReserve
 }) => {
-  const { t } = useLanguage();
-  const activityType = activityTypes.find(t => t.id.toString() === newActivity.activityTypeId)?.label || '';
-  
+  const { t } = useLanguage()
+  const activityType = activityTypes.find(at => at.id.toString() === newActivity.activityTypeId)?.label || ''
+  const reservationStatus: ReservationStatus = newActivity.reservationStatus || 'to_reserve'
+
+  const handleOpenBookingSite = () => {
+    if (newActivity.bookingUrl) {
+      window.open(newActivity.bookingUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  const handleMarkReserved = () => {
+    setNewActivity({ ...newActivity, reservationStatus: 'reserved' })
+    if (onReserve) onReserve()
+  }
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         {editingActivity ? t('edit_activity', { type: activityType }) : t('add_activity_to_stage', { type: activityType, stage: selectedStage?.name })}
       </DialogTitle>
       <DialogContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, mt: 1 }}>
+          <Chip
+            size="small"
+            color={reservationStatus === 'reserved' ? 'success' : 'warning'}
+            label={reservationStatus === 'reserved' ? t('reservation_reserved') : t('reservation_to_book')}
+          />
+        </Box>
+
+        <FormControl fullWidth margin="dense" variant="outlined">
+          <InputLabel>{t('reservation_status')}</InputLabel>
+          <Select
+            label={t('reservation_status')}
+            value={reservationStatus}
+            onChange={(e) => setNewActivity({ ...newActivity, reservationStatus: e.target.value })}
+          >
+            <MenuItem value="to_reserve">{t('reservation_to_book')}</MenuItem>
+            <MenuItem value="reserved">{t('reservation_reserved')}</MenuItem>
+          </Select>
+        </FormControl>
+
+        <TextField
+          margin="dense"
+          label={t('booking_url')}
+          fullWidth
+          variant="outlined"
+          value={newActivity.bookingUrl || ''}
+          onChange={(e) => setNewActivity({ ...newActivity, bookingUrl: e.target.value })}
+          helperText={t('booking_url_help')}
+        />
+
+        {newActivity.bookingUrl && (
+          <Box sx={{ mb: 1 }}>
+            <Link href={newActivity.bookingUrl} target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+              {t('open_booking_site')}
+              <OpenInNewIcon fontSize="small" />
+            </Link>
+          </Box>
+        )}
+
         <TextField
           autoFocus
           margin="dense"
@@ -240,9 +295,20 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           </>
         )}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ flexWrap: 'wrap', gap: 1, px: 3, pb: 2 }}>
+        {newActivity.bookingUrl && (
+          <Button onClick={handleOpenBookingSite} startIcon={<OpenInNewIcon />}>
+            {t('reserve_action')}
+          </Button>
+        )}
+        {reservationStatus === 'to_reserve' && (
+          <Button onClick={handleMarkReserved} color="success" variant="outlined">
+            {t('mark_as_reserved')}
+          </Button>
+        )}
+        <Box sx={{ flexGrow: 1 }} />
         <Button onClick={onClose}>{t('cancel')}</Button>
-        <Button onClick={onSubmit}>
+        <Button onClick={onSubmit} variant="contained">
           {editingActivity ? t('update_activity') : t('add_activity')}
         </Button>
       </DialogActions>

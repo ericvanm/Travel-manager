@@ -7,9 +7,10 @@ interface ImportMenuProps {
   onICSImport: () => void;
   onCSVImport: () => void;
   onAIImport: () => void;
+  onAIPlanning: () => void;
 }
 
-const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAIImport }) => {
+const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAIImport, onAIPlanning }) => {
   const { t } = useLanguage();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -37,6 +38,11 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAII
     handleClose();
   };
 
+  const handleAIPlanning = () => {
+    onAIPlanning();
+    handleClose();
+  };
+
   return (
     <>
       <Button
@@ -59,6 +65,9 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAII
         </MenuItem>
         <MenuItem onClick={handleAIImport}>
           {t('import_document_ai')}
+        </MenuItem>
+        <MenuItem onClick={handleAIPlanning}>
+          {t('plan_trip_ai')}
         </MenuItem>
       </Menu>
     </>

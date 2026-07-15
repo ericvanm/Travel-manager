@@ -24,6 +24,32 @@ router.get('/stage/:stageId', async (req, res) => {
   }
 })
 
+// POST reserve activity (mark as reserved with optional booking URL)
+router.post('/:id/reserve', async (req, res) => {
+  try {
+    const activity = await Activity.findByPk(req.params.id)
+    if (!activity) {
+      return res.status(404).json({ error: 'Activity not found' })
+    }
+
+    const updates = {
+      reservationStatus: req.body.reservationStatus || 'reserved'
+    }
+    if (req.body.bookingUrl !== undefined) {
+      updates.bookingUrl = req.body.bookingUrl
+    }
+    if (req.body.confirmationNumber !== undefined) {
+      updates.confirmationNumber = req.body.confirmationNumber
+    }
+
+    await activity.update(updates)
+    res.json(activity)
+  } catch (error) {
+    console.error('Error reserving activity:', error)
+    res.status(500).json({ error: 'Failed to update reservation' })
+  }
+})
+
 // GET single activity
 router.get('/:id', async (req, res) => {
   try {

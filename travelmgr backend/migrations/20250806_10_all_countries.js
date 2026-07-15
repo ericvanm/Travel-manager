@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize')
+const { upsertCountryByCode } = require('../utils/migration-helpers')
 
 const countries = [
   { name: 'France', code: 'FR', timezone: 'Europe/Paris', translations: { en: 'France', fr: 'France', nl: 'Frankrijk', es: 'Francia' } },
@@ -66,39 +66,14 @@ const countries = [
 
 module.exports = {
   up: async ({ context: queryInterface }) => {
-    // Clear existing country translations first
-    await queryInterface.bulkDelete('translations', { entity_type: 'country' }, {})
-    // Clear ALL countries and restart fresh
-    await queryInterface.bulkDelete('countries', null, {})
-    
-    let countryId = 1
-    const translations = []
-    
     for (const country of countries) {
-      await queryInterface.bulkInsert('countries', [{
-        id: countryId,
-        name: country.name,
-        code: country.code,
-        timezone: country.timezone,
-        created_at: new Date(),
-        updated_at: new Date()
-      }])
-      
-      translations.push(
-        { language_id: 1, entity_type: 'country', entity_id: countryId, field_name: 'name', translated_text: country.translations.en, created_at: new Date(), updated_at: new Date() },
-        { language_id: 2, entity_type: 'country', entity_id: countryId, field_name: 'name', translated_text: country.translations.fr, created_at: new Date(), updated_at: new Date() },
-        { language_id: 3, entity_type: 'country', entity_id: countryId, field_name: 'name', translated_text: country.translations.nl, created_at: new Date(), updated_at: new Date() },
-        { language_id: 4, entity_type: 'country', entity_id: countryId, field_name: 'name', translated_text: country.translations.es, created_at: new Date(), updated_at: new Date() }
-      )
-      
-      countryId++
+      await upsertCountryByCode(queryInterface, country)
     }
-    
-    await queryInterface.bulkInsert('translations', translations)
   },
 
   down: async ({ context: queryInterface }) => {
-    await queryInterface.bulkDelete('translations', { entity_type: 'country', entity_id: { [require('sequelize').Op.gt]: 10 } }, {})
-    await queryInterface.bulkDelete('countries', { id: { [require('sequelize').Op.gt]: 10 } }, {})
+    const { Op } = require('sequelize')
+    await queryInterface.bulkDelete('translations', { entity_type: 'country', entity_id: { [Op.gt]: 10 } }, {})
+    await queryInterface.bulkDelete('countries', { id: { [Op.gt]: 10 } }, {})
   }
 }

@@ -14,6 +14,7 @@ import TripActionsMenu from './TripActionsMenu';
 import ImportMenu from './ImportMenu';
 import ImportDialog from './ImportDialog';
 import { AIDocumentImport } from '../AIDocumentImport';
+import AITripPlanning from '../AITripPlanning';
 import UserProfile from '../UserProfile';
 
 interface TripListProps {
@@ -36,6 +37,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [importDetails, setImportDetails] = useState<string[] | null>(null);
   const [aiImportDialog, setAiImportDialog] = useState(false);
   const [aiImportTripId, setAiImportTripId] = useState<number | null>(null);
+  const [aiPlanningDialog, setAiPlanningDialog] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
   const { user, setUser } = useAuth();
   const { t } = useLanguage();
@@ -254,7 +256,15 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
               onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
               onCSVImport={() => document.getElementById('new-csv-file-input')?.click()}
               onAIImport={() => setAiImportDialog(true)}
+              onAIPlanning={() => setAiPlanningDialog(true)}
             />
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => setAiPlanningDialog(true)}
+            >
+              {t('plan_trip_ai')}
+            </Button>
             <Button
               variant="contained"
               startIcon={<Add />}
@@ -399,6 +409,15 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         <UserProfile
           open={profileDialog}
           onClose={() => setProfileDialog(false)}
+        />
+
+        <AITripPlanning
+          open={aiPlanningDialog}
+          onClose={() => setAiPlanningDialog(false)}
+          onTripCreated={async (trip) => {
+            await loadTrips();
+            onTripSelect(trip);
+          }}
         />
       </Box>
     </Box>

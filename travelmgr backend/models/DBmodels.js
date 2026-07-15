@@ -171,6 +171,11 @@ Trip.init({
   currency: {
     type: DataTypes.STRING(3),
     allowNull: true
+  },
+  departureLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'departure_location'
   }
 }, {
   sequelize,
@@ -411,6 +416,35 @@ Activity.init({
     type: DataTypes.TIME,
     allowNull: true,
     field: 'check_out_time'
+  },
+  reservationStatus: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'to_reserve',
+    field: 'reservation_status'
+  },
+  bookingUrl: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'booking_url'
+  },
+  latitude: {
+    type: DataTypes.DECIMAL(10, 7),
+    allowNull: true
+  },
+  longitude: {
+    type: DataTypes.DECIMAL(10, 7),
+    allowNull: true
+  },
+  departureLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'departure_location'
+  },
+  arrivalLocation: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'arrival_location'
   }
 }, {
   sequelize,
@@ -950,6 +984,62 @@ CarRental.init({
   modelName: 'carRental'
 })
 
+// TripPlanningSession model
+class TripPlanningSession extends Model {}
+TripPlanningSession.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'users', key: 'id' }
+  },
+  status: {
+    type: DataTypes.STRING(30),
+    allowNull: false,
+    defaultValue: 'draft'
+  },
+  formData: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    defaultValue: {}
+  },
+  synthesis: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  itinerary: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  revisionCount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  revisionFeedback: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  tripId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'trips', key: 'id' }
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'tripPlanningSession'
+})
+
+User.hasMany(TripPlanningSession, { foreignKey: 'userId' })
+TripPlanningSession.belongsTo(User, { foreignKey: 'userId' })
+TripPlanningSession.belongsTo(Trip, { foreignKey: 'tripId' })
+
 // Relations for new models
 Stage.hasMany(Flight, { foreignKey: 'stageId' })
 Flight.belongsTo(Stage, { foreignKey: 'stageId' })
@@ -964,5 +1054,5 @@ module.exports = {
   Language, Translation, User, Country, Trip, Stage, ActivityType, Activity,
   TransportType, Transport, AccommodationType, Accommodation,
   ExpenseCategory, Expense, NotificationType, Notification, TripList,
-  Flight, Lodging, CarRental
+  Flight, Lodging, CarRental, TripPlanningSession
 }

@@ -1,32 +1,32 @@
 const { DataTypes } = require('sequelize')
+const { addColumnIfNotExists, removeColumnIfExists } = require('../utils/migration-helpers')
 
 module.exports = {
   up: async ({ context: queryInterface }) => {
-    await queryInterface.addColumn('countries', 'timezone', {
+    await addColumnIfNotExists(queryInterface, 'countries', 'timezone', {
       type: DataTypes.STRING(50),
       allowNull: true
     })
 
-    // Update existing countries with their timezones
-    await queryInterface.bulkUpdate('countries', 
-      { timezone: 'Africa/Johannesburg' }, 
+    await queryInterface.bulkUpdate('countries',
+      { timezone: 'Africa/Johannesburg' },
       { code: 'ZA' }
     )
-    await queryInterface.bulkUpdate('countries', 
-      { timezone: 'Europe/Brussels' }, 
+    await queryInterface.bulkUpdate('countries',
+      { timezone: 'Europe/Brussels' },
       { code: 'BE' }
     )
-    await queryInterface.bulkUpdate('countries', 
-      { timezone: 'Europe/Amsterdam' }, 
+    await queryInterface.bulkUpdate('countries',
+      { timezone: 'Europe/Amsterdam' },
       { code: 'NL' }
     )
-    await queryInterface.bulkUpdate('countries', 
-      { timezone: 'Africa/Mbabane' }, 
+    await queryInterface.bulkUpdate('countries',
+      { timezone: 'Africa/Mbabane' },
       { code: 'SZ' }
     )
   },
 
   down: async ({ context: queryInterface }) => {
-    await queryInterface.removeColumn('countries', 'timezone')
+    await removeColumnIfExists(queryInterface, 'countries', 'timezone')
   }
 }

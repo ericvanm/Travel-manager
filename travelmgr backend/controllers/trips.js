@@ -1,5 +1,7 @@
 const router = require('express').Router()
+const { Op } = require('sequelize')
 const { Trip, Stage, Activity, Transport, Accommodation, Expense, Country, ActivityType } = require('../models/DBmodels')
+const { buildTripMapData } = require('../utils/trip-map-service')
 const {
   parseCSVLine,
   parseCSVDate,
@@ -20,6 +22,33 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching trips:', error)
     res.status(500).json({ error: 'Failed to fetch trips' })
+  }
+})
+
+// GET trip map data (geographic view)
+router.get('/:id/map-data', async (req, res) => {
+  try {
+    const trip = await Trip.findByPk(req.params.id)
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found' })
+    }
+
+    const stages = await Stage.findAll({
+      where: { tripId: trip.id },
+      include: [{ model: Country }],
+      order: [['startDate', 'ASC']]
+    })
+
+    const stageIds = stages.map((s) => s.id)
+    const activities = stageIds.length
+      ? await Activity.findAll({ where: { stageId: { [Op.in]: stageIds } } })
+      : []
+
+    const mapData = await buildTripMapData(trip, stages, activities)
+    res.json(mapData)
+  } catch (error) {
+    console.error('Error building trip map:', error)
+    res.status(500).json({ error: 'Failed to build trip map' })
   }
 })
 

@@ -1,5 +1,5 @@
 import api from './auth';
-import { Trip, Stage, Activity, ActivityInput, Country, ActivityType, TimelineDay, DuplicateAnalysis } from '../types';
+import { Trip, Stage, Activity, ActivityInput, Country, ActivityType, TimelineDay, DuplicateAnalysis, TripMapData } from '../types';
 
 export const getTrips = async (): Promise<Trip[]> => {
   const response = await api.get('/trips');
@@ -80,6 +80,19 @@ export const structureTrip = async (tripId: number): Promise<{ message: string }
 
 export const getTripTimeline = async (tripId: number): Promise<TimelineDay[]> => {
   const response = await api.get(`/activities/timeline/${tripId}`);
+  return response.data;
+};
+
+export const getTripMapData = async (tripId: number): Promise<TripMapData> => {
+  const response = await api.get(`/trips/${tripId}/map-data`);
+  return response.data;
+};
+
+export const reserveActivity = async (
+  id: number,
+  data: { reservationStatus?: 'to_reserve' | 'reserved'; bookingUrl?: string; confirmationNumber?: string }
+): Promise<Activity> => {
+  const response = await api.post(`/activities/${id}/reserve`, data);
   return response.data;
 };
 

@@ -29,8 +29,11 @@ export interface Trip {
   endDate?: string | null;
   budget?: number | null;
   currency?: string | null;
+  departureLocation?: string | null;
   stages?: Stage[];
 }
+
+export type ReservationStatus = 'to_reserve' | 'reserved';
 
 export interface Stage {
   id: number;
@@ -81,6 +84,12 @@ export interface Activity {
   pickupDate?: string | null;
   dropoffDate?: string | null;
   carType?: string | null;
+  reservationStatus?: ReservationStatus;
+  bookingUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  departureLocation?: string | null;
+  arrivalLocation?: string | null;
 }
 
 export type ActivityInput = Omit<Activity, 'id'>;
@@ -114,7 +123,36 @@ export interface ActivityFormState {
   pickupDate: string;
   dropoffDate: string;
   carType: string;
+  reservationStatus: ReservationStatus;
+  bookingUrl: string;
 }
+
+export interface TripMapPoint {
+  lat: number;
+  lng: number;
+  label: string;
+  type: 'departure' | 'stage' | 'activity' | 'accommodation' | 'transport';
+  estimatedCost?: number | null;
+  transportMode?: string;
+  reservationStatus?: ReservationStatus;
+}
+
+export interface TripMapRouteSegment {
+  from: TripMapPoint;
+  to: TripMapPoint;
+  transportMode?: string;
+  estimatedCost?: number | null;
+  label?: string;
+}
+
+export interface TripMapData {
+  departureLocation?: string | null;
+  currency: string;
+  mapPoints: TripMapPoint[];
+  routeSegments: TripMapRouteSegment[];
+}
+
+export type MapFocusMode = 'trip' | 'global';
 
 export const emptyActivityForm = (): ActivityFormState => ({
   name: '',
@@ -145,6 +183,8 @@ export const emptyActivityForm = (): ActivityFormState => ({
   pickupDate: '',
   dropoffDate: '',
   carType: '',
+  reservationStatus: 'to_reserve',
+  bookingUrl: '',
 });
 
 export interface Country {
