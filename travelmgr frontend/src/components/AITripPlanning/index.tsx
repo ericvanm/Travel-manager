@@ -41,7 +41,8 @@ import {
   revisePlanningItinerary,
   acceptPlanningItinerary,
   rejectPlanningItinerary,
-  getPlanningSessions
+  getPlanningSessions,
+  getInspirationSites
 } from '../../services/ai-planning'
 import TripPlanningMap from './TripPlanningMap'
 import TripPlanningBudget from './TripPlanningBudget'
@@ -94,10 +95,14 @@ export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }
   const [showRevisionInput, setShowRevisionInput] = useState(false)
   const [history, setHistory] = useState<TripPlanningSession[]>([])
   const [showHistory, setShowHistory] = useState(false)
+  const [availableInspirationSites, setAvailableInspirationSites] = useState<string[]>([])
 
   useEffect(() => {
     if (open) {
       loadHistory()
+      getInspirationSites()
+        .then((data) => setAvailableInspirationSites(data.sites.map((s) => s.name)))
+        .catch(() => setAvailableInspirationSites(['GetYourGuide', 'Viator', 'TripAdvisor']))
       if (user?.defaultDepartureLocation) {
         setFormData((prev) => ({
           ...prev,
@@ -402,6 +407,56 @@ export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }
                 inputProps={{ min: 1 }}
               />
             </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label={t('ai_planning_activity_hours_min')}
+                value={formData.minActivityHoursPerDay}
+                onChange={(e) => updateField('minActivityHoursPerDay', Math.max(0, parseFloat(e.target.value) || 0))}
+                inputProps={{ min: 0, max: 16, step: 0.5 }}
+                helperText={t('ai_planning_activity_hours_help')}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label={t('ai_planning_activity_hours_max')}
+                value={formData.maxActivityHoursPerDay}
+                onChange={(e) => updateField('maxActivityHoursPerDay', Math.max(0, parseFloat(e.target.value) || 0))}
+                inputProps={{ min: 0, max: 16, step: 0.5 }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={t('ai_planning_inspiration_sites')}
+                value={formData.activityInspirationSites}
+                onChange={(e) => updateField('activityInspirationSites', e.target.value)}
+                placeholder={t('ai_planning_inspiration_sites_placeholder')}
+                helperText={
+                  availableInspirationSites.length > 0
+                    ? `${t('ai_planning_inspiration_sites_help')}: ${availableInspirationSites.join(', ')}`
+                    : t('ai_planning_inspiration_sites_help')
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={6}
+                label={t('ai_planning_remarks')}
+                value={formData.remarks}
+                onChange={(e) => updateField('remarks', e.target.value)}
+                placeholder={t('ai_planning_remarks_placeholder')}
+                helperText={t('ai_planning_remarks_help')}
+              />
+            </Grid>
           </Grid>
         )}
 
@@ -412,8 +467,8 @@ export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }
               {synthesis.summary}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              {synthesis.highlights.map((h) => (
-                <Chip key={h} label={h} color="primary" variant="outlined" />
+              {synthesis.highlights.map((h, idx) => (
+                <Chip key={`highlight-${idx}`} label={h} color="primary" variant="outlined" />
               ))}
             </Box>
             {synthesis.recommendedOutboundTransport && (
@@ -426,9 +481,9 @@ export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>{t('ai_planning_transport_options')}</Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {synthesis.outboundTransportOptions.map((opt) => (
+                  {synthesis.outboundTransportOptions.map((opt, idx) => (
                     <Chip
-                      key={opt.mode}
+                      key={`${opt.mode}-${idx}-${opt.label}`}
                       label={`${opt.label} — ${opt.estimatedCost} ${formData.currency}`}
                       variant={opt.mode === synthesis.recommendedOutboundTransport?.mode ? 'filled' : 'outlined'}
                       color="primary"
@@ -451,6 +506,16 @@ export const AITripPlanning: React.FC<Props> = ({ open, onClose, onTripCreated }
         {step === 'itinerary' && itinerary && (
           <Box>
             <Typography variant="h6" gutterBottom>{itinerary.title}</Typography>
+            {itinerary.activityHoursFilledDays && itinerary.activityHoursFilledDays.length > 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                {t('ai_planning_activity_hours_filled', { days: itinerary.activityHoursFilledDays.length })}
+              </Alert>
+            )}
+            {itinerary.activityHoursWarnings?.map((warning, idx) => (
+              <Alert key={`hours-warn-${idx}`} severity="warning" sx={{ mb: 1 }}>
+                {warning}
+              </Alert>
+            ))}
             <Alert severity="info" sx={{ mb: 2 }}>{itinerary.transportRoute}</Alert>
 
             <TripPlanningMap itinerary={itinerary} currency={formData.currency} />

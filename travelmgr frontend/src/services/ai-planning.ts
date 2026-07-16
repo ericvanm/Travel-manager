@@ -10,6 +10,14 @@ export interface TripPlanningFormData {
   accommodationType: string
   budget: number
   currency: string
+  minActivityHoursPerDay: number
+  maxActivityHoursPerDay: number
+  activityInspirationSites: string
+  remarks: string
+}
+
+export interface InspirationSite {
+  name: string
 }
 
 export interface TransportOption {
@@ -124,6 +132,9 @@ export interface PlannedItinerary {
   }
   stages: PlannedStage[]
   source?: string
+  activityHoursFilledDays?: string[]
+  activityHoursWarnings?: string[]
+  activityHoursIssues?: { code: string; severity: string; params: Record<string, unknown> }[]
 }
 
 export interface TripPlanningSession {
@@ -158,6 +169,11 @@ const jsonFetch = async (path: string, options: RequestInit = {}) => {
 
 export const getPlanningSessions = (): Promise<TripPlanningSession[]> =>
   jsonFetch('/sessions')
+
+export const getInspirationSites = (): Promise<{
+  sites: InspirationSite[]
+  defaultSiteNames: string[]
+}> => jsonFetch('/inspiration-sites')
 
 export const getPlanningSession = (id: number): Promise<TripPlanningSession> =>
   jsonFetch(`/sessions/${id}`)
@@ -224,5 +240,9 @@ export const defaultFormData = (): TripPlanningFormData => ({
   localTransport: '',
   accommodationType: '',
   budget: 1500,
-  currency: 'EUR'
+  currency: 'EUR',
+  minActivityHoursPerDay: 4,
+  maxActivityHoursPerDay: 8,
+  activityInspirationSites: 'GetYourGuide, Viator, TripAdvisor',
+  remarks: ''
 })

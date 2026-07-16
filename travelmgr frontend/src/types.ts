@@ -212,11 +212,12 @@ export interface ActivityType {
   label: string;
 }
 
-export type TimelineActivityStatus = 'starts' | 'ends' | 'continues';
+export type TimelineActivityStatus = 'starts' | 'ends' | 'continues' | 'starts_ends';
 
 export interface TimelineStageRef {
   id: number;
   name?: string;
+  timezone?: string;
 }
 
 export interface TimelineActivity extends Activity {

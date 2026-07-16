@@ -30,19 +30,30 @@ const loadPromptsConfig = () => {
   }
 }
 
-const buildFormVariables = (formData, language = 'fr') => ({
-  departureLocation: formData.departureLocation,
-  geographicZone: formData.geographicZone,
-  durationDays: formData.durationDays,
-  startDate: formData.startDate || 'flexible',
-  travelStyle: formData.travelStyle,
-  localTransport: formData.localTransport,
-  accommodationType: formData.accommodationType,
-  budget: formData.budget,
-  currency: formData.currency,
-  language,
-  languageLabel: { en: 'English', fr: 'French', es: 'Spanish', nl: 'Dutch' }[language] || 'French'
-})
+const buildFormVariables = (formData, language = 'fr') => {
+  const { formatInspirationSitesForPrompt } = require('./activity-inspiration-sites')
+  return {
+    departureLocation: formData.departureLocation,
+    geographicZone: formData.geographicZone,
+    durationDays: formData.durationDays,
+    startDate: formData.startDate || 'flexible',
+    travelStyle: formData.travelStyle,
+    localTransport: formData.localTransport,
+    accommodationType: formData.accommodationType,
+    budget: formData.budget,
+    currency: formData.currency,
+    minActivityHoursPerDay: formData.minActivityHoursPerDay ?? 4,
+    maxActivityHoursPerDay: formData.maxActivityHoursPerDay ?? 8,
+    activityInspirationSites: formatInspirationSitesForPrompt(formData),
+    expectedActivitiesPerDay: Math.max(
+      1,
+      Math.ceil(((formData.minActivityHoursPerDay ?? 4) + (formData.maxActivityHoursPerDay ?? 8)) / 4)
+    ),
+    remarks: String(formData.remarks || '').trim() || '(aucune)',
+    language,
+    languageLabel: { en: 'English', fr: 'French', es: 'Spanish', nl: 'Dutch' }[language] || 'French'
+  }
+}
 
 const buildLanguageBlock = (language) => {
   const config = loadPromptsConfig()
@@ -86,7 +97,7 @@ ${config.itineraryInstructions}
 Structure JSON exacte :
 ${config.itineraryJsonSchema}
 
-${config.itineraryRules}`
+${renderTemplate(config.itineraryRules, buildFormVariables(formData, language))}`
 }
 
 const getSystemMessage = (language = 'fr') => {

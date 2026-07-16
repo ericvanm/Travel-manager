@@ -1,8 +1,8 @@
 const router = require('express').Router()
-const { Activity, ActivityType, Stage, Trip } = require('../models/DBmodels')
+const { Activity, ActivityType, Stage, Trip, Country } = require('../models/DBmodels')
 const { v4: uuidv4 } = require('uuid')
 const { Op } = require('sequelize')
-const { listDateRange, MAX_TRIP_DAYS } = require('../utils/date-only')
+const { buildTripTimeline } = require('../utils/trip-timeline')
 const {
   applyHotelDateSync,
   haveDatesChanged,
@@ -10,6 +10,18 @@ const {
   updateGroupedActivities
 } = require('../utils/activity-update-helpers')
 const logger = require('../utils/logger')
+const { sanitizeBookingUrl } = require('../utils/booking-urls')
+
+const normalizeIncomingBookingUrl = (data) => {
+  if (!data?.bookingUrl) return data
+  const sanitized = sanitizeBookingUrl(
+    data.bookingUrl,
+    { name: data.name, city: data.city, activityTypeId: data.activityTypeId },
+    null,
+    'activity'
+  )
+  return { ...data, bookingUrl: sanitized || null }
+}
 
 // GET all activities for a stage
 router.get('/stage/:stageId', async (req, res) => {
@@ -37,7 +49,12 @@ router.post('/:id/reserve', async (req, res) => {
       reservationStatus: req.body.reservationStatus || 'reserved'
     }
     if (req.body.bookingUrl !== undefined) {
-      updates.bookingUrl = req.body.bookingUrl
+      updates.bookingUrl = normalizeIncomingBookingUrl({
+        bookingUrl: req.body.bookingUrl,
+        name: activity.name,
+        city: activity.city,
+        activityTypeId: activity.activityTypeId
+      }).bookingUrl
     }
     if (req.body.confirmationNumber !== undefined) {
       updates.confirmationNumber = req.body.confirmationNumber
@@ -111,7 +128,7 @@ router.post('/', async (req, res) => {
   try {
     logger.info('Creating activity')
     
-    let activityData = { ...req.body }
+    let activityData = normalizeIncomingBookingUrl({ ...req.body })
 
     // For hotel activities (activityTypeId = 7), initialize start/end dates with checkIn/checkOut dates
     if (req.body.activityTypeId === 7) {
@@ -167,7 +184,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Activity not found' })
     }
 
-    const updateData = applyHotelDateSync({ ...req.body }, req.body, activity)
+    const updateData = normalizeIncomingBookingUrl(applyHotelDateSync({ ...req.body }, req.body, activity))
 
     if (activity.groupId && haveDatesChanged(activity, updateData)) {
       const updated = await resetGroupedActivity(Activity, activity, updateData)
@@ -322,6 +339,7 @@ router.get('/timeline/:tripId', async (req, res) => {
     // Get all stages for the trip
     const stages = await Stage.findAll({
       where: { tripId },
+      include: [{ model: Country, as: 'Country' }],
       order: [['startDate', 'ASC']]
     })
     
@@ -336,150 +354,11 @@ router.get('/timeline/:tripId', async (req, res) => {
       include: [{ model: ActivityType }]
     })
     
-    // Create date range from trip start to end
-    const validStages = stages.filter(s => s.startDate && s.endDate)
-    if (validStages.length === 0) {
-      return res.json([])
-    }
-    
-    const tripStart = new Date(Math.min(...validStages.map(s => new Date(s.startDate).getTime())))
-    const tripEnd = new Date(Math.max(...validStages.map(s => new Date(s.endDate).getTime())))
-
-    if (Number.isNaN(tripStart.getTime()) || Number.isNaN(tripEnd.getTime())) {
-      return res.json([])
-    }
-
-    const dayStrings = listDateRange(
-      tripStart.toISOString().slice(0, 10),
-      tripEnd.toISOString().slice(0, 10),
-      MAX_TRIP_DAYS
+    const timeline = buildTripTimeline(
+      stages.map((s) => s.toJSON()),
+      activities.map((a) => a.toJSON())
     )
 
-    const timeline = []
-
-    for (const dateStr of dayStrings) {
-      const currentDate = new Date(`${dateStr}T12:00:00Z`)
-      
-      // Find stage for this date
-      const currentStage = stages.find(stage => {
-        if (!stage.startDate || !stage.endDate) return false
-        const stageStart = new Date(stage.startDate)
-        const stageEnd = new Date(stage.endDate)
-        return currentDate >= stageStart && currentDate <= stageEnd
-      })
-      
-      // Find activities for this date
-      const dayActivities = []
-      
-      activities.forEach(activity => {
-        if (!activity.startDateTime || !activity.endDateTime) {
-          // For activities without dates, show them on all days of their stage
-          const activityStage = stages.find(s => s.id === activity.stageId)
-          if (activityStage && currentStage && activityStage.id === currentStage.id) {
-            dayActivities.push({
-              ...activity.toJSON(),
-              status: 'continues',
-              stage: { id: activityStage.id, name: activityStage.name }
-            })
-          }
-          return
-        }
-        
-        const actStart = new Date(activity.startDateTime)
-        const actEnd = new Date(activity.endDateTime)
-        const actStartDate = actStart.toISOString().split('T')[0]
-        const actEndDate = actEnd.toISOString().split('T')[0]
-        const activityStage = stages.find(s => s.id === activity.stageId)
-        
-        // Activity starts and ends on the same date
-        if (actStartDate === dateStr && actEndDate === dateStr) {
-          const startTime = actStart.toTimeString().slice(0, 5)
-          const endTime = actEnd.toTimeString().slice(0, 5)
-          
-          if (startTime !== endTime) {
-            // Different times - create two entries
-            dayActivities.push({
-              ...activity.toJSON(),
-              status: 'starts',
-              stage: { id: activityStage.id, name: activityStage.name }
-            })
-            dayActivities.push({
-              ...activity.toJSON(),
-              status: 'ends',
-              stage: { id: activityStage.id, name: activityStage.name }
-            })
-          } else {
-            // Same time - single entry with combined status
-            dayActivities.push({
-              ...activity.toJSON(),
-              status: 'starts_ends',
-              stage: { id: activityStage.id, name: activityStage.name }
-            })
-          }
-        }
-        // Activity starts on this date (but doesn't end same day)
-        else if (actStartDate === dateStr && actEndDate !== dateStr) {
-          dayActivities.push({
-            ...activity.toJSON(),
-            status: 'starts',
-            stage: { id: activityStage.id, name: activityStage.name }
-          })
-        }
-        // Activity ends on this date (but doesn't start same day)
-        else if (actEndDate === dateStr && actStartDate !== dateStr) {
-          dayActivities.push({
-            ...activity.toJSON(),
-            status: 'ends',
-            stage: { id: activityStage.id, name: activityStage.name }
-          })
-        }
-        // Activity continues on this date
-        else if (currentDate > actStart && currentDate < actEnd) {
-          dayActivities.push({
-            ...activity.toJSON(),
-            status: 'continues',
-            stage: { id: activityStage.id, name: activityStage.name }
-          })
-        }
-      })
-      
-      // Sort activities by relevant time for the day
-      dayActivities.sort((a, b) => {
-        const getRelevantTime = (activity) => {
-          if (!activity.startDateTime) return '00:00'
-          
-          const actStart = new Date(activity.startDateTime)
-          const actEnd = new Date(activity.endDateTime || activity.startDateTime)
-          const actStartDate = actStart.toISOString().split('T')[0]
-          const actEndDate = actEnd.toISOString().split('T')[0]
-          
-          // For hotels (type 7), flights (type 6), and transport (type 8)
-          if ([6, 7, 8].includes(activity.activityTypeId)) {
-            if (actStartDate === dateStr) {
-              // Start day - use start time (departure for flights, check-in for hotels, pickup for transport)
-              return actStart.toTimeString().slice(0, 5)
-            } else if (actEndDate === dateStr) {
-              // End day - use end time (arrival for flights, check-out for hotels, dropoff for transport)
-              return actEnd.toTimeString().slice(0, 5)
-            }
-          }
-          
-          // For other activities, use start time
-          return actStart.toTimeString().slice(0, 5)
-        }
-        
-        const timeA = getRelevantTime(a)
-        const timeB = getRelevantTime(b)
-        return timeA.localeCompare(timeB)
-      })
-      
-      timeline.push({
-        date: dateStr,
-        stage: currentStage ? { id: currentStage.id, name: currentStage.name } : null,
-        activities: dayActivities
-      })
-    }
-    
     res.json(timeline)
   } catch (error) {
     console.error('Error fetching timeline:', error)

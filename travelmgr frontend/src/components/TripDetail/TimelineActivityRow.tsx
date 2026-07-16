@@ -1,14 +1,17 @@
 import React from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, IconButton } from '@mui/material';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { Activity, ActivityType, Stage, TimelineActivity, TimelineActivityStatus } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { formatTime } from '../../utils/localeHelpers';
+import { getActivityStageTimezone } from '../../utils/tripTimezoneHelpers';
 import { getAccommodationLocationLine, getTransportIdentificationLine, isTransportActivity } from '../../utils/activityDisplayHelpers';
 
 const TIMELINE_STATUS_COLORS: Record<TimelineActivityStatus, string> = {
   starts: 'success.main',
   ends: 'error.main',
   continues: 'warning.main',
+  starts_ends: 'success.main',
 };
 
 interface TimelineActivityRowProps {
@@ -17,6 +20,7 @@ interface TimelineActivityRowProps {
   activityTypes: ActivityType[];
   stages: Stage[];
   onEdit: (activity: Activity, stage: Stage) => void;
+  onDelete?: (activityId: number) => void;
 }
 
 export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
@@ -25,6 +29,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   activityTypes,
   stages,
   onEdit,
+  onDelete,
 }) => {
   const { t, language } = useLanguage();
   const statusColor = TIMELINE_STATUS_COLORS[activity.status];
@@ -32,6 +37,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   const activityTypeLabel = activityTypes.find((type) => type.id === activity.activityTypeId)?.label || 'N/A';
   const accommodationLine = getAccommodationLocationLine(activity);
   const transportLine = getTransportIdentificationLine(activity);
+  const timeZone = activity.stage?.timezone || getActivityStageTimezone(activity.stageId, stages);
 
   const handleClick = () => {
     const activityStage = stages.find((stage) => stage.id === activity.stageId);
@@ -39,6 +45,28 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
       onEdit(activity, activityStage);
     }
   };
+
+  const handleDelete = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (onDelete) {
+      onDelete(activity.id);
+    }
+  };
+
+  const renderTime = () => {
+    if (activity.status === 'starts' && activity.startDateTime) {
+      return formatTime(activity.startDateTime, language, timeZone);
+    }
+    if (activity.status === 'ends' && activity.endDateTime) {
+      return formatTime(activity.endDateTime, language, timeZone);
+    }
+    if (activity.status === 'starts_ends' && activity.startDateTime && activity.endDateTime) {
+      return `${formatTime(activity.startDateTime, language, timeZone)} – ${formatTime(activity.endDateTime, language, timeZone)}`;
+    }
+    return null;
+  };
+
+  const timeLabel = renderTime();
 
   return (
     <Box
@@ -100,15 +128,20 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
           />
         )}
       </Box>
-      {activity.status === 'starts' && activity.startDateTime && (
-        <Typography variant="body2" color="text.secondary">
-          {formatTime(activity.startDateTime, language)}
+      {timeLabel && (
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+          {timeLabel}
         </Typography>
       )}
-      {activity.status === 'ends' && activity.endDateTime && (
-        <Typography variant="body2" color="text.secondary">
-          {formatTime(activity.endDateTime, language)}
-        </Typography>
+      {onDelete && (
+        <IconButton
+          size="small"
+          color="error"
+          aria-label={t('delete')}
+          onClick={handleDelete}
+        >
+          <DeleteOutlineIcon fontSize="small" />
+        </IconButton>
       )}
     </Box>
   );

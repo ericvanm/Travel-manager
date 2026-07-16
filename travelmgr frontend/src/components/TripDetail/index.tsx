@@ -22,7 +22,15 @@ import TripActionsToolbar from '../shared/TripActionsToolbar';
 import AITripAdapt from '../AITripAdapt';
 import TripDialog from '../TripList/TripDialog';
 import { exportTripToCsv } from '../TripList/tripCsvExport';
-import { formatDateLong } from '../../utils/localeHelpers';
+import { formatDateLong, formatDateTime, formatDateOnly } from '../../utils/localeHelpers';
+import { getStageTimezone } from '../../utils/tripTimezoneHelpers';
+import {
+  formatDateTimeForInputInTimezone,
+  formatDateForInputInTimezone,
+  formatTimeForInputInTimezone,
+  localInputToUtcIso,
+  combineDateAndTimeInTimezone
+} from '../../utils/dateTimeInputHelpers';
 import TripConsistencyBanner from '../shared/TripConsistencyBanner';
 import TripConsistencyIndicator from '../shared/TripConsistencyIndicator';
 import { getTripConsistency, TripConsistencyReport } from '../../services/tripConsistency';
@@ -78,6 +86,32 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     accommodationWarnings?: import('../../services/ai-adapt').AccommodationWarnings
   } | null>(null);
   const [resolveMode, setResolveMode] = useState(false);
+  const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
+
+  const resolveFormUtcDateTimes = (
+    form: ActivityFormState,
+    timezone: string,
+    activityTypeId: number
+  ) => {
+    if (activityTypeId === 7) {
+      const startDateTime = form.checkInDate
+        ? combineDateAndTimeInTimezone(form.checkInDate, form.checkInTime || '15:00', timezone)
+        : null;
+      const endDateTime = form.checkOutDate
+        ? combineDateAndTimeInTimezone(form.checkOutDate, form.checkOutTime || '11:00', timezone)
+        : null;
+      return {
+        startDateTime,
+        endDateTime,
+        checkInDate: form.checkInDate || null,
+        checkOutDate: form.checkOutDate || null,
+      };
+    }
+    return {
+      startDateTime: localInputToUtcIso(form.startDateTime, timezone),
+      endDateTime: localInputToUtcIso(form.endDateTime, timezone),
+    };
+  };
 
   useEffect(() => {
     loadTripData();
@@ -99,14 +133,15 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     }
   };
 
-  const buildActivityPayload = (form: ActivityFormState, stageId: number): ActivityInput => {
+  const buildActivityPayload = (form: ActivityFormState, stageId: number, timezone: string): ActivityInput => {
     const activityTypeId = Number.parseInt(form.activityTypeId, 10)
+    const dateTimes = resolveFormUtcDateTimes(form, timezone, activityTypeId)
     const activityData: ActivityInput = {
       name: form.name,
       stageId,
       activityTypeId,
-      startDateTime: form.startDateTime || null,
-      endDateTime: form.endDateTime || null,
+      startDateTime: dateTimes.startDateTime,
+      endDateTime: dateTimes.endDateTime,
       city: form.city || null,
       cost: form.cost ? Number.parseFloat(form.cost) : null,
       confirmationNumber: form.confirmationNumber || null,
@@ -126,8 +161,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     }
 
     if (activityTypeId === 7) {
-      activityData.checkInDate = form.checkInDate || null
-      activityData.checkOutDate = form.checkOutDate || null
+      activityData.checkInDate = (dateTimes.checkInDate ?? form.checkInDate) || null
+      activityData.checkOutDate = (dateTimes.checkOutDate ?? form.checkOutDate) || null
       activityData.address = form.address || null
       activityData.phone = form.phone || null
       activityData.confirmationNumber = form.confirmationNumber || null
@@ -178,13 +213,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     }
   }
 
-  const buildActivityUpdatePayload = (form: ActivityFormState): Partial<Activity> => {
+  const buildActivityUpdatePayload = (form: ActivityFormState, timezone: string): Partial<Activity> => {
     const activityTypeId = Number.parseInt(form.activityTypeId, 10)
+    const dateTimes = resolveFormUtcDateTimes(form, timezone, activityTypeId)
     const activityData: Partial<Activity> = {
       name: form.name,
       activityTypeId,
-      startDateTime: form.startDateTime || null,
-      endDateTime: form.endDateTime || null,
+      startDateTime: dateTimes.startDateTime,
+      endDateTime: dateTimes.endDateTime,
       city: form.city || null,
       cost: form.cost ? Number.parseFloat(form.cost) : null,
       confirmationNumber: form.confirmationNumber || null,
@@ -204,8 +240,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     }
 
     if (activityTypeId === 7) {
-      activityData.checkInDate = form.checkInDate || null
-      activityData.checkOutDate = form.checkOutDate || null
+      activityData.checkInDate = (dateTimes.checkInDate ?? form.checkInDate) || null
+      activityData.checkOutDate = (dateTimes.checkOutDate ?? form.checkOutDate) || null
       activityData.address = form.address || null
       activityData.phone = form.phone || null
       activityData.roomType = form.roomType || null
@@ -422,7 +458,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     if (!newActivity.name.trim() || !newActivity.activityTypeId || !selectedStage) return;
     
     try {
-      await createActivity(buildActivityPayload(newActivity, selectedStage.id));
+      await createActivity(buildActivityPayload(newActivity, selectedStage.id, getStageTimezone(selectedStage)));
       await loadStagesData();
       await loadTimeline();
       setActivityDialog(false);
@@ -437,7 +473,10 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     if (!newActivity.name.trim() || !newActivity.activityTypeId || !editingActivity) return;
     
     try {
-      await updateActivity(editingActivity.id, buildActivityUpdatePayload(newActivity));
+      await updateActivity(
+        editingActivity.id,
+        buildActivityUpdatePayload(newActivity, getStageTimezone(selectedStage))
+      );
       await loadStagesData();
       await loadTimeline();
       setActivityDialog(false);
@@ -451,17 +490,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   const handleEditActivity = (activity: Activity, stage: Stage) => {
     setEditingActivity(activity);
     setSelectedStage(stage);
-    const timezone = stage.Country?.timezone || 'UTC';
-    const formatDateTimeForInput = (dateTime: string | null | undefined): string => {
-      if (!dateTime) return '';
-      const date = new Date(dateTime);
-      return date.toLocaleString('sv-SE', { timeZone: timezone }).slice(0, 16);
-    };
-    const formatDateForInput = (dateTime: string | null | undefined): string => {
-      if (!dateTime) return '';
-      const date = new Date(dateTime);
-      return date.toLocaleDateString('sv-SE', { timeZone: timezone });
-    };
+    const timezone = getStageTimezone(stage);
 
     const checkInSource = activity.checkInDate || activity.startDateTime;
     const checkOutSource = activity.checkOutDate || activity.endDateTime;
@@ -469,8 +498,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     setNewActivity({
       name: activity.name || '',
       activityTypeId: activity.activityTypeId?.toString() || '',
-      startDateTime: formatDateTimeForInput(activity.startDateTime),
-      endDateTime: formatDateTimeForInput(activity.endDateTime),
+      startDateTime: formatDateTimeForInputInTimezone(activity.startDateTime, timezone),
+      endDateTime: formatDateTimeForInputInTimezone(activity.endDateTime, timezone),
       city: activity.city || '',
       cost: activity.cost?.toString() || '',
       airline: activity.airline || '',
@@ -481,13 +510,13 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       confirmationCode: activity.confirmationCode || '',
       gate: activity.gate || '',
       terminal: activity.terminal || '',
-      checkInDate: activity.activityTypeId === 7 ? formatDateForInput(checkInSource) : '',
-      checkOutDate: activity.activityTypeId === 7 ? formatDateForInput(checkOutSource) : '',
+      checkInDate: activity.activityTypeId === 7 ? formatDateForInputInTimezone(checkInSource, timezone) : '',
+      checkOutDate: activity.activityTypeId === 7 ? formatDateForInputInTimezone(checkOutSource, timezone) : '',
       checkInTime: activity.activityTypeId === 7 && checkInSource
-        ? new Date(checkInSource).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5)
+        ? formatTimeForInputInTimezone(checkInSource, timezone, '15:00')
         : '',
       checkOutTime: activity.activityTypeId === 7 && checkOutSource
-        ? new Date(checkOutSource).toLocaleTimeString('en-GB', { timeZone: timezone, hour12: false }).slice(0, 5)
+        ? formatTimeForInputInTimezone(checkOutSource, timezone, '11:00')
         : '',
       address: activity.address || '',
       phone: activity.phone || '',
@@ -496,8 +525,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       company: activity.company || '',
       pickupLocation: activity.pickupLocation || '',
       dropoffLocation: activity.dropoffLocation || '',
-      pickupDate: activity.pickupDate ? formatDateForInput(activity.pickupDate) : '',
-      dropoffDate: activity.dropoffDate ? formatDateForInput(activity.dropoffDate) : '',
+      pickupDate: activity.pickupDate ? formatDateForInputInTimezone(activity.pickupDate, timezone) : '',
+      dropoffDate: activity.dropoffDate ? formatDateForInputInTimezone(activity.dropoffDate, timezone) : '',
       carType: activity.carType || '',
       departureLocation: activity.departureLocation || '',
       arrivalLocation: activity.arrivalLocation || '',
@@ -521,6 +550,47 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       await loadTimeline();
     } catch (error) {
       console.error('Failed to reserve activity:', error);
+    }
+  };
+
+  const toggleActivitySelection = (activityId: number) => {
+    setSelectedActivityIds((prev) =>
+      prev.includes(activityId) ? prev.filter((id) => id !== activityId) : [...prev, activityId]
+    );
+  };
+
+  const toggleStageActivitiesSelection = (stage: Stage, selected: boolean) => {
+    const stageActivityIds = (stage.activities || []).map((a) => a.id);
+    setSelectedActivityIds((prev) => {
+      if (selected) {
+        return [...new Set([...prev, ...stageActivityIds])];
+      }
+      return prev.filter((id) => !stageActivityIds.includes(id));
+    });
+  };
+
+  const handleDeleteActivity = async (activityId: number) => {
+    if (!window.confirm(t('delete_activity_confirm'))) return;
+    try {
+      await deleteActivity(activityId);
+      setSelectedActivityIds((prev) => prev.filter((id) => id !== activityId));
+      await loadStagesData();
+      await loadTimeline();
+    } catch (error) {
+      console.error('Failed to delete activity:', error);
+    }
+  };
+
+  const handleDeleteSelectedActivities = async () => {
+    if (selectedActivityIds.length === 0) return;
+    if (!window.confirm(t('delete_activities_confirm', { count: selectedActivityIds.length }))) return;
+    try {
+      await Promise.all(selectedActivityIds.map((id) => deleteActivity(id)));
+      setSelectedActivityIds([]);
+      await loadStagesData();
+      await loadTimeline();
+    } catch (error) {
+      console.error('Failed to delete activities:', error);
     }
   };
 
@@ -661,6 +731,15 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             {currentViewMode === 'timeline' ? t('trip_timeline_title') : t('stages')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
+            {currentViewMode === 'stages' && selectedActivityIds.length > 0 && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteSelectedActivities}
+              >
+                {t('delete_selected', { count: selectedActivityIds.length })}
+              </Button>
+            )}
             {mergeMode && (
               <Button
                 variant="contained"
@@ -702,7 +781,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             <Paper key={day.date} sx={{ mb: 2, p: 2 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                  {formatDateLong(day.date, language)}
+                  {formatDateLong(day.date, language, getStageTimezone(day.stage, stages))}
                 </Typography>
                 {day.stage && (
                   <Typography variant="body2" color="text.secondary">
@@ -721,6 +800,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                       activityTypes={activityTypes}
                       stages={stages}
                       onEdit={handleEditActivity}
+                      onDelete={handleDeleteActivity}
                     />
                   ))}
                 </Box>
@@ -748,8 +828,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {stage.Country?.name || 'N/A'} • 
-                      {stage.startDate ? new Date(stage.startDate).toLocaleDateString() : 'N/A'} - 
-                      {stage.endDate ? new Date(stage.endDate).toLocaleDateString() : 'N/A'}
+                      {stage.startDate ? formatDateOnly(stage.startDate, language, getStageTimezone(stage)) : 'N/A'} -
+                      {stage.endDate ? formatDateOnly(stage.endDate, language, getStageTimezone(stage)) : 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
@@ -809,6 +889,17 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                   <Table size="small">
                     <TableHead>
                       <TableRow>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            indeterminate={
+                              stage.activities.some((a) => selectedActivityIds.includes(a.id))
+                              && !stage.activities.every((a) => selectedActivityIds.includes(a.id))
+                            }
+                            checked={stage.activities.every((a) => selectedActivityIds.includes(a.id))}
+                            onChange={(e) => toggleStageActivitiesSelection(stage, e.target.checked)}
+                            inputProps={{ 'aria-label': t('select_all_activities') }}
+                          />
+                        </TableCell>
                         <TableCell>{t('activity_name')}</TableCell>
                         <TableCell>{t('type')}</TableCell>
                         <TableCell>{t('city')}</TableCell>
@@ -837,6 +928,12 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                               borderLeft: isMultiDay ? '4px solid #1976d2' : 'none'
                             }}
                           >
+                            <TableCell padding="checkbox">
+                              <Checkbox
+                                checked={selectedActivityIds.includes(activity.id)}
+                                onChange={() => toggleActivitySelection(activity.id)}
+                              />
+                            </TableCell>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {activity.name}
@@ -877,10 +974,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                             </TableCell>
                             <TableCell>{activity.city || t('na')}</TableCell>
                             <TableCell>
-                              {activity.startDateTime ? new Date(activity.startDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
+                              {activity.startDateTime
+                                ? formatDateTime(activity.startDateTime, language, getStageTimezone(stage))
+                                : t('na')}
                             </TableCell>
                             <TableCell>
-                              {activity.endDateTime ? new Date(activity.endDateTime).toLocaleString('en-GB', { timeZone: stage.Country?.timezone || 'UTC' }) : t('na')}
+                              {activity.endDateTime
+                                ? formatDateTime(activity.endDateTime, language, getStageTimezone(stage))
+                                : t('na')}
                             </TableCell>
                             <TableCell>
                               {activity.cost ? `$${activity.cost}` : t('na')}
@@ -898,16 +999,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                                   size="small" 
                                   variant="outlined" 
                                   color="error"
-                                  onClick={async () => {
-                                    if (window.confirm(t('delete_activity_confirm'))) {
-                                      try {
-                                        await deleteActivity(activity.id);
-                                        await loadStagesData();
-                                      } catch (error) {
-                                        console.error('Failed to delete activity:', error);
-                                      }
-                                    }
-                                  }}
+                                  onClick={() => handleDeleteActivity(activity.id)}
                                 >
                                   {t('delete')}
                                 </Button>

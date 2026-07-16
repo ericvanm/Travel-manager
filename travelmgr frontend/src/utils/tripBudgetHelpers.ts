@@ -106,6 +106,12 @@ export const aggregateMainBudgetCategories = (
     .filter((entry): entry is MainBudgetCategoryTotal => Boolean(entry && entry.itemCount > 0))
 }
 
+/** @alias aggregateMainBudgetCategories */
+export const aggregateBudgetByMainCategory = aggregateMainBudgetCategories
+
+export const sumBudgetItems = (items: TripBudgetLineItem[]): number =>
+  items.reduce((sum, item) => sum + item.estimatedCost, 0)
+
 export const mainBudgetCategoryLabelKey = (category: MainBudgetCategory): string => {
   const keys: Record<MainBudgetCategory, string> = {
     flights: 'trip_budget_category_flights',
@@ -115,6 +121,20 @@ export const mainBudgetCategoryLabelKey = (category: MainBudgetCategory): string
     other: 'trip_budget_category_other',
   }
   return keys[category]
+}
+
+/** @alias mainBudgetCategoryLabelKey */
+export const mainCategoryTranslationKey = mainBudgetCategoryLabelKey
+
+export const detailCategoryTranslationKey = (category: string): string => {
+  const keys: Record<string, string> = {
+    transport_outbound: 'ai_planning_budget_outbound',
+    transport_return: 'ai_planning_budget_return',
+    transport_local: 'ai_planning_budget_local',
+    accommodation: 'ai_planning_budget_accommodation',
+    activity: 'ai_planning_budget_activity',
+  }
+  return keys[category] || 'ai_planning_budget_other'
 }
 
 export const planningBudgetCategoryLabelKey = (category: MainBudgetCategory): string => {

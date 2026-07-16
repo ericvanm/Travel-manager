@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react'
 import { Box, Typography, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
 import { MapFocusMode, TripMapPoint, TripMapRouteSegment } from '../../types'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { defaultLeafletIcon } from '../../utils/leafletIcons'
@@ -34,19 +35,34 @@ const MapBoundsController: React.FC<{
   const map = useMap()
 
   useEffect(() => {
+    let cancelled = false
+
+    const fitSafely = (bounds: ReturnType<typeof L.latLngBounds>, padding: number) => {
+      if (cancelled) return
+      const container = map.getContainer?.()
+      if (!container?.isConnected) return
+      try {
+        map.fitBounds(bounds.pad(padding))
+      } catch {
+        // Map may be unmounting (e.g. dialog closed)
+      }
+    }
+
     const valid = points.filter((p) => p.lat && p.lng)
-    if (valid.length === 0) return
+    if (valid.length === 0) return () => { cancelled = true }
 
     if (focusMode === 'global' && valid.length >= 2) {
       const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]))
-      map.fitBounds(bounds.pad(0.35))
-      return
+      fitSafely(bounds, 0.35)
+      return () => { cancelled = true }
     }
 
     const stagePoints = valid.filter((p) => ['stage', 'activity', 'accommodation', 'transport'].includes(p.type))
     const target = stagePoints.length > 0 ? stagePoints : valid
     const bounds = L.latLngBounds(target.map((p) => [p.lat, p.lng]))
-    map.fitBounds(bounds.pad(0.15))
+    fitSafely(bounds, 0.15)
+
+    return () => { cancelled = true }
   }, [map, points, focusMode])
 
   return null

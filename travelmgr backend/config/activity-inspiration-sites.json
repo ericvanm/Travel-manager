@@ -1,0 +1,22 @@
+{
+  "_description": "Sites d'inspiration pour trouver des activités (utilisés par l'IA et les liens de réservation). {{query}} = ville ou activité.",
+  "defaultSiteNames": ["GetYourGuide", "Viator", "TripAdvisor"],
+  "sites": [
+    {
+      "name": "GetYourGuide",
+      "urlTemplate": "https://www.getyourguide.com/s?q={{query}}"
+    },
+    {
+      "name": "Viator",
+      "urlTemplate": "https://www.viator.com/searchResults/all?text={{query}}"
+    },
+    {
+      "name": "TripAdvisor",
+      "urlTemplate": "https://www.tripadvisor.com/Search?q={{query}}"
+    },
+    {
+      "name": "Klook",
+      "urlTemplate": "https://www.klook.com/search/result/?query={{query}}"
+    }
+  ]
+}

@@ -155,6 +155,20 @@ const createTripFromItinerary = async (itinerary, formData = {}) => {
 
 router.use(optionalAuth)
 
+router.get('/inspiration-sites', (req, res) => {
+  try {
+    const { loadInspirationSitesConfig, listDefaultSiteNames } = require('../utils/activity-inspiration-sites')
+    const config = loadInspirationSitesConfig()
+    res.json({
+      sites: config.sites.map(({ name }) => ({ name })),
+      defaultSiteNames: listDefaultSiteNames()
+    })
+  } catch (error) {
+    console.error('Error loading inspiration sites:', error)
+    res.status(500).json({ error: 'Failed to load inspiration sites' })
+  }
+})
+
 router.get('/sessions', async (req, res) => {
   try {
     const userId = getUserId(req)

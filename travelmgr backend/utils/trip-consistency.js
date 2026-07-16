@@ -7,7 +7,7 @@ const { flattenActivities } = require('./trip-flatten')
 const {
   validateTripAccommodationCoverage
 } = require('./trip-accommodation-validation')
-const { parseDateOnly, addDays, deriveTripDateBounds } = require('./date-only')
+const { parseDateOnly, addDays, deriveTripDateBounds, listDateRange } = require('./date-only')
 const {
   extractStageCity,
   locationsCompatible,
@@ -28,6 +28,19 @@ const parseTime = (value) => {
 
 const isTransportActivity = (activity) =>
   isTransportForLocation(activity)
+
+const LEISURE_ACTIVITY_TYPE_IDS = new Set([1, 2, 3, 4, 5])
+
+const isLeisureActivityRecord = (activity) =>
+  LEISURE_ACTIVITY_TYPE_IDS.has(Number(activity?.activityTypeId))
+
+const activityOccursOnDay = (activity, day) => {
+  const startDay = parseDateOnly(activity?.startDateTime || activity?.checkInDate)
+  const endDay = parseDateOnly(activity?.endDateTime || activity?.checkOutDate)
+  if (startDay === day || endDay === day) return true
+  if (startDay && endDay && startDay <= day && day <= endDay) return true
+  return false
+}
 
 const extractStageLabel = (stage) => extractStageCity(stage) || `Stage ${stage?.id}`
 
@@ -232,6 +245,20 @@ const validateTripConsistency = (snapshot) => {
   for (const act of datedActivities) {
     if (!act.startDateTime && !act.endDateTime) {
       issues.push(buildIssue('ACTIVITY_MISSING_DATES', 'info', { name: act.name || `#${act.id}` }))
+    }
+  }
+
+  const dateBounds = deriveTripDateBounds(trip, stages, activities)
+  if (dateBounds.start && dateBounds.end) {
+    const lastActivityDay = addDays(dateBounds.end, -1)
+    const tripDays = listDateRange(dateBounds.start, lastActivityDay || dateBounds.end)
+    for (const day of tripDays) {
+      const leisureOnDay = activities.filter(
+        (a) => isLeisureActivityRecord(a) && activityOccursOnDay(a, day)
+      )
+      if (leisureOnDay.length === 0) {
+        issues.push(buildIssue('DAILY_NO_ACTIVITIES', 'warning', { date: day }))
+      }
     }
   }
 

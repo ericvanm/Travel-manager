@@ -1,5 +1,6 @@
 const { flattenActivities } = require('./trip-flatten')
 const { getActivityTypeId } = require('./activity-types')
+const { resolveStageIdForActivityChange } = require('./ai-adapt-service')
 const { parseDateOnly, addDays, listDateRange, deriveTripDateBounds, compareDateOnly } = require('./date-only')
 const { extractStageCity } = require('./trip-location-validation')
 
@@ -153,7 +154,7 @@ const simulateSnapshotAfterChanges = (snapshot, proposedChanges) => {
       }
 
       if (change.action === 'create') {
-        const stageId = change.stageId || data.stageId
+        const stageId = resolveStageIdForActivityChange(change, cloned.stages)
         const stage = cloned.stages.find((s) => s.id === stageId)
         if (stage) {
           const typeKey = change.activityType || data.activityType || 'tour'

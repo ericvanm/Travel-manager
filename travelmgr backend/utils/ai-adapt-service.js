@@ -5,6 +5,7 @@ const { ACTIVITY_TYPE_LABELS } = require('./trip-snapshot')
 const { getActivityTypeId } = require('./activity-types')
 const { suggestBookingUrl } = require('./booking-urls')
 const { parseDateOnly, addDays } = require('./date-only')
+const { extractStageCity, locationsCompatible } = require('./trip-location-validation')
 
 const DEFAULT_CONFIG_PATH = path.join(__dirname, '..', 'config', 'ai-adapt-prompts.json')
 
@@ -210,7 +211,7 @@ const normalizeProposedChanges = (raw) => {
 
 const STRIP_FROM_ACTIVITY_PAYLOAD = new Set([
   'activityType', 'estimatedCost', 'description', 'location',
-  'entityType', 'entityId', 'action', 'stageId', 'data'
+  'entityType', 'entityId', 'action', 'data'
 ])
 
 const normalizeHotelDates = (payload, activityTypeId) => {
@@ -255,6 +256,46 @@ const resolveActivityTypeId = (change) => {
     || change.data?.activityTypeId
   if (typeof typeKey === 'number') return typeKey
   return getActivityTypeId(typeKey)
+}
+
+const resolveStageIdForActivityChange = (change, stages = []) => {
+  const explicit = change.stageId ?? change.data?.stageId
+  if (explicit != null && explicit !== '') {
+    const id = Number.parseInt(String(explicit), 10)
+    if (Number.isFinite(id) && stages.some((s) => s.id === id)) return id
+  }
+
+  const location = change.location || change.data?.city
+  const day = parseDateOnly(
+    change.startDateTime || change.checkInDate || change.data?.startDateTime
+  )
+
+  if (day) {
+    const dateMatches = stages.filter((stage) => {
+      const start = parseDateOnly(stage.startDate)
+      const end = parseDateOnly(stage.endDate)
+      return start && end && start <= day && day <= end
+    })
+
+    if (location && dateMatches.length > 0) {
+      const byLocation = dateMatches.find((stage) =>
+        locationsCompatible(location, extractStageCity(stage))
+      )
+      if (byLocation) return byLocation.id
+    }
+
+    if (dateMatches.length === 1) return dateMatches[0].id
+    if (dateMatches.length > 0) return dateMatches[0].id
+  }
+
+  if (location) {
+    const byLocation = stages.find((stage) =>
+      locationsCompatible(location, extractStageCity(stage))
+    )
+    if (byLocation) return byLocation.id
+  }
+
+  return null
 }
 
 const buildActivityUpdates = (change, activity) => {
@@ -365,13 +406,18 @@ const applyProposedChanges = async (tripId, proposedChanges) => {
           applied.activities += 1
         }
         if (change.action === 'create') {
-          const stageId = change.stageId || change.data?.stageId
+          const stageId = resolveStageIdForActivityChange(change, existingStages)
           if (!stageId) {
-            errors.push('Activity create skipped: missing stageId')
+            errors.push(
+              `Activity create skipped: missing stageId (location=${change.location || '?'})`
+            )
             continue
           }
           const stage = await Stage.findByPk(stageId)
-          if (stage?.tripId !== tripId) continue
+          if (!stage || stage.tripId !== tripId) {
+            errors.push(`Activity create skipped: invalid stageId ${stageId}`)
+            continue
+          }
           const payload = buildActivityCreatePayload(change, stageId)
           await Activity.create(payload)
           applied.activities += 1
@@ -403,5 +449,8 @@ module.exports = {
   detectReservedImpacts,
   applyProposedChanges,
   buildAdaptPrompt,
-  normalizeProposedChanges
+  normalizeProposedChanges,
+  resolveStageIdForActivityChange,
+  buildActivityCreatePayload,
+  sanitizeActivityPayload
 }

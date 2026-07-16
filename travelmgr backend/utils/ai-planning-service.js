@@ -1,6 +1,6 @@
 const { geocodePlaces } = require('./geocoding')
 const { scheduleItinerary } = require('./itinerary-scheduler')
-const { suggestBookingUrl } = require('./booking-urls')
+const { suggestBookingUrl, normalizeItineraryBookingUrls } = require('./booking-urls')
 const {
   buildGeoQuery,
   extractStageCity,
@@ -14,6 +14,11 @@ const {
   buildItineraryPrompt,
   getSystemMessage
 } = require('./ai-planning-prompts')
+const { formatInspirationSitesForPrompt } = require('./activity-inspiration-sites')
+const {
+  ensureDailyActivityHours,
+  validateItineraryActivityHours
+} = require('./itinerary-activity-hours')
 
 const {
   ACTIVITY_TYPE_MAP,
@@ -41,7 +46,11 @@ const normalizeFormData = (formData = {}) => ({
   localTransport: String(formData.localTransport || '').trim(),
   accommodationType: String(formData.accommodationType || '').trim(),
   budget: Number(formData.budget) || 0,
-  currency: String(formData.currency || 'EUR').trim().toUpperCase()
+  currency: String(formData.currency || 'EUR').trim().toUpperCase(),
+  minActivityHoursPerDay: Math.max(0, Number(formData.minActivityHoursPerDay) || 4),
+  maxActivityHoursPerDay: Math.max(0, Number(formData.maxActivityHoursPerDay) || 8),
+  activityInspirationSites: String(formData.activityInspirationSites || '').trim(),
+  remarks: String(formData.remarks || '').trim()
 })
 
 const isLikelySameRegion = (departure, destination) => {
@@ -112,6 +121,14 @@ const validateFormData = (rawFormData) => {
     errors.push('La devise doit être un code ISO à 3 lettres (ex. EUR, USD).')
   }
 
+  if (formData.minActivityHoursPerDay > formData.maxActivityHoursPerDay) {
+    errors.push('Les heures d\'activités minimum ne peuvent pas dépasser le maximum.')
+  }
+
+  if (formData.maxActivityHoursPerDay > 16) {
+    warnings.push('Plus de 16 h d\'activités par jour est rarement réaliste.')
+  }
+
   if (formData.departureLocation.toLowerCase() === formData.geographicZone.toLowerCase()) {
     warnings.push('Le lieu de départ et la destination semblent identiques.')
   }
@@ -174,8 +191,11 @@ const buildSynthesisText = (formData, warnings) => {
       `Transport recommandé vers la destination : ${transport.recommended.label} (~${transport.recommended.estimatedCost} ${formData.currency}).`,
       `Déplacement sur place : ${formData.localTransport}.`,
       `Hébergement : ${formData.accommodationType}.`,
+      `Activités : ${formData.minActivityHoursPerDay}–${formData.maxActivityHoursPerDay} h/jour.`,
+      `Sources d'inspiration : ${formatInspirationSitesForPrompt(formData)}.`,
+      formData.remarks ? `Remarques : ${formData.remarks}.` : null,
       `Budget total : ${formData.budget} ${formData.currency} (~${dailyBudget} ${formData.currency}/jour).`
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
     highlights: [
       formData.departureLocation,
       formData.travelStyle,
@@ -233,17 +253,26 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
     const stageName = i === 0 ? zone.split(',')[0].trim() : `${zone.split(',')[0].trim()} — étape ${Math.floor(i / segmentDays) + 1}`
 
     const activities = []
+    const minHours = formData.minActivityHoursPerDay || 4
+    const maxHours = formData.maxActivityHoursPerDay || 8
+    const slotHours = 2
+    const targetHours = Math.min(maxHours, Math.max(minHours, (minHours + maxHours) / 2))
+    const slotsPerDay = Math.max(1, Math.ceil(targetHours / slotHours))
+    const inspirationHint = formatInspirationSitesForPrompt(formData)
     for (let day = i; day < Math.min(i + segmentDays, formData.durationDays); day += 1) {
       const dayDate = addDays(startDate, day)
-      activities.push({
-        name: `Jour ${day + 1} — ${style.includes('plage') ? 'Détente et balades' : 'Découverte locale'}`,
-        activityType: style.includes('museum') || style.includes('culturel') ? 'museum' : 'tour',
-        startDateTime: `${dayDate}T09:00:00Z`,
-        endDateTime: `${dayDate}T18:00:00Z`,
-        city: stageName,
-        comments: `Activité proposée pour un séjour ${style}.`,
-        estimatedCost: activityBudgetPerDay
-      })
+      for (let slot = 0; slot < slotsPerDay; slot += 1) {
+        const startHour = 9 + slot * 3
+        activities.push({
+          name: `Jour ${day + 1} — ${style.includes('plage') ? 'Détente' : 'Visite'} ${slot + 1} (${stageName})`,
+          activityType: style.includes('museum') || style.includes('culturel') ? 'museum' : 'tour',
+          startDateTime: `${dayDate}T${String(startHour).padStart(2, '0')}:00:00Z`,
+          endDateTime: `${dayDate}T${String(startHour + slotHours).padStart(2, '0')}:00:00Z`,
+          city: stageName,
+          comments: `Activité ${style} — inspiration : ${inspirationHint}`,
+          estimatedCost: Math.round(activityBudgetPerDay / slotsPerDay)
+        })
+      }
     }
 
     stages.push({
@@ -661,10 +690,26 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary, 
   }
 
   itinerary = scheduleItinerary(itinerary, formData)
+
+  const activityHoursResult = ensureDailyActivityHours(itinerary, formData)
+  itinerary = activityHoursResult.itinerary
+  if (activityHoursResult.warnings.length > 0) {
+    itinerary.activityHoursWarnings = activityHoursResult.warnings
+  }
+  if (activityHoursResult.filledDays.length > 0) {
+    itinerary.activityHoursFilledDays = activityHoursResult.filledDays
+  }
+
+  const hoursValidation = validateItineraryActivityHours(itinerary, formData)
+  if (hoursValidation.issues.length > 0) {
+    itinerary.activityHoursIssues = hoursValidation.issues
+  }
+
   itinerary = normalizeStageLocations(itinerary, formData)
   itinerary = ensureDailyAccommodation(itinerary, formData)
   itinerary = await geocodeItineraryLocations(itinerary, formData)
   itinerary = await enrichItineraryGeoAndBudget(itinerary, formData)
+  itinerary = await normalizeItineraryBookingUrls(itinerary, formData)
 
   if (itinerary.outboundTransport && !itinerary.outboundTransport.bookingUrl) {
     itinerary.outboundTransport.bookingUrl = suggestBookingUrl('transport', itinerary.outboundTransport, formData)

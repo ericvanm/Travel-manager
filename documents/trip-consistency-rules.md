@@ -1,6 +1,43 @@
 # Règles de cohérence des voyages
 
-Ce document décrit les contrôles automatiques appliqués à chaque voyage dans Travel Manager.
+Ce document décrit les contrôles automatiques appliqués à chaque voyage dans Travel Manager, ainsi que les règles métier associées (dates, fuseaux horaires, hébergements, transports, activités).
+
+## Fuseaux horaires et dates
+
+### Stockage
+
+| Donnée | Format | Règle |
+|--------|--------|-------|
+| `startDateTime` / `endDateTime` (activités, transports) | ISO 8601 **UTC** | Heure réelle enregistrée en base, indépendante du fuseau d'affichage |
+| `checkInDate` / `checkOutDate` (hébergements) | `YYYY-MM-DD` | Dates calendaires ; les heures check-in/out sont dérivées ou saisies via le formulaire |
+| `startDate` / `endDate` (étapes, voyage) | `YYYY-MM-DD` | Dates calendaires de l'étape |
+
+### Affichage (frontend)
+
+Toute heure ou date/heure affichée dans le détail d'un voyage utilise le fuseau **IANA** de l'étape (`stage.Country.timezone`, ex. `Asia/Bangkok`, `Europe/Paris`). Si absent : `UTC`.
+
+| Vue | Règle |
+|-----|-------|
+| **Chronologie (timeline)** | Heures de début/fin formatées dans le fuseau de l'étape de l'activité ; en-tête de jour formaté dans le fuseau de l'étape du jour |
+| **Liste par étape** | `startDateTime` / `endDateTime` affichés dans le fuseau de l'étape |
+| **Formulaire d'édition** | Saisie en heure « murale » locale à l'étape ; conversion UTC à l'enregistrement |
+
+### Saisie / enregistrement
+
+1. L'utilisateur saisit date + heure dans le fuseau de l'étape.
+2. Le frontend convertit en UTC (`localInputToUtcIso`, `combineDateAndTimeInTimezone`) avant l'API.
+3. À la réouverture du formulaire, reconversion UTC → heure murale de l'étape.
+
+### Timeline (backend)
+
+Le regroupement des activités par jour utilise la **date calendaire locale** dans le fuseau de l'étape (pas la date UTC). Le tri horaire du jour utilise la même règle.
+
+### Implémentation
+
+- Frontend : `travelmgr frontend/src/utils/localeHelpers.ts`, `dateTimeInputHelpers.ts`, `tripTimezoneHelpers.ts`
+- Backend : `travelmgr backend/utils/datetime-timezone.js`, `trip-timeline.js`
+
+---
 
 ## Indicateurs
 
@@ -66,6 +103,21 @@ Les dates effectives du voyage sont dérivées du **trip**, des **étapes** et d
 |------|-------|
 | `STAGE_NO_ACTIVITIES` | Une étape ne contient **aucune activité**. |
 | `ACTIVITY_MISSING_DATES` | Une activité n'a **pas de dates** de début/fin. |
+| `DAILY_NO_ACTIVITIES` | Aucune activité de loisirs un **jour calendaire** donné (fuseau de l'étape, hors dernier jour de retour). |
+| `DAILY_ACTIVITY_HOURS_BELOW_MIN` | Moins d'heures d'activités que le minimum demandé (planification IA). |
+
+## Planification IA — activités quotidiennes
+
+Lors d'une planification ou adaptation IA avec `minActivityHoursPerDay` / `maxActivityHoursPerDay` :
+
+- Chaque jour sur place (hors jour de retour) doit totaliser entre le min et le max d'heures d'activités de loisirs.
+- Post-traitement : `ensureDailyActivityHours` complète les journées sous le minimum.
+- URLs de réservation : préférer des liens de **recherche** valides (GetYourGuide, Viator…) ; les deep links invalides sont remplacés automatiquement.
+
+## Adaptation IA (resolve consistency)
+
+- Création d'activité : `stageId` obligatoire (explicite ou résolu via ville + date dans le snapshot).
+- Le payload de création **conserve** `stageId` jusqu'à l'insertion en base.
 
 ## Résolution assistée par IA
 
@@ -77,7 +129,7 @@ Le bouton **Résoudre** (actif lorsqu'il existe des erreurs ou avertissements) :
 
 Les éléments déjà marqués **réservés** ne sont pas modifiés sans confirmation explicite.
 
-## Implémentation
+## Fichiers d'implémentation
 
 - Backend : `travelmgr backend/utils/trip-consistency.js`
 - API : `GET /api/trips/consistency/summary`, `GET /api/trips/:id/consistency`
