@@ -1,10 +1,10 @@
 const router = require('express').Router()
 const {
-  Trip,
   User,
   AiInteractionLog
 } = require('../models/DBmodels')
 const { requireAuth, requireAdmin } = require('../utils/auth-helpers')
+const { findTripsForAdmin, parseUserId } = require('../utils/trip-ownership')
 
 router.use(requireAuth)
 router.use(requireAdmin)
@@ -24,22 +24,15 @@ router.get('/users', async (_req, res) => {
 
 router.get('/trips', async (req, res) => {
   try {
-    const where = {}
-    if (req.query.userId) {
-      where.ownerUserId = Number(req.query.userId)
+    const userId = req.query.userId !== undefined && req.query.userId !== null && req.query.userId !== ''
+      ? parseUserId(req.query.userId)
+      : null
+
+    if (req.query.userId && !userId) {
+      return res.status(400).json({ error: 'Invalid userId' })
     }
 
-    const trips = await Trip.findAll({
-      where,
-      include: [{
-        model: User,
-        as: 'owner',
-        attributes: ['id', 'username', 'name'],
-        required: false
-      }],
-      order: [['updatedAt', 'DESC']]
-    })
-
+    const trips = await findTripsForAdmin(userId)
     res.json(trips)
   } catch (error) {
     console.error('Admin trips list error:', error)

@@ -29,9 +29,14 @@ const findOrCreateTrip = async (TripModel, { tripId, tripName, tripInfo, userId 
     name: tripName || tripInfo.name,
     description: tripInfo.description,
     startDate: tripInfo.startDate,
-    endDate: tripInfo.endDate,
-    userId: userId || 1
+    endDate: tripInfo.endDate
   })
+
+  const { linkTripToUser } = require('../utils/trip-ownership')
+  if (userId) {
+    await linkTripToUser(trip.id, userId)
+  }
+
   return { trip }
 }
 

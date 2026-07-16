@@ -19,7 +19,7 @@ interface TimelineActivityRowProps {
   index: number;
   activityTypes: ActivityType[];
   stages: Stage[];
-  onEdit: (activity: Activity, stage: Stage) => void;
+  onEdit?: (activity: Activity, stage: Stage) => void;
   onDelete?: (activityId: number) => void;
 }
 
@@ -40,6 +40,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   const timeZone = activity.stage?.timezone || getActivityStageTimezone(activity.stageId, stages);
 
   const handleClick = () => {
+    if (!onEdit) return;
     const activityStage = stages.find((stage) => stage.id === activity.stageId);
     if (activityStage) {
       onEdit(activity, activityStage);
@@ -80,10 +81,10 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
         borderColor: statusColor,
         pl: 2,
         mb: 1,
-        cursor: 'pointer',
-        '&:hover': {
+        cursor: onEdit ? 'pointer' : 'default',
+        '&:hover': onEdit ? {
           backgroundColor: 'rgba(0, 0, 0, 0.04)'
-        }
+        } : undefined
       }}
       onClick={handleClick}
     >

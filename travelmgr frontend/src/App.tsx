@@ -9,6 +9,7 @@ import Register from './components/Register';
 import TripList from './components/TripList';
 import TripDetail from './components/TripDetail';
 import AdminPanel from './components/AdminPanel';
+import { logout } from './services/auth';
 import { Trip } from './types';
 
 const theme = createTheme({
@@ -23,10 +24,16 @@ const theme = createTheme({
 });
 
 const AppContent: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, setUser, isLoading } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
-  const [showAdmin, setShowAdmin] = useState(false);
+  const isAdmin = user?.role === 'admin';
+
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
+    setSelectedTrip(null);
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -40,14 +47,21 @@ const AppContent: React.FC = () => {
     );
   }
 
-  if (showAdmin && user.role === 'admin') {
+  if (isAdmin) {
+    if (selectedTrip) {
+      return (
+        <TripDetail
+          tripId={selectedTrip.id}
+          onBack={() => setSelectedTrip(null)}
+          readOnly
+        />
+      );
+    }
+
     return (
       <AdminPanel
-        onBack={() => setShowAdmin(false)}
-        onTripSelect={(trip) => {
-          setShowAdmin(false);
-          setSelectedTrip(trip);
-        }}
+        onLogout={handleLogout}
+        onTripSelect={setSelectedTrip}
       />
     );
   }
@@ -64,7 +78,6 @@ const AppContent: React.FC = () => {
   return (
     <TripList
       onTripSelect={setSelectedTrip}
-      onOpenAdmin={user.role === 'admin' ? () => setShowAdmin(true) : undefined}
     />
   );
 };

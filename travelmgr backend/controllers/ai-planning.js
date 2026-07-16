@@ -15,6 +15,7 @@ const {
   normalizeFormData
 } = require('../utils/ai-planning-service')
 const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
+const { linkTripToUser } = require('../utils/trip-ownership')
 
 const findSessionForUser = async (sessionId, userId) => {
   const where = { id: sessionId }
@@ -41,7 +42,7 @@ const findCountryForStage = async (countryCode, stageName) => {
   return Country.findOne({ where: { code: 'FR' } }) || Country.findOne()
 }
 
-const createTripFromItinerary = async (itinerary, formData = {}, ownerUserId = null) => {
+const createTripFromItinerary = async (itinerary, formData = {}, userId = null) => {
   const { trip, stages: stageList } = itinerary
 
   const existingTrip = await Trip.findOne({ where: { name: trip.name } })
@@ -56,9 +57,12 @@ const createTripFromItinerary = async (itinerary, formData = {}, ownerUserId = n
     endDate: trip.endDate,
     budget: trip.budget,
     currency: trip.currency,
-    departureLocation: formData.departureLocation || itinerary.outboundTransport?.departureLocation || null,
-    ownerUserId: ownerUserId || null
+    departureLocation: formData.departureLocation || itinerary.outboundTransport?.departureLocation || null
   })
+
+  if (userId) {
+    await linkTripToUser(createdTrip.id, userId)
+  }
 
   const createTransportActivity = async (stage, transport) => {
     if (!transport) return

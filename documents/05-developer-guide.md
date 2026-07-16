@@ -81,6 +81,8 @@ CREATE DATABASE travel_mgr_test;
 
 2. Start the backend — migrations run automatically on connect (`utils/db.js` + Umzug).
 
+User trip lists return all trips (same behaviour as before admin work). New trips created while logged in are also linked in `trip_lists` for admin filtering. Admin ownership is resolved from `trip_lists`, AI planning sessions, and AI adaptation sessions.
+
 3. Optional manual migration:
 
 ```bash

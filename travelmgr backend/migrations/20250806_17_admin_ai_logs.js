@@ -28,14 +28,6 @@ module.exports = {
       })
     }
 
-    await addColumnIfNotExists(queryInterface, 'trips', 'owner_user_id', {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: { model: 'users', key: 'id' },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL'
-    })
-
     await createTableIfNotExists(queryInterface, 'ai_interaction_logs', {
       id: {
         type: DataTypes.INTEGER,
@@ -160,7 +152,6 @@ module.exports = {
 
   down: async ({ context: queryInterface }) => {
     await queryInterface.dropTable('ai_interaction_logs')
-    await removeColumnIfExists(queryInterface, 'trips', 'owner_user_id')
     await removeColumnIfExists(queryInterface, 'users', 'must_set_password')
     await removeColumnIfExists(queryInterface, 'users', 'role')
     await queryInterface.sequelize.query("DELETE FROM users WHERE username = 'admin' AND password_hash IS NULL")

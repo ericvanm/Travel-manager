@@ -40,9 +40,10 @@ interface TripDetailProps {
   tripId: number;
   onBack: () => void;
   viewMode?: 'timeline' | 'stages';
+  readOnly?: boolean;
 }
 
-const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'timeline' }) => {
+const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'timeline', readOnly = false }) => {
   const { t, language } = useLanguage();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -689,13 +690,15 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           )}
           <TripActionsToolbar
             color="inherit"
-            onEdit={handleEditTripOpen}
             onExport={handleExportTrip}
-            onImportCsv={handleImportCsvClick}
-            onAdaptAi={handleAdaptAiOpen}
-            onDelete={handleDeleteTrip}
             onMap={() => setMapDialogOpen(true)}
             showMap
+            {...(!readOnly && {
+              onEdit: handleEditTripOpen,
+              onImportCsv: handleImportCsvClick,
+              onAdaptAi: handleAdaptAiOpen,
+              onDelete: handleDeleteTrip,
+            })}
           />
         </Toolbar>
       </AppBar>
@@ -712,7 +715,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
         <TripConsistencyBanner
           report={consistencyReport}
           loading={consistencyLoading}
-          onResolve={handleResolveConsistency}
+          onResolve={readOnly ? undefined : handleResolveConsistency}
           resolving={resolvingConsistency}
         />
 
@@ -731,7 +734,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             {currentViewMode === 'timeline' ? t('trip_timeline_title') : t('stages')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            {currentViewMode === 'stages' && selectedActivityIds.length > 0 && (
+            {!readOnly && currentViewMode === 'stages' && selectedActivityIds.length > 0 && (
               <Button
                 variant="contained"
                 color="error"
@@ -740,7 +743,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                 {t('delete_selected', { count: selectedActivityIds.length })}
               </Button>
             )}
-            {mergeMode && (
+            {!readOnly && mergeMode && (
               <Button
                 variant="contained"
                 color="primary"
@@ -758,21 +761,25 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             >
               {currentViewMode === 'timeline' ? t('trip_view_stages') : t('trip_view_timeline')}
             </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleStructureTrip}
-              startIcon={<AccountTree />}
-            >
-              {t('structure_trip')}
-            </Button>
-            <Button
-              variant={mergeMode ? "contained" : "outlined"}
-              color={mergeMode ? "secondary" : "primary"}
-              onClick={toggleMergeMode}
-            >
-              {mergeMode ? t('cancel') : t('merge')}
-            </Button>
+            {!readOnly && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleStructureTrip}
+                  startIcon={<AccountTree />}
+                >
+                  {t('structure_trip')}
+                </Button>
+                <Button
+                  variant={mergeMode ? "contained" : "outlined"}
+                  color={mergeMode ? "secondary" : "primary"}
+                  onClick={toggleMergeMode}
+                >
+                  {mergeMode ? t('cancel') : t('merge')}
+                </Button>
+              </>
+            )}
           </Box>
         </Box>
 
@@ -799,8 +806,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                       index={index}
                       activityTypes={activityTypes}
                       stages={stages}
-                      onEdit={handleEditActivity}
-                      onDelete={handleDeleteActivity}
+                      onEdit={readOnly ? undefined : handleEditActivity}
+                      onDelete={readOnly ? undefined : handleDeleteActivity}
                     />
                   ))}
                 </Box>
@@ -816,7 +823,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
             <Paper key={stage.id} sx={{ mb: 3, p: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {mergeMode && (
+                  {!readOnly && mergeMode && (
                     <Checkbox
                       checked={selectedStageIds.includes(stage.id)}
                       onChange={(e) => (e.target.checked ? selectStage(stage.id) : deselectStage(stage.id))}
@@ -833,7 +840,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                     </Typography>
                   </Box>
                 </Box>
-                {!mergeMode && (
+                {!readOnly && !mergeMode && (
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button 
                       size="small" 
@@ -889,24 +896,26 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            indeterminate={
-                              stage.activities.some((a) => selectedActivityIds.includes(a.id))
-                              && !stage.activities.every((a) => selectedActivityIds.includes(a.id))
-                            }
-                            checked={stage.activities.every((a) => selectedActivityIds.includes(a.id))}
-                            onChange={(e) => toggleStageActivitiesSelection(stage, e.target.checked)}
-                            inputProps={{ 'aria-label': t('select_all_activities') }}
-                          />
-                        </TableCell>
+                        {!readOnly && (
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              indeterminate={
+                                stage.activities.some((a) => selectedActivityIds.includes(a.id))
+                                && !stage.activities.every((a) => selectedActivityIds.includes(a.id))
+                              }
+                              checked={stage.activities.every((a) => selectedActivityIds.includes(a.id))}
+                              onChange={(e) => toggleStageActivitiesSelection(stage, e.target.checked)}
+                              inputProps={{ 'aria-label': t('select_all_activities') }}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell>{t('activity_name')}</TableCell>
                         <TableCell>{t('type')}</TableCell>
                         <TableCell>{t('city')}</TableCell>
                         <TableCell>{t('start_time')}</TableCell>
                         <TableCell>{t('end_time')}</TableCell>
                         <TableCell>{t('cost')}</TableCell>
-                        <TableCell>{t('actions')}</TableCell>
+                        {!readOnly && <TableCell>{t('actions')}</TableCell>}
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -928,12 +937,14 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                               borderLeft: isMultiDay ? '4px solid #1976d2' : 'none'
                             }}
                           >
-                            <TableCell padding="checkbox">
-                              <Checkbox
-                                checked={selectedActivityIds.includes(activity.id)}
-                                onChange={() => toggleActivitySelection(activity.id)}
-                              />
-                            </TableCell>
+                            {!readOnly && (
+                              <TableCell padding="checkbox">
+                                <Checkbox
+                                  checked={selectedActivityIds.includes(activity.id)}
+                                  onChange={() => toggleActivitySelection(activity.id)}
+                                />
+                              </TableCell>
+                            )}
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {activity.name}
@@ -986,25 +997,27 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
                             <TableCell>
                               {activity.cost ? `$${activity.cost}` : t('na')}
                             </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Button 
-                                  size="small" 
-                                  variant="outlined"
-                                  onClick={() => handleEditActivity(activity, stage)}
-                                >
-                                  {t('edit')}
-                                </Button>
-                                <Button 
-                                  size="small" 
-                                  variant="outlined" 
-                                  color="error"
-                                  onClick={() => handleDeleteActivity(activity.id)}
-                                >
-                                  {t('delete')}
-                                </Button>
-                              </Box>
-                            </TableCell>
+                            {!readOnly && (
+                              <TableCell>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                  <Button 
+                                    size="small" 
+                                    variant="outlined"
+                                    onClick={() => handleEditActivity(activity, stage)}
+                                  >
+                                    {t('edit')}
+                                  </Button>
+                                  <Button 
+                                    size="small" 
+                                    variant="outlined" 
+                                    color="error"
+                                    onClick={() => handleDeleteActivity(activity.id)}
+                                  >
+                                    {t('delete')}
+                                  </Button>
+                                </Box>
+                              </TableCell>
+                            )}
                           </TableRow>
                         );
                       })}
@@ -1020,24 +1033,28 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           ))
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setStageDialog(true)}
-          >
-            {t('add_stage')}
-          </Button>
-        </Box>
+        {!readOnly && (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setStageDialog(true)}
+              >
+                {t('add_stage')}
+              </Button>
+            </Box>
 
-        <Fab
-          color="primary"
-          aria-label="add stage"
-          sx={{ position: 'fixed', bottom: 16, right: 16 }}
-          onClick={() => setStageDialog(true)}
-        >
-          <Add />
-        </Fab>
+            <Fab
+              color="primary"
+              aria-label="add stage"
+              sx={{ position: 'fixed', bottom: 16, right: 16 }}
+              onClick={() => setStageDialog(true)}
+            >
+              <Add />
+            </Fab>
+          </>
+        )}
 
         <StageDialog
           open={stageDialog}
@@ -1121,7 +1138,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           onErrorClear={() => setEditTripError(null)}
         />
 
-        {trip && (
+        {!readOnly && trip && (
           <AITripAdapt
             open={aiAdaptOpen}
             trip={trip}

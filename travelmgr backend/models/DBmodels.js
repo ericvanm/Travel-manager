@@ -192,12 +192,6 @@ Trip.init({
     type: DataTypes.STRING(255),
     allowNull: true,
     field: 'departure_location'
-  },
-  ownerUserId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    field: 'owner_user_id',
-    references: { model: 'users', key: 'id' }
   }
 }, {
   sequelize,
@@ -1233,8 +1227,6 @@ AiInteractionLog.init({
 User.hasMany(AiInteractionLog, { foreignKey: 'userId' })
 AiInteractionLog.belongsTo(User, { foreignKey: 'userId' })
 AiInteractionLog.belongsTo(Trip, { foreignKey: 'tripId' })
-User.hasMany(Trip, { foreignKey: 'ownerUserId', as: 'ownedTrips' })
-Trip.belongsTo(User, { foreignKey: 'ownerUserId', as: 'owner' })
 
 // Relations for new models
 Stage.hasMany(Flight, { foreignKey: 'stageId' })

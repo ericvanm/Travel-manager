@@ -13,7 +13,7 @@ import TripConsistencyIndicator from './TripConsistencyIndicator'
 interface Props {
   report: TripConsistencyReport | null
   loading?: boolean
-  onResolve: () => void
+  onResolve?: () => void
   resolving?: boolean
 }
 
@@ -73,16 +73,18 @@ export const TripConsistencyBanner: React.FC<Props> = ({
       action={
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
           <TripConsistencyIndicator summary={summaryForIndicator} compact={false} />
-          <Button
-            size="small"
-            variant="contained"
-            color="secondary"
-            startIcon={resolving ? <CircularProgress size={16} color="inherit" /> : <AutoFixHigh />}
-            disabled={!canResolve || resolving}
-            onClick={onResolve}
-          >
-            {t('trip_consistency_resolve')}
-          </Button>
+          {onResolve && (
+            <Button
+              size="small"
+              variant="contained"
+              color="secondary"
+              startIcon={resolving ? <CircularProgress size={16} color="inherit" /> : <AutoFixHigh />}
+              disabled={!canResolve || resolving}
+              onClick={onResolve}
+            >
+              {t('trip_consistency_resolve')}
+            </Button>
+          )}
         </Box>
       }
     >

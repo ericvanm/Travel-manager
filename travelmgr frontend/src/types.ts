@@ -34,8 +34,7 @@ export interface Trip {
   budget?: number | null;
   currency?: string | null;
   departureLocation?: string | null;
-  ownerUserId?: number | null;
-  owner?: { id: number; username: string; name: string } | null;
+  users?: { id: number; username: string; name: string }[];
   stages?: Stage[];
 }
 

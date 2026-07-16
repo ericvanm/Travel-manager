@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs')
 const { sequelize } = require('../utils/db')
-const { User, Trip, Stage, Activity, Country } = require('../models/DBmodels')
+const { User, Trip, TripList, Stage, Activity, Country } = require('../models/DBmodels')
 
 const resetDatabase = async () => {
   await sequelize.query(`
@@ -39,6 +39,27 @@ const createTrip = async ({ name = 'Test Trip', description = 'A test trip' } = 
   return Trip.create({ name, description })
 }
 
+const linkTripToUser = async (tripId, userId) => {
+  return TripList.create({ tripId, userId })
+}
+
+const createTripForUser = async (userId, { name = 'Test Trip', description = 'A test trip' } = {}) => {
+  const trip = await createTrip({ name, description })
+  if (userId) {
+    await linkTripToUser(trip.id, userId)
+  }
+  return trip
+}
+
+const createAuthenticatedAgent = async (app, { username = 'testuser', password = 'secret', name = 'Test User' } = {}) => {
+  const supertest = require('supertest')
+  const agent = supertest.agent(app)
+  await agent.post('/api/auth/register').send({ username, password, name })
+  await agent.post('/api/auth/login').send({ username, password })
+  const user = await User.findOne({ where: { username } })
+  return { agent, user }
+}
+
 const createStage = async (tripId, { name = 'Stage 1', startDate = '2025-06-01', endDate = '2025-06-05', countryId } = {}) => {
   const resolvedCountryId = countryId || await getDefaultCountryId()
   return Stage.create({
@@ -64,6 +85,9 @@ module.exports = {
   getDefaultCountryId,
   createUser,
   createTrip,
+  linkTripToUser,
+  createTripForUser,
+  createAuthenticatedAgent,
   createStage,
   createActivity,
 }

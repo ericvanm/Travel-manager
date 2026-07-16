@@ -49,6 +49,7 @@ function Get-RepoRoot {
 }
 
 $RepoRoot = Get-RepoRoot
+
 $ComposeFile = Join-Path $RepoRoot $(if ($Profile -eq 'Dev') { 'docker-compose.dev.yml' } else { 'docker-compose.yml' })
 
 if (-not (Test-Path -LiteralPath $ComposeFile)) {
@@ -56,7 +57,7 @@ if (-not (Test-Path -LiteralPath $ComposeFile)) {
 }
 
 Write-Host ''
-Write-Host "Travel Manager — Docker rebuild ($Profile)" -ForegroundColor Cyan
+Write-Host "Travel Manager - Docker rebuild ($Profile)" -ForegroundColor Cyan
 Write-Host "Compose file: $ComposeFile"
 Write-Host ''
 

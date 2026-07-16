@@ -24,7 +24,7 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { Logout } from '@mui/icons-material';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   getAdminAiLogDetail,
@@ -40,7 +40,7 @@ import {
 } from '../../types';
 
 interface AdminPanelProps {
-  onBack: () => void;
+  onLogout: () => void;
   onTripSelect?: (trip: Trip) => void;
 }
 
@@ -49,11 +49,11 @@ const formatDateTime = (value?: string | null) => {
   return new Date(value).toLocaleString();
 };
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onTripSelect }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
   const { t } = useLanguage();
   const [tab, setTab] = useState(0);
   const [users, setUsers] = useState<AdminUserOption[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [trips, setTrips] = useState<Trip[]>([]);
   const [logs, setLogs] = useState<AiInteractionLogSummary[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(false);
@@ -73,7 +73,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onTripSelect }) => {
     setLoadingTrips(true);
     setError(null);
     try {
-      const data = await getAdminTrips(selectedUserId === '' ? undefined : selectedUserId);
+      const data = await getAdminTrips(selectedUserId ? Number(selectedUserId) : undefined);
       setTrips(data);
     } catch {
       setError(t('admin_load_error'));
@@ -87,7 +87,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onTripSelect }) => {
     setError(null);
     try {
       const data = await getAdminAiLogs({
-        userId: selectedUserId === '' ? undefined : selectedUserId,
+        userId: selectedUserId ? Number(selectedUserId) : undefined,
         limit: 100,
       });
       setLogs(data.logs);
@@ -124,11 +124,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onTripSelect }) => {
       <Select
         label={t('admin_filter_user')}
         value={selectedUserId}
-        onChange={(e) => setSelectedUserId(e.target.value === '' ? '' : Number(e.target.value))}
+        onChange={(e) => setSelectedUserId(String(e.target.value))}
       >
         <MenuItem value="">{t('admin_all_users')}</MenuItem>
         {users.map((user) => (
-          <MenuItem key={user.id} value={user.id}>
+          <MenuItem key={user.id} value={String(user.id)}>
             {user.username} ({user.name})
           </MenuItem>
         ))}
@@ -140,12 +140,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onTripSelect }) => {
     <Box>
       <AppBar position="static">
         <Toolbar>
-          <IconButton color="inherit" onClick={onBack} edge="start" sx={{ mr: 1 }}>
-            <ArrowBack />
-          </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {t('admin_panel')}
           </Typography>
+          <IconButton color="inherit" onClick={onLogout} aria-label={t('logout')}>
+            <Logout />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -190,7 +190,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack, onTripSelect }) => {
                     <TableRow key={trip.id} hover>
                       <TableCell>{trip.name}</TableCell>
                       <TableCell>
-                        {trip.owner?.username || '—'}
+                        {(trip.users && trip.users.length > 0)
+                          ? trip.users.map((u) => u.username).join(', ')
+                          : '—'}
                       </TableCell>
                       <TableCell>{formatDateTime(trip.startDate)}</TableCell>
                       <TableCell>{formatDateTime(trip.endDate)}</TableCell>
