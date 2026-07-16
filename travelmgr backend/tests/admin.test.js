@@ -41,6 +41,7 @@ describe('GET /api/admin/trips', () => {
       name: 'Admin Login'
     })
     await User.update({ role: 'admin' }, { where: { username: 'adminlogin' } })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminlogin', password: 'secret' })
 
     const filtered = await adminAgent.get('/api/admin/trips').query({ userId: owner.id })
     assert.strictEqual(filtered.status, 200)

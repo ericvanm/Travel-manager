@@ -2,15 +2,14 @@ const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const supertest = require('supertest')
 const { connectToDatabase } = require('../utils/db')
+const { User } = require('../models/DBmodels')
 const { resetDatabase } = require('./setup')
 
 let app
-let api
 
 before(async () => {
   await connectToDatabase()
   app = require('../app')
-  api = supertest(app)
 })
 
 beforeEach(async () => {
@@ -56,11 +55,16 @@ describe('users profile API', () => {
     assert.strictEqual(relogin.status, 200)
   })
 
-  test('lists public profiles', async () => {
-    const agent = supertest.agent(app)
-    await registerAndLogin(agent, 'listeduser')
+  test('lists profiles for admin', async () => {
+    const adminAgent = supertest.agent(app)
+    await registerAndLogin(adminAgent, 'adminuser')
+    await User.update({ role: 'admin' }, { where: { username: 'adminuser' } })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminuser', password: 'secret' })
 
-    const response = await api.get('/api/auth/profiles')
+    const listedAgent = supertest.agent(app)
+    await registerAndLogin(listedAgent, 'listeduser')
+
+    const response = await adminAgent.get('/api/auth/profiles')
     assert.strictEqual(response.status, 200)
     assert.ok(response.body.some((user) => user.username === 'listeduser'))
   })
