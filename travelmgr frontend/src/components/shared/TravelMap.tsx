@@ -37,24 +37,35 @@ const MapBoundsController: React.FC<{
   useEffect(() => {
     let cancelled = false
 
+    const cancelPendingTransition = () => {
+      cancelled = true
+      try {
+        map.stop()
+      } catch {
+        // The map may already have been removed by React-Leaflet.
+      }
+    }
+
     const fitSafely = (bounds: ReturnType<typeof L.latLngBounds>, padding: number) => {
       if (cancelled) return
       const container = map.getContainer?.()
       if (!container?.isConnected) return
       try {
-        map.fitBounds(bounds.pad(padding))
+        // An animated fit can finish after a dialog/map has unmounted. Leaflet
+        // then tries to read the removed map pane and throws on `_leaflet_pos`.
+        map.fitBounds(bounds.pad(padding), { animate: false })
       } catch {
         // Map may be unmounting (e.g. dialog closed)
       }
     }
 
     const valid = points.filter((p) => p.lat && p.lng)
-    if (valid.length === 0) return () => { cancelled = true }
+    if (valid.length === 0) return cancelPendingTransition
 
     if (focusMode === 'global' && valid.length >= 2) {
       const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]))
       fitSafely(bounds, 0.35)
-      return () => { cancelled = true }
+      return cancelPendingTransition
     }
 
     const stagePoints = valid.filter((p) => ['stage', 'activity', 'accommodation', 'transport'].includes(p.type))
@@ -62,7 +73,7 @@ const MapBoundsController: React.FC<{
     const bounds = L.latLngBounds(target.map((p) => [p.lat, p.lng]))
     fitSafely(bounds, 0.15)
 
-    return () => { cancelled = true }
+    return cancelPendingTransition
   }, [map, points, focusMode])
 
   return null

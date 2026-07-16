@@ -22,6 +22,7 @@ Central documentation for the Travel Manager monorepo. All documents are written
 | 05 | [Developer guide](05-developer-guide.md) | Local setup, env vars, scripts, troubleshooting |
 | 06 | [Deployment](06-deployment.md) | Render, Vercel, Docker, environment variables |
 | 07 | [API reference](07-api-reference.md) | REST endpoints, auth, request/response examples |
+| 08 | [AI integration](08-ai-integration.md) | AI workflows, OpenAI setup, prompt configuration, logging and fallbacks |
 
 ## Additional artifacts
 
