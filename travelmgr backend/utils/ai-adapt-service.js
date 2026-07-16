@@ -10,15 +10,32 @@ const { extractStageCity, locationsCompatible } = require('./trip-location-valid
 const { clearIncompatibleActivityFields } = require('./activity-field-cleanup')
 const { enforceTripActivityTransportTiming } = require('./trip-activity-timing')
 
+const { sanitizeForLlm, sanitizeLlmMessages } = require('./log-sanitizer')
+
 const DEFAULT_CONFIG_PATH = path.join(__dirname, '..', 'config', 'ai-adapt-prompts.json')
 
-let cache = { mtimeMs: 0, config: null }
+const EMPTY_ADAPT_CONFIG = {
+  systemMessage: '',
+  languageInstruction: '',
+  proposeInstructions: '',
+  proposeJsonSchema: ''
+}
+
+let cache = { mtimeMs: 0, config: EMPTY_ADAPT_CONFIG }
+
+const normalizeAdaptPromptsConfig = (raw) => ({
+  systemMessage: String(raw?.systemMessage || ''),
+  languageInstruction: String(raw?.languageInstruction || ''),
+  proposeInstructions: String(raw?.proposeInstructions || ''),
+  proposeJsonSchema: String(raw?.proposeJsonSchema || '')
+})
 
 const loadAdaptPromptsConfig = () => {
   const configPath = process.env.AI_ADAPT_PROMPTS_PATH || DEFAULT_CONFIG_PATH
   const stat = fs.statSync(configPath)
   if (cache.config && cache.mtimeMs === stat.mtimeMs) return cache.config
-  cache = { mtimeMs: stat.mtimeMs, config: JSON.parse(fs.readFileSync(configPath, 'utf8')) }
+  const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  cache = { mtimeMs: stat.mtimeMs, config: normalizeAdaptPromptsConfig(parsed) }
   return cache.config
 }
 
@@ -66,7 +83,7 @@ const mergeActivityDetailFields = (change, data = {}) => {
   return merged
 }
 
-const buildCompactSnapshot = (snapshot) => ({
+const buildCompactSnapshot = (snapshot) => sanitizeForLlm({
   trip: {
     id: snapshot.trip.id,
     name: snapshot.trip.name,
@@ -100,8 +117,6 @@ const buildCompactSnapshot = (snapshot) => ({
       airline: a.airline,
       departureAirport: a.departureAirport,
       arrivalAirport: a.arrivalAirport,
-      confirmationCode: a.confirmationCode,
-      confirmationNumber: a.confirmationNumber,
       checkInDate: a.checkInDate,
       checkOutDate: a.checkOutDate,
       company: a.company,
@@ -140,10 +155,10 @@ const callOpenAI = async (prompt, language, logContext = null) => {
   const languageLabel = getLanguageLabel(language)
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
   const systemMessage = renderTemplate(config.systemMessage, { languageLabel })
-  const messages = [
+  const messages = sanitizeLlmMessages([
     { role: 'system', content: systemMessage },
     { role: 'user', content: prompt }
-  ]
+  ])
 
   try {
     const response = await openai.chat.completions.create({

@@ -3,13 +3,21 @@ const path = require('path')
 
 const DEFAULT_CONFIG_PATH = path.join(__dirname, '..', 'config', 'activity-inspiration-sites.json')
 
-let cache = { mtimeMs: 0, config: null }
+const EMPTY_CONFIG = { sites: [], defaultSiteNames: [] }
+
+let cache = { mtimeMs: 0, config: EMPTY_CONFIG }
+
+const normalizeInspirationConfig = (raw) => ({
+  sites: Array.isArray(raw?.sites) ? raw.sites : [],
+  defaultSiteNames: Array.isArray(raw?.defaultSiteNames) ? raw.defaultSiteNames : []
+})
 
 const loadInspirationSitesConfig = () => {
   const configPath = process.env.ACTIVITY_INSPIRATION_SITES_PATH || DEFAULT_CONFIG_PATH
   const stat = fs.statSync(configPath)
   if (cache.config && cache.mtimeMs === stat.mtimeMs) return cache.config
-  cache = { mtimeMs: stat.mtimeMs, config: JSON.parse(fs.readFileSync(configPath, 'utf8')) }
+  const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  cache = { mtimeMs: stat.mtimeMs, config: normalizeInspirationConfig(parsed) }
   return cache.config
 }
 
@@ -20,7 +28,8 @@ const renderSiteUrl = (template, query) =>
 
 const listDefaultSiteNames = () => {
   const config = loadInspirationSitesConfig()
-  return config.defaultSiteNames || config.sites.map((s) => s.name)
+  if (config.defaultSiteNames.length > 0) return config.defaultSiteNames
+  return config.sites.map((s) => s.name)
 }
 
 const resolveInspirationSites = (formData = {}) => {

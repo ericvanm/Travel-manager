@@ -90,8 +90,9 @@ const deriveTripDateBounds = (trip, stages = [], activities = []) => {
     return { start: null, end: null }
   }
 
-  starts.sort()
-  ends.sort()
+  const compareIsoDate = (a, b) => String(a).localeCompare(String(b))
+  starts.sort(compareIsoDate)
+  ends.sort(compareIsoDate)
   return { start: starts[0], end: ends[ends.length - 1] }
 }
 

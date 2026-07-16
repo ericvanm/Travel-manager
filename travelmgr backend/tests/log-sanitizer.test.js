@@ -1,6 +1,6 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { sanitizeParams, sanitizeObject, redactConnectionUrl, buildDatabaseLogContext } = require('../utils/log-sanitizer')
+const { sanitizeParams, sanitizeObject, sanitizeForLlm, sanitizeLlmMessages, redactConnectionUrl, buildDatabaseLogContext } = require('../utils/log-sanitizer')
 
 describe('log-sanitizer', () => {
   test('redacts sensitive keys in objects', () => {
@@ -55,5 +55,28 @@ describe('log-sanitizer', () => {
     const sanitized = sanitizeObject({ username: 'alice', token: 'abc' })
     assert.strictEqual(sanitized.username, 'alice')
     assert.strictEqual(sanitized.token, '[REDACTED]')
+  })
+
+  test('sanitizeForLlm redacts booking confirmation fields', () => {
+    const sanitized = sanitizeForLlm({
+      name: 'Flight to Paris',
+      confirmationCode: 'ABC123',
+      confirmationNumber: 'PNR-999',
+      bookingCode: 'BK-42'
+    })
+    assert.strictEqual(sanitized.name, 'Flight to Paris')
+    assert.strictEqual(sanitized.confirmationCode, '[REDACTED]')
+    assert.strictEqual(sanitized.confirmationNumber, '[REDACTED]')
+    assert.strictEqual(sanitized.bookingCode, '[REDACTED]')
+  })
+
+  test('sanitizeLlmMessages preserves role and content', () => {
+    const messages = sanitizeLlmMessages([
+      { role: 'system', content: 'You are a planner.' },
+      { role: 'user', content: '{"confirmationCode":"secret"}' }
+    ])
+    assert.strictEqual(messages.length, 2)
+    assert.strictEqual(messages[0].role, 'system')
+    assert.strictEqual(messages[1].content, '{"confirmationCode":"secret"}')
   })
 })

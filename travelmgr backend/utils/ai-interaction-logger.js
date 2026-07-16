@@ -1,4 +1,5 @@
 const { AiInteractionLog } = require('../models/DBmodels')
+const { sanitizeForLlm, sanitizeLlmMessages } = require('./log-sanitizer')
 
 const logAiInteraction = async ({
   userId = null,
@@ -29,10 +30,10 @@ const logAiInteraction = async ({
       model,
       systemPrompt,
       userPrompt,
-      requestMessages,
-      requestPayload,
+      requestMessages: sanitizeLlmMessages(requestMessages),
+      requestPayload: sanitizeForLlm(requestPayload),
       rawResponse,
-      parsedResponse,
+      parsedResponse: sanitizeForLlm(parsedResponse),
       tokenUsage,
       status,
       errorMessage

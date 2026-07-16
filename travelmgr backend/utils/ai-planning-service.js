@@ -439,16 +439,17 @@ const buildPlanningPrompt = (formData, mode, previousItinerary, revisionFeedback
 }
 
 const { logAiInteraction } = require('./ai-interaction-logger')
+const { sanitizeLlmMessages } = require('./log-sanitizer')
 
 const callOpenAI = async (prompt, language = 'fr', logContext = null) => {
   const { OpenAI } = require('openai')
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
   const systemMessage = getSystemMessage(language)
-  const messages = [
+  const messages = sanitizeLlmMessages([
     { role: 'system', content: systemMessage },
     { role: 'user', content: prompt }
-  ]
+  ])
 
   try {
     const response = await openai.chat.completions.create({
