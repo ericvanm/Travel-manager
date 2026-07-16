@@ -13,6 +13,10 @@ const ALLOWED_BOOKING_HOSTS = [
   'www.klook.com',
   'booking.com',
   'www.booking.com',
+  'airbnb.com',
+  'www.airbnb.com',
+  'airbnb.fr',
+  'www.airbnb.fr',
   'google.com',
   'www.google.com',
   'thetrainline.com',
@@ -48,6 +52,14 @@ const isGetYourGuideSearchUrl = (url) => {
   return path === '/s' || path === '/s/' || path.startsWith('/s/')
 }
 
+const isSearchResultsUrl = (url) => {
+  const path = url.pathname.toLowerCase()
+  return path.includes('searchresult') || path.includes('search-results')
+}
+
+const buildGoogleSearchUrl = (query) =>
+  `https://www.google.com/search?q=${encodeQuery(query)}`
+
 const buildActivitySearchQuery = (activity, formData = null) => {
   const city = activity.city || activity.arrivalLocation || ''
   const name = activity.name || ''
@@ -67,7 +79,7 @@ const suggestActivityBookingUrl = (activity, formData = null) => {
   const template = pickInspirationSiteTemplate(formData)
 
   if (type === 'restaurant') {
-    return `https://www.google.com/search?q=${encodeQuery(`${query} restaurant reservation`)}`
+    return buildGoogleSearchUrl(`${query} restaurant reservation`)
   }
   if (type === 'museum' || type === 'tour' || type === 'entertainment' || type === 'shopping') {
     return renderSiteUrl(template, query)
@@ -76,41 +88,61 @@ const suggestActivityBookingUrl = (activity, formData = null) => {
     return suggestAccommodationBookingUrl(activity, formData)
   }
   if (type === 'train') {
-    return 'https://www.thetrainline.com'
+    return buildGoogleSearchUrl(`${query} train tickets`)
   }
   if (type === 'bus') {
-    return 'https://www.flixbus.com'
+    return buildGoogleSearchUrl(`${query} bus tickets`)
   }
   if (type === 'public_transport') {
-    return `https://www.google.com/search?q=${encodeQuery(`${query} public transport tickets`)}`
+    return buildGoogleSearchUrl(`${query} public transport tickets`)
   }
-  return `https://www.google.com/search?q=${encodeQuery(`${query} book tickets`)}`
+  if (type === 'private_car') {
+    const from = activity.departureLocation || ''
+    const to = activity.arrivalLocation || query
+    return buildGoogleSearchUrl(`${from} to ${to} driving directions`)
+  }
+  return buildGoogleSearchUrl(`${query} book tickets`)
 }
 
 const suggestTransportBookingUrl = (transport) => {
   const mode = (transport.mode || transport.activityType || '').toLowerCase()
   const from = transport.departureLocation || transport.departureAirport || ''
   const to = transport.arrivalLocation || transport.arrivalAirport || ''
+  const routeQuery = [from, to].filter(Boolean).join(' to ')
 
   if (mode === 'flight' || transport.activityType === 'flight') {
-    const q = [from, to].filter(Boolean).join(' to ')
-    return q
-      ? `https://www.google.com/travel/flights?q=Flights%20${encodeQuery(q)}`
+    return routeQuery
+      ? `https://www.google.com/travel/flights?q=Flights%20${encodeQuery(routeQuery)}`
       : 'https://www.google.com/travel/flights'
   }
   if (mode === 'train' || transport.activityType === 'train' || transport.activityTypeId === 9) {
-    return 'https://www.thetrainline.com'
+    return buildGoogleSearchUrl(`${routeQuery} train tickets`)
   }
   if (mode === 'bus' || transport.activityType === 'bus' || transport.activityTypeId === 10) {
-    return 'https://www.flixbus.com'
+    return buildGoogleSearchUrl(`${routeQuery} bus tickets`)
+  }
+  if (mode === 'public_transport' || transport.activityType === 'public_transport') {
+    return buildGoogleSearchUrl(`${routeQuery} public transport`)
+  }
+  if (mode === 'private_car' || transport.activityType === 'private_car') {
+    return buildGoogleSearchUrl(`${routeQuery} driving route`)
   }
   if (mode === 'car' || transport.activityType === 'car_rental') {
-    const loc = to || from
-    return loc
-      ? `https://www.rentalcars.com/SearchResults.do?city=${encodeQuery(loc)}`
-      : 'https://www.rentalcars.com'
+    return buildGoogleSearchUrl(`${to || from} car rental`)
   }
-  return `https://www.google.com/search?q=${encodeQuery(`${from} ${to} transport booking`)}`
+  return buildGoogleSearchUrl(`${from} ${to} transport booking`)
+}
+
+const detectAccommodationProvider = (accommodation, formData) => {
+  const bookingUrl = String(accommodation?.bookingUrl || '').toLowerCase()
+  const bookingSource = String(accommodation?.bookingSource || '').toLowerCase()
+  const type = String(accommodation?.type || formData?.accommodationType || '').toLowerCase()
+
+  if (bookingSource.includes('airbnb') || bookingUrl.includes('airbnb')) return 'airbnb'
+  if (bookingSource.includes('booking') || bookingUrl.includes('booking.com')) return 'booking'
+  if (type.includes('airbnb') || type.includes('appart')) return 'airbnb'
+  if (type.includes('camping')) return 'camping'
+  return 'booking'
 }
 
 const suggestAccommodationBookingUrl = (accommodation, formData) => {
@@ -120,19 +152,33 @@ const suggestAccommodationBookingUrl = (accommodation, formData) => {
     ? `${name} ${city}`.trim()
     : String(name).trim()
 
-  const params = new URLSearchParams()
-  params.set('ss', searchTerm)
-
   const checkIn = accommodation.checkInDate
     ? String(accommodation.checkInDate).slice(0, 10)
     : null
   const checkOut = accommodation.checkOutDate
     ? String(accommodation.checkOutDate).slice(0, 10)
     : null
+
+  const provider = detectAccommodationProvider(accommodation, formData)
+
+  if (provider === 'airbnb') {
+    const params = new URLSearchParams()
+    params.set('query', searchTerm)
+    if (checkIn) params.set('checkin', checkIn)
+    if (checkOut) params.set('checkout', checkOut)
+    const locationSlug = encodeURIComponent(city || searchTerm).replace(/%20/g, '-')
+    return `https://www.airbnb.com/s/${locationSlug}/homes?${params.toString()}`
+  }
+
+  if (provider === 'camping') {
+    return buildGoogleSearchUrl(`${searchTerm} camping reservation`)
+  }
+
+  const params = new URLSearchParams()
+  params.set('q', searchTerm)
   if (checkIn) params.set('checkin', checkIn)
   if (checkOut) params.set('checkout', checkOut)
-
-  return `https://www.booking.com/searchresults.html?${params.toString()}`
+  return `https://www.booking.com/search.html?${params.toString()}`
 }
 
 const normalizeGetYourGuideUrl = (url, item, formData = null) => {
@@ -149,6 +195,22 @@ const normalizeGetYourGuideUrl = (url, item, formData = null) => {
   )
 }
 
+const normalizeSearchResultsUrl = (url, item, formData, kind) => {
+  if (!isSearchResultsUrl(url)) return url.toString()
+
+  if (url.hostname.toLowerCase().includes('getyourguide.com')) {
+    return normalizeGetYourGuideUrl(url, item, formData)
+  }
+
+  if (kind === 'accommodation') {
+    return suggestAccommodationBookingUrl(item, formData)
+  }
+  if (kind === 'transport') {
+    return suggestTransportBookingUrl(item)
+  }
+  return suggestActivityBookingUrl(item, formData)
+}
+
 const sanitizeBookingUrl = (rawUrl, item = {}, formData = null, kind = 'activity') => {
   const parsed = parseHttpUrl(rawUrl)
   if (!parsed) return null
@@ -156,6 +218,10 @@ const sanitizeBookingUrl = (rawUrl, item = {}, formData = null, kind = 'activity
 
   if (parsed.hostname.toLowerCase().includes('getyourguide.com')) {
     return normalizeGetYourGuideUrl(parsed, item, formData)
+  }
+
+  if (isSearchResultsUrl(parsed)) {
+    return normalizeSearchResultsUrl(parsed, item, formData, kind)
   }
 
   return parsed.toString()
@@ -278,5 +344,6 @@ module.exports = {
   resolveBookingUrl,
   normalizeItineraryBookingUrls,
   parseHttpUrl,
-  isAllowedBookingHost
+  isAllowedBookingHost,
+  detectAccommodationProvider
 }

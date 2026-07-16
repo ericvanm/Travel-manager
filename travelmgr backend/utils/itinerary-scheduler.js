@@ -1,12 +1,23 @@
 const { suggestBookingUrl } = require('./booking-urls')
+const { resolveTransportActivityType } = require('./activity-field-cleanup')
 
 const TRANSPORT_DURATION_HOURS = {
   flight: 8,
   train: 4,
   car: 5,
+  private_car: 5,
   bus: 6,
   default: 4
 }
+
+const TRANSPORT_ACTIVITY_TYPES = new Set([
+  'flight',
+  'car_rental',
+  'private_car',
+  'train',
+  'bus',
+  'public_transport'
+])
 
 const parseDateOnly = (value) => {
   if (!value) return null
@@ -26,7 +37,7 @@ const inferInterStageMode = (formData, fromLoc, toLoc) => {
   const local = (formData.localTransport || '').toLowerCase()
   if (local.includes('voiture') || local.includes('car')) return 'car'
   if (local.includes('bus')) return 'bus'
-  if (local.includes('train')) return 'train'
+  if (local.includes('train') || local.includes('metro')) return 'train'
   const from = fromLoc.toLowerCase()
   const to = toLoc.toLowerCase()
   if (from.includes('aéroport') || to.includes('aéroport') || from.includes('airport') || to.includes('airport')) {
@@ -44,18 +55,22 @@ const buildTransportLeg = ({
   arrivalLocation,
   date,
   activityType,
+  formData,
   startHour = 8
 }) => {
   const duration = TRANSPORT_DURATION_HOURS[mode] || TRANSPORT_DURATION_HOURS.default
   const times = addHoursToIso(date, startHour, duration)
+  const resolvedType = activityType || resolveTransportActivityType(mode, formData)
+  const cost = resolvedType === 'private_car' ? 0 : estimatedCost
+
   return {
     mode,
     label,
     description,
-    estimatedCost,
+    estimatedCost: cost,
     departureLocation,
     arrivalLocation,
-    activityType: activityType || (mode === 'flight' ? 'flight' : mode === 'car' ? 'car_rental' : 'tour'),
+    activityType: resolvedType,
     startDateTime: times.startDateTime,
     endDateTime: times.endDateTime,
     reservationStatus: 'to_reserve',
@@ -64,20 +79,49 @@ const buildTransportLeg = ({
 }
 
 const ensureActivityAfterArrival = (activity, arrivalEndIso) => {
-  if (!arrivalEndIso || !activity.startDateTime) return
+  if (!arrivalEndIso || !activity?.startDateTime) return
   const arrivalEnd = new Date(arrivalEndIso)
   const actStart = new Date(activity.startDateTime)
   if (actStart >= arrivalEnd) return
 
   const actEnd = activity.endDateTime ? new Date(activity.endDateTime) : null
-  const durationMs = actEnd && actEnd > actStart ? actEnd.getTime() - actStart.getTime() : 8 * 60 * 60 * 1000
+  const durationMs = actEnd && actEnd > actStart ? actEnd.getTime() - actStart.getTime() : 2 * 60 * 60 * 1000
   const newStart = new Date(arrivalEnd.getTime() + 60 * 60 * 1000)
   activity.startDateTime = newStart.toISOString()
   activity.endDateTime = new Date(newStart.getTime() + durationMs).toISOString()
 }
 
+const getStageArrivalEnd = (stage, stageIndex, itinerary) => {
+  if (stage?.arrivalTransport?.endDateTime) return stage.arrivalTransport.endDateTime
+  if (stageIndex === 0 && itinerary?.outboundTransport?.endDateTime) {
+    return itinerary.outboundTransport.endDateTime
+  }
+  return `${parseDateOnly(stage?.startDate)}T14:00:00Z`
+}
+
+const enforceActivitiesAfterTransport = (itinerary) => {
+  const scheduled = {
+    ...itinerary,
+    stages: (itinerary.stages || []).map((stage) => ({
+      ...stage,
+      activities: [...(stage.activities || [])]
+    }))
+  }
+
+  scheduled.stages.forEach((stage, index) => {
+    const arrivalEnd = getStageArrivalEnd(stage, index, scheduled)
+    for (const activity of stage.activities || []) {
+      const type = String(activity.activityType || '').toLowerCase()
+      if (TRANSPORT_ACTIVITY_TYPES.has(type)) continue
+      ensureActivityAfterArrival(activity, arrivalEnd)
+    }
+  })
+
+  return scheduled
+}
+
 const stripTransportActivities = (activities = []) =>
-  activities.filter((a) => !['flight', 'car_rental'].includes(a.activityType))
+  activities.filter((a) => !TRANSPORT_ACTIVITY_TYPES.has(String(a.activityType || '').toLowerCase()))
 
 const scheduleItinerary = (itinerary, formData) => {
   const scheduled = { ...itinerary, stages: (itinerary.stages || []).map((s) => ({ ...s })) }
@@ -92,6 +136,13 @@ const scheduleItinerary = (itinerary, formData) => {
         scheduled.outboundTransport.departureLocation || formData.departureLocation
       scheduled.outboundTransport.arrivalLocation =
         scheduled.outboundTransport.arrivalLocation || firstLoc
+      scheduled.outboundTransport.activityType = resolveTransportActivityType(
+        scheduled.outboundTransport.mode || scheduled.outboundTransport.activityType,
+        formData
+      )
+      if (scheduled.outboundTransport.activityType === 'private_car') {
+        scheduled.outboundTransport.estimatedCost = 0
+      }
     }
 
     if (scheduled.returnTransport) {
@@ -99,6 +150,13 @@ const scheduleItinerary = (itinerary, formData) => {
         scheduled.returnTransport.departureLocation || lastLoc
       scheduled.returnTransport.arrivalLocation =
         scheduled.returnTransport.arrivalLocation || formData.departureLocation
+      scheduled.returnTransport.activityType = resolveTransportActivityType(
+        scheduled.returnTransport.mode || scheduled.returnTransport.activityType,
+        formData
+      )
+      if (scheduled.returnTransport.activityType === 'private_car') {
+        scheduled.returnTransport.estimatedCost = 0
+      }
     }
   }
 
@@ -138,6 +196,7 @@ const scheduleItinerary = (itinerary, formData) => {
         departureLocation: fromLoc,
         arrivalLocation: toLoc,
         date: stage.startDate,
+        formData,
         startHour: 7
       })
       stage.arrivalTransport.bookingUrl = suggestBookingUrl('transport', stage.arrivalTransport, formData)
@@ -183,11 +242,14 @@ const scheduleItinerary = (itinerary, formData) => {
     .map((s) => s.arrivalTransport)
     .filter((t, idx) => t && idx > 0)
 
-  return scheduled
+  return enforceActivitiesAfterTransport(scheduled)
 }
 
 module.exports = {
   scheduleItinerary,
   ensureActivityAfterArrival,
-  buildTransportLeg
+  enforceActivitiesAfterTransport,
+  getStageArrivalEnd,
+  buildTransportLeg,
+  TRANSPORT_ACTIVITY_TYPES
 }

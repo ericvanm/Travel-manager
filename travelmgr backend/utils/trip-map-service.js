@@ -26,7 +26,7 @@ const buildPoint = (label, type, coords, extra = {}) => {
 
 const inferTransportMode = (activity) => {
   if (activity.activityTypeId === 6) return 'flight'
-  if (activity.activityTypeId === 8) return 'car'
+  if (activity.activityTypeId === 8 || activity.activityTypeId === 12) return 'car'
   return 'default'
 }
 

@@ -11,11 +11,13 @@ export const ACTIVITY_TYPE = {
   TRAIN: 9,
   BUS: 10,
   PUBLIC_TRANSPORT: 11,
+  PRIVATE_CAR: 12,
 } as const
 
 export const TRANSPORT_TYPE_IDS = new Set<number>([
   ACTIVITY_TYPE.FLIGHT,
   ACTIVITY_TYPE.CAR_RENTAL,
+  ACTIVITY_TYPE.PRIVATE_CAR,
   ACTIVITY_TYPE.TRAIN,
   ACTIVITY_TYPE.BUS,
   ACTIVITY_TYPE.PUBLIC_TRANSPORT,
@@ -32,3 +34,6 @@ export const isTransportActivityType = (activityTypeId?: number): boolean =>
 
 export const isGroundTransportActivityType = (activityTypeId?: number): boolean =>
   activityTypeId != null && GROUND_TRANSPORT_TYPE_IDS.has(activityTypeId)
+
+export const isPrivateCarActivityType = (activityTypeId?: number): boolean =>
+  activityTypeId === ACTIVITY_TYPE.PRIVATE_CAR

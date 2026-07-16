@@ -7,7 +7,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { ActivityType, ReservationStatus, Stage } from '../../types'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { combineDateAndTime, getDatePart, getTimePart } from '../../utils/dateTimeInputHelpers'
-import { ACTIVITY_TYPE, isGroundTransportActivityType } from '../../utils/activityTypes'
+import { ACTIVITY_TYPE, isGroundTransportActivityType, isPrivateCarActivityType } from '../../utils/activityTypes'
 
 interface ActivityDialogProps {
   open: boolean
@@ -38,6 +38,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
   const typeId = Number.parseInt(newActivity.activityTypeId, 10)
   const isGroundTransport = isGroundTransportActivityType(typeId)
   const isCarRental = typeId === ACTIVITY_TYPE.CAR_RENTAL
+  const isPrivateCar = isPrivateCarActivityType(typeId)
   const showGenericDates = typeId !== ACTIVITY_TYPE.HOTEL
 
   const handleOpenBookingSite = () => {
@@ -181,6 +182,32 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
               value={newActivity.carType}
               onChange={(e) => setNewActivity({ ...newActivity, carType: e.target.value })}
             />
+          </>
+        )}
+
+        {isPrivateCar && (
+          <>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                margin="dense"
+                label={t('departure_location')}
+                variant="outlined"
+                sx={{ flex: 1 }}
+                value={newActivity.departureLocation}
+                onChange={(e) => setNewActivity({ ...newActivity, departureLocation: e.target.value })}
+              />
+              <TextField
+                margin="dense"
+                label={t('arrival_location')}
+                variant="outlined"
+                sx={{ flex: 1 }}
+                value={newActivity.arrivalLocation}
+                onChange={(e) => setNewActivity({ ...newActivity, arrivalLocation: e.target.value })}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+              {t('private_car_cost_hint')}
+            </Typography>
           </>
         )}
 

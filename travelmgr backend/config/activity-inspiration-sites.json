@@ -8,7 +8,7 @@
     },
     {
       "name": "Viator",
-      "urlTemplate": "https://www.viator.com/searchResults/all?text={{query}}"
+      "urlTemplate": "https://www.viator.com/search?q={{query}}"
     },
     {
       "name": "TripAdvisor",
@@ -16,7 +16,7 @@
     },
     {
       "name": "Klook",
-      "urlTemplate": "https://www.klook.com/search/result/?query={{query}}"
+      "urlTemplate": "https://www.klook.com/search/?q={{query}}"
     }
   ]
 }

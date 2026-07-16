@@ -7,6 +7,8 @@ const { suggestBookingUrl } = require('./booking-urls')
 const { buildAccommodationDateTimes } = require('./hotel-datetime')
 const { parseDateOnly, addDays } = require('./date-only')
 const { extractStageCity, locationsCompatible } = require('./trip-location-validation')
+const { clearIncompatibleActivityFields } = require('./activity-field-cleanup')
+const { enforceTripActivityTransportTiming } = require('./trip-activity-timing')
 
 const DEFAULT_CONFIG_PATH = path.join(__dirname, '..', 'config', 'ai-adapt-prompts.json')
 
@@ -40,7 +42,7 @@ const ACTIVITY_DETAIL_FIELDS = [
   'airline', 'flightNumber', 'departureAirport', 'arrivalAirport', 'confirmationCode',
   'seat', 'gate', 'terminal', 'departureLocation', 'arrivalLocation',
   'company', 'pickupLocation', 'dropoffLocation', 'carType', 'bookingUrl', 'bookingCode',
-  'transportLine', 'transportChanges'
+  'transportLine', 'transportChanges', 'bookingSource'
 ]
 
 const mergeActivityDetailFields = (change, data = {}) => {
@@ -285,7 +287,10 @@ const sanitizeActivityPayload = (payload, activityTypeId) => {
     const cost = Number(cleaned.cost)
     cleaned.cost = Number.isFinite(cost) ? cost : null
   }
-  return normalizeHotelDates(cleaned, activityTypeId)
+  return clearIncompatibleActivityFields(
+    normalizeHotelDates(cleaned, activityTypeId),
+    activityTypeId
+  )
 }
 
 const resolveActivityTypeId = (change) => {
@@ -340,6 +345,7 @@ const buildActivityUpdates = (change, activity) => {
   const activityTypeId = resolveActivityTypeId(change) || activity.activityTypeId
   const merged = mergeActivityDetailFields(change, {
     ...(change.data || {}),
+    name: change.data?.name || activity.name,
     city: change.location || change.data?.city || activity.city,
     startDateTime: change.startDateTime || change.data?.startDateTime || activity.startDateTime,
     endDateTime: change.endDateTime || change.data?.endDateTime || activity.endDateTime,
@@ -486,6 +492,8 @@ const applyProposedChanges = async (tripId, proposedChanges) => {
   if (errors.length > 0 && applied.trip + applied.stages + applied.activities === 0) {
     throw new Error(errors.join('; '))
   }
+
+  await enforceTripActivityTransportTiming(tripId)
 
   return applied
 }

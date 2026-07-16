@@ -22,8 +22,10 @@ const {
 const { formatInspirationSitesForPrompt } = require('./activity-inspiration-sites')
 const {
   ensureDailyActivityHours,
-  validateItineraryActivityHours
+  validateItineraryActivityHours,
+  finalizeItineraryActivityTiming
 } = require('./itinerary-activity-hours')
+const { resolveTransportActivityType } = require('./activity-field-cleanup')
 
 const {
   ACTIVITY_TYPE_MAP,
@@ -309,7 +311,7 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
     estimatedCost: outbound.estimatedCost,
     departureLocation: formData.departureLocation,
     arrivalLocation: zone.split(',')[0].trim(),
-    activityType: outbound.mode === 'flight' ? 'flight' : outbound.mode === 'car' ? 'car_rental' : 'tour'
+    activityType: resolveTransportActivityType(outbound.mode, formData)
   }
 
   const returnTransportLeg = {
@@ -319,7 +321,7 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
     estimatedCost: returnTransport.estimatedCost,
     departureLocation: zone.split(',')[0].trim(),
     arrivalLocation: formData.departureLocation,
-    activityType: returnTransport.mode === 'flight' ? 'flight' : returnTransport.mode === 'car' ? 'car_rental' : 'tour'
+    activityType: resolveTransportActivityType(returnTransport.mode, formData)
   }
 
   const transportRoute = [
@@ -749,6 +751,8 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary, 
   if (activityHoursResult.filledDays.length > 0) {
     itinerary.activityHoursFilledDays = activityHoursResult.filledDays
   }
+
+  itinerary = finalizeItineraryActivityTiming(itinerary)
 
   const hoursValidation = validateItineraryActivityHours(itinerary, formData)
   if (hoursValidation.issues.length > 0) {

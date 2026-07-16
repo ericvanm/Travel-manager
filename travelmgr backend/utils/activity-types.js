@@ -11,7 +11,8 @@ const ACTIVITY_TYPE = {
   CAR_RENTAL: 8,
   TRAIN: 9,
   BUS: 10,
-  PUBLIC_TRANSPORT: 11
+  PUBLIC_TRANSPORT: 11,
+  PRIVATE_CAR: 12
 }
 
 const TRANSPORT_TYPE_IDS = new Set([
@@ -19,7 +20,8 @@ const TRANSPORT_TYPE_IDS = new Set([
   ACTIVITY_TYPE.CAR_RENTAL,
   ACTIVITY_TYPE.TRAIN,
   ACTIVITY_TYPE.BUS,
-  ACTIVITY_TYPE.PUBLIC_TRANSPORT
+  ACTIVITY_TYPE.PUBLIC_TRANSPORT,
+  ACTIVITY_TYPE.PRIVATE_CAR
 ])
 
 const ACTIVITY_TYPE_LABELS = {
@@ -33,7 +35,8 @@ const ACTIVITY_TYPE_LABELS = {
   8: 'car_rental',
   9: 'train',
   10: 'bus',
-  11: 'public_transport'
+  11: 'public_transport',
+  12: 'private_car'
 }
 
 const ACTIVITY_TYPE_MAP = {
@@ -48,6 +51,8 @@ const ACTIVITY_TYPE_MAP = {
   train: 9,
   bus: 10,
   public_transport: 11,
+  private_car: 12,
+  personal_car: 12,
   ferry: 11,
   metro: 11,
   tram: 11

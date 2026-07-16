@@ -1,5 +1,6 @@
 const { parseDateOnly, addDays, listDateRange } = require('./date-only')
 const { formatInspirationSitesForPrompt } = require('./activity-inspiration-sites')
+const { ensureActivityAfterArrival, getStageArrivalEnd } = require('./itinerary-scheduler')
 
 const LEISURE_ACTIVITY_TYPES = new Set([
   'restaurant',
@@ -12,6 +13,7 @@ const LEISURE_ACTIVITY_TYPES = new Set([
 const TRANSPORT_ACTIVITY_TYPES = new Set([
   'flight',
   'car_rental',
+  'private_car',
   'train',
   'bus',
   'public_transport',
@@ -104,14 +106,25 @@ const buildFillerActivity = ({
   slotIndex,
   stage,
   formData,
-  startHour
+  arrivalEndIso
 }) => {
   const city = extractStageCity(stage)
   const style = formData.travelStyle || 'découverte'
-  const hour = startHour + slotIndex * 3
   const inspirationHint = formatInspirationSitesForPrompt(formData)
 
-  return {
+  let startHour = 10
+  if (arrivalEndIso) {
+    const arrival = new Date(arrivalEndIso)
+    const dayStart = new Date(`${day}T00:00:00Z`)
+    if (parseDateOnly(arrivalEndIso) === day) {
+      startHour = Math.min(18, Math.max(9, arrival.getUTCHours() + 1))
+    } else if (arrival > dayStart) {
+      startHour = 10
+    }
+  }
+  const hour = startHour + slotIndex * 3
+
+  const filler = {
     name: `${city} — ${style} (${day}, activité ${slotIndex + 1})`,
     activityType: style.toLowerCase().includes('museum') || style.toLowerCase().includes('culturel')
       ? 'museum'
@@ -124,6 +137,12 @@ const buildFillerActivity = ({
     reservationStatus: 'to_reserve',
     bookingUrl: null
   }
+
+  if (arrivalEndIso && parseDateOnly(arrivalEndIso) === day) {
+    ensureActivityAfterArrival(filler, arrivalEndIso)
+  }
+
+  return filler
 }
 
 const validateItineraryActivityHours = (itinerary, formData = {}) => {
@@ -210,7 +229,8 @@ const ensureDailyActivityHours = (itinerary, formData = {}) => {
     if (!stageRef) continue
 
     const needed = slotsNeededForDay(currentHours, minHours, maxHours)
-    const arrivalHour = 10
+    const stageIndex = enriched.stages.indexOf(stageRef)
+    const arrivalEnd = getStageArrivalEnd(stageRef, stageIndex, enriched)
 
     for (let slot = 0; slot < needed; slot += 1) {
       totals = computeDailyLeisureHours(enriched)
@@ -223,7 +243,7 @@ const ensureDailyActivityHours = (itinerary, formData = {}) => {
         slotIndex: slot,
         stage: stageRef,
         formData,
-        startHour: arrivalHour
+        arrivalEndIso: parseDateOnly(arrivalEnd) === day ? arrivalEnd : null
       }))
     }
 
@@ -239,11 +259,17 @@ const ensureDailyActivityHours = (itinerary, formData = {}) => {
   return { itinerary: enriched, filledDays, warnings }
 }
 
+const finalizeItineraryActivityTiming = (itinerary) => {
+  const { enforceActivitiesAfterTransport } = require('./itinerary-scheduler')
+  return enforceActivitiesAfterTransport(itinerary)
+}
+
 module.exports = {
   isLeisureActivity,
   activityDurationHours,
   computeDailyLeisureHours,
   validateItineraryActivityHours,
   ensureDailyActivityHours,
+  finalizeItineraryActivityTiming,
   LEISURE_ACTIVITY_TYPES
 }

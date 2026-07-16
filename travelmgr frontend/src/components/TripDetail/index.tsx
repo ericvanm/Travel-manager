@@ -6,7 +6,7 @@ import {
 import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
 import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, TimelineDay, emptyActivityForm } from '../../types';
 import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity, updateStage, deleteStage, updateActivity, deleteActivity, mergeStages, structureTrip, getTripTimeline, analyzeDuplicates, reserveActivity, updateTrip, deleteTrip } from '../../services/trips';
-import { ACTIVITY_TYPE, isGroundTransportActivityType } from '../../utils/activityTypes';
+import { ACTIVITY_TYPE, isGroundTransportActivityType, isPrivateCarActivityType } from '../../utils/activityTypes';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import StageDialog from './StageDialog';
@@ -178,6 +178,12 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       activityData.confirmationNumber = form.confirmationNumber || null
     }
 
+    if (isPrivateCarActivityType(activityTypeId)) {
+      activityData.departureLocation = form.departureLocation || null
+      activityData.arrivalLocation = form.arrivalLocation || null
+      activityData.cost = form.cost ? Number.parseFloat(form.cost) : 0
+    }
+
     if (isGroundTransportActivityType(activityTypeId)) {
       activityData.company = form.company || null
       activityData.departureLocation = form.departureLocation || null
@@ -202,6 +208,11 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       activityData.pickupLocation = form.pickupLocation || null
       activityData.dropoffLocation = form.dropoffLocation || null
       activityData.carType = form.carType || null
+    }
+    if (isPrivateCarActivityType(activityTypeId)) {
+      activityData.departureLocation = form.departureLocation || null
+      activityData.arrivalLocation = form.arrivalLocation || null
+      activityData.cost = form.cost ? Number.parseFloat(form.cost) : 0
     }
     if (isGroundTransportActivityType(activityTypeId)) {
       activityData.company = form.company || null
