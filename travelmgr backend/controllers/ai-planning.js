@@ -41,7 +41,7 @@ const findCountryForStage = async (countryCode, stageName) => {
   return Country.findOne({ where: { code: 'FR' } }) || Country.findOne()
 }
 
-const createTripFromItinerary = async (itinerary, formData = {}) => {
+const createTripFromItinerary = async (itinerary, formData = {}, ownerUserId = null) => {
   const { trip, stages: stageList } = itinerary
 
   const existingTrip = await Trip.findOne({ where: { name: trip.name } })
@@ -56,7 +56,8 @@ const createTripFromItinerary = async (itinerary, formData = {}) => {
     endDate: trip.endDate,
     budget: trip.budget,
     currency: trip.currency,
-    departureLocation: formData.departureLocation || itinerary.outboundTransport?.departureLocation || null
+    departureLocation: formData.departureLocation || itinerary.outboundTransport?.departureLocation || null,
+    ownerUserId: ownerUserId || null
   })
 
   const createTransportActivity = async (stage, transport) => {
@@ -250,7 +251,15 @@ router.post('/sessions/:id/validate', async (req, res) => {
     }
 
     const language = await getUserLanguage(req, 'fr')
-    const synthesis = await generateSynthesis(validation.formData, language)
+    const userId = getUserId(req)
+    const logContext = {
+      userId,
+      feature: 'planning',
+      sessionType: 'planning',
+      sessionId: session.id,
+      tripId: session.tripId || null
+    }
+    const synthesis = await generateSynthesis(validation.formData, language, logContext)
     await session.update({
       formData: validation.formData,
       synthesis,
@@ -282,7 +291,15 @@ router.post('/sessions/:id/confirm-synthesis', async (req, res) => {
     }
 
     const language = await getUserLanguage(req, 'fr')
-    const itinerary = await generateItinerary(session.formData, null, null, language)
+    const userId = getUserId(req)
+    const logContext = {
+      userId,
+      feature: 'planning',
+      sessionType: 'planning',
+      sessionId: session.id,
+      tripId: session.tripId || null
+    }
+    const itinerary = await generateItinerary(session.formData, null, null, language, logContext)
     await session.update({
       itinerary,
       status: 'itinerary_generated',
@@ -313,11 +330,20 @@ router.post('/sessions/:id/revise', async (req, res) => {
     }
 
     const language = await getUserLanguage(req, 'fr')
+    const userId = getUserId(req)
+    const logContext = {
+      userId,
+      feature: 'planning',
+      sessionType: 'planning',
+      sessionId: session.id,
+      tripId: session.tripId || null
+    }
     const itinerary = await generateItinerary(
       session.formData,
       String(feedback).trim(),
       session.itinerary,
-      language
+      language,
+      logContext
     )
 
     await session.update({
@@ -349,7 +375,11 @@ router.post('/sessions/:id/accept', async (req, res) => {
       return res.status(400).json({ error: 'Aucun itinéraire à accepter' })
     }
 
-    const createdTrip = await createTripFromItinerary(session.itinerary, session.formData || {})
+    const createdTrip = await createTripFromItinerary(
+      session.itinerary,
+      session.formData || {},
+      session.userId || getUserId(req)
+    )
     await session.update({
       status: 'accepted',
       tripId: createdTrip.id

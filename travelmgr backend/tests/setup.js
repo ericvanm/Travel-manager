@@ -5,6 +5,9 @@ const { User, Trip, Stage, Activity, Country } = require('../models/DBmodels')
 const resetDatabase = async () => {
   await sequelize.query(`
     TRUNCATE TABLE
+      ai_interaction_logs,
+      trip_planning_sessions,
+      trip_adaptation_sessions,
       activities,
       transports,
       accommodations,

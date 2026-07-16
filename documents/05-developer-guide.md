@@ -9,7 +9,7 @@
 | PostgreSQL | 15 recommended |
 | Git | Latest |
 
-Optional: Docker (see [06-deployment.md](06-deployment.md) for container workflow).
+Optional: Docker (see [06-deployment.md](06-deployment.md) for container workflow). Maintenance scripts: [`tools/README.md`](../tools/README.md) (`reset-database.ps1`, `rebuild-docker.ps1`).
 
 ## Clone and install
 
@@ -87,6 +87,20 @@ CREATE DATABASE travel_mgr_test;
 cd "travelmgr backend"
 node run-migration.js
 ```
+
+### Reset database (empty)
+
+PowerShell scripts in [`tools/`](../tools/README.md):
+
+```powershell
+# Docker dev stack (default)
+.\tools\reset-database.ps1 -Force
+
+# Local Postgres (uses travelmgr backend/.env)
+.\tools\reset-database.ps1 -Mode Local -Force
+```
+
+This drops and recreates `travel_mgr`. Migrations run again on the next backend start (including the default `admin` user).
 
 ## Running locally
 

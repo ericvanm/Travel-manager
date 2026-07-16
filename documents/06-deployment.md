@@ -69,7 +69,22 @@ Production image: `travelmgr backend/Dockerfile`
 
 Development image: `dev.Dockerfile` (includes dev dependencies).
 
-Build and run locally:
+**Compose stacks:**
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.dev.yml` | Dev: bind mounts, Vite `:5173`, API `:3001`, nginx `:8080` |
+| `docker-compose.yml` | Prod-like: built images behind nginx on `:8080` |
+
+**Maintenance (PowerShell):** see [`tools/README.md`](../tools/README.md)
+
+```powershell
+docker compose -f docker-compose.dev.yml up -d
+.\tools\rebuild-docker.ps1              # rebuild dev stack
+.\tools\reset-database.ps1 -Force       # empty DB + migrations on backend start
+```
+
+Build and run API only (without compose):
 
 ```bash
 cd "travelmgr backend"

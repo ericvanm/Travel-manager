@@ -8,8 +8,36 @@ const api = axios.create({
   withCredentials: true,
 });
 
+export class PasswordSetupRequiredError extends Error {
+  username: string;
+
+  id: number;
+
+  constructor(username: string, id: number) {
+    super('password_setup_required');
+    this.username = username;
+    this.id = id;
+  }
+}
+
 export const login = async (credentials: LoginCredentials): Promise<User> => {
-  const response = await api.post('/auth/login', credentials);
+  try {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  } catch (error) {
+    if (
+      axios.isAxiosError(error)
+      && error.response?.status === 403
+      && error.response.data?.error === 'password_setup_required'
+    ) {
+      throw new PasswordSetupRequiredError(error.response.data.username, error.response.data.id);
+    }
+    throw error;
+  }
+};
+
+export const setupInitialPassword = async (username: string, newPassword: string): Promise<User> => {
+  const response = await api.post('/auth/setup-initial-password', { username, newPassword });
   return response.data;
 };
 

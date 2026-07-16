@@ -21,9 +21,10 @@ import { getTripConsistencySummary, TripConsistencySummary } from '../../service
 
 interface TripListProps {
   onTripSelect: (trip: Trip) => void;
+  onOpenAdmin?: () => void;
 }
 
-const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
+const TripList: React.FC<TripListProps> = ({ onTripSelect, onOpenAdmin }) => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [open, setOpen] = useState(false);
   const [newTrip, setNewTrip] = useState({ name: '', description: '' });
@@ -269,6 +270,11 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           <IconButton color="inherit" onClick={() => setProfileDialog(true)}>
             <Typography variant="body2" sx={{ mr: 1 }}>{t('profile')}</Typography>
           </IconButton>
+          {onOpenAdmin && (
+            <Button color="inherit" onClick={onOpenAdmin} sx={{ mr: 1 }}>
+              {t('admin_panel')}
+            </Button>
+          )}
           <IconButton color="inherit" onClick={handleLogout}>
             <Logout />
           </IconButton>

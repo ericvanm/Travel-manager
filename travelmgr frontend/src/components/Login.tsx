@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Paper, Alert } from '@mui/material';
-import { login } from '../services/auth';
+import {
+  Box, Button, TextField, Typography, Paper, Alert,
+} from '@mui/material';
+import { login, PasswordSetupRequiredError } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LoginCredentials } from '../types';
 import LanguageSelector from './LanguageSelector';
+import SetInitialPassword from './SetInitialPassword';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
@@ -14,6 +17,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
   const [credentials, setCredentials] = useState<LoginCredentials>({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordSetupUsername, setPasswordSetupUsername] = useState<string | null>(null);
   const { setUser } = useAuth();
   const { t, setLanguage } = useLanguage();
 
@@ -27,12 +31,28 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
       if (user.language) {
         setLanguage(user.language);
       }
-    } catch {
-      setError(t('invalid_credentials'));
+    } catch (err) {
+      if (err instanceof PasswordSetupRequiredError) {
+        setPasswordSetupUsername(err.username);
+      } else {
+        setError(t('invalid_credentials'));
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (passwordSetupUsername) {
+    return (
+      <SetInitialPassword
+        username={passwordSetupUsername}
+        onCancel={() => {
+          setPasswordSetupUsername(null);
+          setCredentials({ username: '', password: '' });
+        }}
+      />
+    );
+  }
 
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: 400, mx: 'auto', mt: 8 }}>
@@ -62,7 +82,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
           value={credentials.password}
           onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
           margin="normal"
-          required
+          helperText={t('login_password_optional_hint')}
         />
         <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={loading}>
           {loading ? t('logging_in') : t('login')}

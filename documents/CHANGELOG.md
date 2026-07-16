@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Developer tools:** PowerShell scripts in `tools/` — `reset-database.ps1` (empty DB) and `rebuild-docker.ps1` (Docker rebuild). See [tools/README.md](../tools/README.md).
 - **AI trip planning:** form-based wizard (zone, duration, style, transport, accommodation, budget) with validation, synthesis, itinerary generation, revision, and trip creation. Sessions persisted in `trip_planning_sessions`. See [07-api-reference.md](07-api-reference.md#ai-trip-planning--ai-planning).
 - Project documentation in `documents/` (architecture, structure, testing, developer guide, deployment, API reference).
 - Architecture Decision Records in `documents/decisions/`.

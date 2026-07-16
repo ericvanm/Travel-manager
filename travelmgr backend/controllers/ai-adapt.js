@@ -61,7 +61,13 @@ router.post('/trips/:tripId/resolve-consistency', async (req, res) => {
       adaptationRequest
     })
 
-    const proposedChanges = await proposeAdaptations(snapshot, adaptationRequest, language)
+    const proposedChanges = await proposeAdaptations(snapshot, adaptationRequest, language, {
+      userId,
+      feature: 'adapt',
+      sessionType: 'adapt',
+      sessionId: session.id,
+      tripId: trip.id
+    })
     const reservedImpacts = detectReservedImpacts(snapshot, proposedChanges)
     const accommodationWarnings = validateAdaptationAccommodation(snapshot, proposedChanges)
 
@@ -132,7 +138,13 @@ router.post('/sessions/:id/propose', async (req, res) => {
 
     const snapshot = session.tripSnapshot
     const language = session.language || await getUserLanguage(req, 'fr')
-    const proposedChanges = await proposeAdaptations(snapshot, adaptationRequest, language)
+    const proposedChanges = await proposeAdaptations(snapshot, adaptationRequest, language, {
+      userId: getUserId(req),
+      feature: 'adapt',
+      sessionType: 'adapt',
+      sessionId: session.id,
+      tripId: session.tripId
+    })
     const reservedImpacts = detectReservedImpacts(snapshot, proposedChanges)
     const accommodationWarnings = validateAdaptationAccommodation(snapshot, proposedChanges)
 

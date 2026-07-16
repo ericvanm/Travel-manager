@@ -2,7 +2,7 @@ const router = require('express').Router()
 const { Op } = require('sequelize')
 const { Trip, Stage, Activity, Transport, Accommodation, Expense, Country, ActivityType } = require('../models/DBmodels')
 const { buildTripMapData } = require('../utils/trip-map-service')
-const { getUserLanguage } = require('../utils/auth-helpers')
+const { getUserLanguage, optionalAuth, getUserId } = require('../utils/auth-helpers')
 const {
   parseCSVLine,
   parseCSVDate,
@@ -16,6 +16,8 @@ const {
 const logger = require('../utils/logger')
 const { loadTripSnapshot } = require('../utils/trip-snapshot')
 const { validateTripConsistency, toSummary } = require('../utils/trip-consistency')
+
+router.use(optionalAuth)
 
 // GET consistency summary for all trips (list indicators)
 router.get('/consistency/summary', async (req, res) => {
@@ -121,7 +123,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'trip_name_exists' })
     }
     
-    const trip = await Trip.create(req.body)
+    const trip = await Trip.create({
+      ...req.body,
+      ownerUserId: getUserId(req) || null
+    })
     res.json(trip)
   } catch (error) {
     console.error('Error creating trip:', error)

@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import TripList from './components/TripList';
 import TripDetail from './components/TripDetail';
+import AdminPanel from './components/AdminPanel';
 import { Trip } from './types';
 
 const theme = createTheme({
@@ -25,6 +26,7 @@ const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -38,6 +40,18 @@ const AppContent: React.FC = () => {
     );
   }
 
+  if (showAdmin && user.role === 'admin') {
+    return (
+      <AdminPanel
+        onBack={() => setShowAdmin(false)}
+        onTripSelect={(trip) => {
+          setShowAdmin(false);
+          setSelectedTrip(trip);
+        }}
+      />
+    );
+  }
+
   if (selectedTrip) {
     return (
       <TripDetail
@@ -47,7 +61,12 @@ const AppContent: React.FC = () => {
     );
   }
 
-  return <TripList onTripSelect={setSelectedTrip} />;
+  return (
+    <TripList
+      onTripSelect={setSelectedTrip}
+      onOpenAdmin={user.role === 'admin' ? () => setShowAdmin(true) : undefined}
+    />
+  );
 };
 
 const App: React.FC = () => {

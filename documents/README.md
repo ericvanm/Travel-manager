@@ -29,6 +29,7 @@ Central documentation for the Travel Manager monorepo. All documents are written
 |----------|-------------|
 | [CHANGELOG.md](CHANGELOG.md) | Notable project changes |
 | [decisions/](decisions/) | Architecture Decision Records (ADRs) |
+| [tools/README.md](../tools/README.md) | PowerShell scripts (DB reset, Docker rebuild) |
 
 ## Planned documentation (future)
 

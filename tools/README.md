@@ -1,0 +1,159 @@
+# Travel Manager — Developer Tools
+
+PowerShell scripts for local maintenance. Run them from the **repository root** or from this folder.
+
+Requirements:
+
+- Windows PowerShell 5.1+ or PowerShell 7+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for Docker modes)
+- Optional: PostgreSQL client (`psql`) for `Local` mode without Docker
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| [`reset-database.ps1`](reset-database.ps1) | Drop and recreate the application database (empty DB + migrations on next backend start) |
+| [`rebuild-docker.ps1`](rebuild-docker.ps1) | Rebuild and restart Docker Compose stacks (dev or prod profile) |
+
+---
+
+## reset-database.ps1
+
+Removes **all** application data: users, trips, sessions, AI logs, planning sessions, etc.
+
+The database file/volume is kept; only the `travel_mgr` database is dropped and recreated. When the backend starts, [Umzug migrations](../travelmgr%20backend/utils/db.js) run again (schema, reference data, default `admin` user).
+
+### Usage
+
+```powershell
+# Default: Docker dev stack (docker-compose.dev.yml)
+.\tools\reset-database.ps1
+
+# Skip confirmation
+.\tools\reset-database.ps1 -Force
+
+# Local PostgreSQL (reads DATABASE_URL from travelmgr backend/.env)
+.\tools\reset-database.ps1 -Mode Local -Force
+
+# Also reset the test database (travel_mgr_test)
+.\tools\reset-database.ps1 -Mode Local -IncludeTestDatabase -Force
+
+# Prod-like Docker stack
+.\tools\reset-database.ps1 -Mode DockerProd -Force
+
+# Reset only, do not restart compose services
+.\tools\reset-database.ps1 -NoRestart -Force
+```
+
+### Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `-Mode` | `DockerDev` | `DockerDev`, `DockerProd`, or `Local` |
+| `-DatabaseUrl` | (from `.env`) | Override PostgreSQL URL (`Local` mode) |
+| `-Force` | off | Skip `RESET` confirmation |
+| `-NoRestart` | off | Do not run `docker compose up -d` after reset |
+| `-IncludeTestDatabase` | off | Also reset `TEST_DATABASE_URL` (`Local` only) |
+
+### What happens
+
+1. Backend/frontend containers are stopped (Docker modes) to release DB connections.
+2. PostgreSQL terminates active sessions on the target database.
+3. Database is dropped and recreated empty.
+4. Docker stack is started again (unless `-NoRestart`).
+5. Backend runs migrations on connect — including the default admin account (`admin`, password must be set on first login).
+
+### Connection defaults (Docker)
+
+| Setting | Value |
+|---------|-------|
+| Container | `travel-mgr-db` |
+| Database | `travel_mgr` |
+| User | `postgres` |
+| Password | `mypassword` (see `docker-compose.dev.yml`) |
+
+---
+
+## rebuild-docker.ps1
+
+Rebuilds Docker images and restarts the stack. Replaces the former root script `rebuild_dockers.ps1`.
+
+### Usage
+
+```powershell
+# Dev stack (default): down → build → up -d
+.\tools\rebuild-docker.ps1
+
+# Production-like stack (docker-compose.yml)
+.\tools\rebuild-docker.ps1 -Profile Prod
+
+# Full rebuild without Docker layer cache
+.\tools\rebuild-docker.ps1 -NoCache
+
+# Empty database + rebuild
+.\tools\rebuild-docker.ps1 -ResetDatabase -Force
+```
+
+### Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `-Profile` | `Dev` | `Dev` → `docker-compose.dev.yml`, `Prod` → `docker-compose.yml` |
+| `-NoCache` | off | `docker compose build --no-cache` |
+| `-ResetDatabase` | off | Call `reset-database.ps1` before rebuild |
+| `-Force` | off | Skip DB reset confirmation when `-ResetDatabase` is set |
+
+### Dev stack URLs (after rebuild)
+
+| Service | URL |
+|---------|-----|
+| Vite frontend | http://localhost:5173 |
+| Backend API | http://localhost:3001/api |
+| Nginx | http://localhost:8080 |
+
+---
+
+## Typical workflows
+
+### Fresh local Docker environment
+
+```powershell
+.\tools\reset-database.ps1 -Force
+# or: .\tools\rebuild-docker.ps1 -ResetDatabase -Force
+```
+
+Then open http://localhost:5173, log in as `admin`, set the admin password.
+
+### After changing Dockerfiles or compose files
+
+```powershell
+.\tools\rebuild-docker.ps1
+```
+
+### Backend-only (no Docker)
+
+```powershell
+.\tools\reset-database.ps1 -Mode Local -Force
+cd "travelmgr backend"
+npm run dev
+```
+
+---
+
+## Troubleshooting
+
+| Issue | Suggestion |
+|-------|------------|
+| `database is being accessed by other users` | Stop the backend (`npm run dev`) or use Docker mode so the script stops containers first |
+| `psql is not on PATH` | Use `-Mode DockerDev`, or install PostgreSQL client tools |
+| `travel-mgr-db` not found | Start Docker Desktop; run `docker compose -f docker-compose.dev.yml up -d db` |
+| Migrations not applied | Ensure backend container/process restarts after reset |
+| Admin login fails | Migrations must complete; user `admin` is seeded by migration `20250806_17_admin_ai_logs.js` |
+
+---
+
+## See also
+
+- [Developer guide — Database setup](../documents/05-developer-guide.md#database-setup)
+- [Deployment — Docker](../documents/06-deployment.md#docker-optional)
+- [Docker Compose dev](../docker-compose.dev.yml)

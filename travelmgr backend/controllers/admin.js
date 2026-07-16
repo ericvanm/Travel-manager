@@ -1,0 +1,106 @@
+const router = require('express').Router()
+const {
+  Trip,
+  User,
+  AiInteractionLog
+} = require('../models/DBmodels')
+const { requireAuth, requireAdmin } = require('../utils/auth-helpers')
+
+router.use(requireAuth)
+router.use(requireAdmin)
+
+router.get('/users', async (_req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: ['id', 'username', 'name', 'role'],
+      order: [['username', 'ASC']]
+    })
+    res.json(users)
+  } catch (error) {
+    console.error('Admin users list error:', error)
+    res.status(500).json({ error: 'Failed to fetch users' })
+  }
+})
+
+router.get('/trips', async (req, res) => {
+  try {
+    const where = {}
+    if (req.query.userId) {
+      where.ownerUserId = Number(req.query.userId)
+    }
+
+    const trips = await Trip.findAll({
+      where,
+      include: [{
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'username', 'name'],
+        required: false
+      }],
+      order: [['updatedAt', 'DESC']]
+    })
+
+    res.json(trips)
+  } catch (error) {
+    console.error('Admin trips list error:', error)
+    res.status(500).json({ error: 'Failed to fetch trips' })
+  }
+})
+
+router.get('/ai-logs', async (req, res) => {
+  try {
+    const where = {}
+    const limit = Math.min(Number(req.query.limit) || 50, 200)
+    const offset = Number(req.query.offset) || 0
+
+    if (req.query.userId) where.userId = Number(req.query.userId)
+    if (req.query.feature) where.feature = String(req.query.feature)
+    if (req.query.operation) where.operation = String(req.query.operation)
+    if (req.query.sessionId) where.sessionId = Number(req.query.sessionId)
+    if (req.query.tripId) where.tripId = Number(req.query.tripId)
+    if (req.query.status) where.status = String(req.query.status)
+
+    const { rows, count } = await AiInteractionLog.findAndCountAll({
+      where,
+      include: [{
+        model: User,
+        attributes: ['id', 'username', 'name'],
+        required: false
+      }],
+      attributes: {
+        exclude: ['systemPrompt', 'userPrompt', 'requestMessages', 'rawResponse', 'parsedResponse']
+      },
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    })
+
+    res.json({ logs: rows, total: count, limit, offset })
+  } catch (error) {
+    console.error('Admin AI logs list error:', error)
+    res.status(500).json({ error: 'Failed to fetch AI logs' })
+  }
+})
+
+router.get('/ai-logs/:id', async (req, res) => {
+  try {
+    const log = await AiInteractionLog.findByPk(req.params.id, {
+      include: [{
+        model: User,
+        attributes: ['id', 'username', 'name'],
+        required: false
+      }]
+    })
+
+    if (!log) {
+      return res.status(404).json({ error: 'Log not found' })
+    }
+
+    res.json(log)
+  } catch (error) {
+    console.error('Admin AI log detail error:', error)
+    res.status(500).json({ error: 'Failed to fetch AI log' })
+  }
+})
+
+module.exports = router

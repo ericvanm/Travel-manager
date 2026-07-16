@@ -413,35 +413,73 @@ const buildPlanningPrompt = (formData, mode, previousItinerary, revisionFeedback
   return buildItineraryPrompt(formData, previousItinerary, revisionFeedback, language)
 }
 
-const callOpenAI = async (prompt, language = 'fr') => {
+const { logAiInteraction } = require('./ai-interaction-logger')
+
+const callOpenAI = async (prompt, language = 'fr', logContext = null) => {
   const { OpenAI } = require('openai')
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  const systemMessage = getSystemMessage(language)
+  const messages = [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: prompt }
+  ]
 
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: 'system',
-        content: getSystemMessage(language)
-      },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.4,
-    max_tokens: 6000,
-    response_format: { type: 'json_object' }
-  })
+  try {
+    const response = await openai.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.4,
+      max_tokens: 6000,
+      response_format: { type: 'json_object' }
+    })
 
-  return parseJsonFromContent(response.choices[0].message.content)
+    const rawResponse = response.choices[0].message.content
+    const parsed = parseJsonFromContent(rawResponse)
+
+    if (logContext) {
+      await logAiInteraction({
+        ...logContext,
+        model,
+        systemPrompt: systemMessage,
+        userPrompt: prompt,
+        requestMessages: messages,
+        rawResponse,
+        parsedResponse: parsed,
+        tokenUsage: response.usage || null,
+        status: 'success'
+      })
+    }
+
+    return parsed
+  } catch (error) {
+    if (logContext) {
+      await logAiInteraction({
+        ...logContext,
+        model,
+        systemPrompt: systemMessage,
+        userPrompt: prompt,
+        requestMessages: messages,
+        status: 'error',
+        errorMessage: error.message
+      })
+    }
+    throw error
+  }
 }
 
 const isOpenAIEnabled = () =>
   process.env.OPENAI_API_KEY && process.env.USE_OPENAI === 'true'
 
-const generateSynthesis = async (formData, language = 'fr') => {
+const generateSynthesis = async (formData, language = 'fr', logContext = null) => {
   if (isOpenAIEnabled()) {
     try {
-      const result = await callOpenAI(buildPlanningPrompt(formData, 'synthesis', null, null, language), language)
+      const prompt = buildPlanningPrompt(formData, 'synthesis', null, null, language)
+      const result = await callOpenAI(prompt, language, logContext ? {
+        ...logContext,
+        operation: 'synthesis',
+        requestPayload: { formData }
+      } : null)
       return { ...result, source: 'openai' }
     } catch (error) {
       console.error('OpenAI synthesis error:', error.message)
@@ -669,15 +707,22 @@ const enrichItineraryGeoAndBudget = async (itinerary, formData) => {
   return enriched
 }
 
-const generateItinerary = async (formData, revisionFeedback, previousItinerary, language = 'fr') => {
+const generateItinerary = async (formData, revisionFeedback, previousItinerary, language = 'fr', logContext = null) => {
   let itinerary
 
   if (isOpenAIEnabled()) {
     try {
-      itinerary = await callOpenAI(
-        buildPlanningPrompt(formData, 'itinerary', previousItinerary, revisionFeedback, language),
-        language
-      )
+      const operation = revisionFeedback ? 'revise' : 'itinerary'
+      const prompt = buildPlanningPrompt(formData, 'itinerary', previousItinerary, revisionFeedback, language)
+      itinerary = await callOpenAI(prompt, language, logContext ? {
+        ...logContext,
+        operation,
+        requestPayload: {
+          formData,
+          revisionFeedback: revisionFeedback || null,
+          previousItinerary: previousItinerary || null
+        }
+      } : null)
       itinerary = enrichItineraryImages(itinerary)
       itinerary.source = 'openai'
     } catch (error) {

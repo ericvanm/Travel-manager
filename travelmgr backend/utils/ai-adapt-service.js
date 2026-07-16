@@ -121,27 +121,61 @@ Structure JSON exacte :
 ${config.proposeJsonSchema}`
 }
 
-const callOpenAI = async (prompt, language) => {
+const { logAiInteraction } = require('./ai-interaction-logger')
+
+const callOpenAI = async (prompt, language, logContext = null) => {
   const config = loadAdaptPromptsConfig()
   const { OpenAI } = require('openai')
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const languageLabel = getLanguageLabel(language)
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  const systemMessage = renderTemplate(config.systemMessage, { languageLabel })
+  const messages = [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: prompt }
+  ]
 
-  const response = await openai.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: renderTemplate(config.systemMessage, { languageLabel })
-      },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.3,
-    max_tokens: 6000,
-    response_format: { type: 'json_object' }
-  })
+  try {
+    const response = await openai.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 6000,
+      response_format: { type: 'json_object' }
+    })
 
-  return parseJsonFromContent(response.choices[0].message.content)
+    const rawResponse = response.choices[0].message.content
+    const parsed = parseJsonFromContent(rawResponse)
+
+    if (logContext) {
+      await logAiInteraction({
+        ...logContext,
+        model,
+        systemPrompt: systemMessage,
+        userPrompt: prompt,
+        requestMessages: messages,
+        rawResponse,
+        parsedResponse: parsed,
+        tokenUsage: response.usage || null,
+        status: 'success'
+      })
+    }
+
+    return parsed
+  } catch (error) {
+    if (logContext) {
+      await logAiInteraction({
+        ...logContext,
+        model,
+        systemPrompt: systemMessage,
+        userPrompt: prompt,
+        requestMessages: messages,
+        status: 'error',
+        errorMessage: error.message
+      })
+    }
+    throw error
+  }
 }
 
 const detectReservedImpacts = (snapshot, proposedChanges) => {
@@ -330,7 +364,7 @@ const buildActivityCreatePayload = (change, stageId) => {
   return sanitizeActivityPayload(merged, activityTypeId)
 }
 
-const proposeAdaptations = async (snapshot, adaptationRequest, language) => {
+const proposeAdaptations = async (snapshot, adaptationRequest, language, logContext = null) => {
   if (!isOpenAIEnabled()) {
     return normalizeProposedChanges({
       summary: 'Adaptation IA indisponible (OpenAI non configuré).',
@@ -341,7 +375,15 @@ const proposeAdaptations = async (snapshot, adaptationRequest, language) => {
   }
 
   const prompt = buildAdaptPrompt(snapshot, adaptationRequest, language)
-  const result = await callOpenAI(prompt, language)
+  const result = await callOpenAI(prompt, language, logContext ? {
+    ...logContext,
+    operation: 'propose',
+    requestPayload: {
+      adaptationRequest,
+      tripId: snapshot?.trip?.id || snapshot?.id || null,
+      tripName: snapshot?.trip?.name || snapshot?.name || null
+    }
+  } : null)
   return normalizeProposedChanges({ ...result, source: 'openai' })
 }
 

@@ -88,7 +88,18 @@ User.init({
   },
   passwordHash: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
+  },
+  role: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'user'
+  },
+  mustSetPassword: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'must_set_password'
   },
   disabled: {
     type: DataTypes.BOOLEAN,
@@ -181,6 +192,12 @@ Trip.init({
     type: DataTypes.STRING(255),
     allowNull: true,
     field: 'departure_location'
+  },
+  ownerUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'owner_user_id',
+    references: { model: 'users', key: 'id' }
   }
 }, {
   sequelize,
@@ -1119,6 +1136,106 @@ User.hasMany(TripAdaptationSession, { foreignKey: 'userId' })
 TripAdaptationSession.belongsTo(User, { foreignKey: 'userId' })
 TripAdaptationSession.belongsTo(Trip, { foreignKey: 'tripId' })
 
+// AiInteractionLog model
+class AiInteractionLog extends Model {}
+AiInteractionLog.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'user_id',
+    references: { model: 'users', key: 'id' }
+  },
+  feature: {
+    type: DataTypes.STRING(30),
+    allowNull: false
+  },
+  operation: {
+    type: DataTypes.STRING(40),
+    allowNull: false
+  },
+  sessionType: {
+    type: DataTypes.STRING(30),
+    allowNull: true,
+    field: 'session_type'
+  },
+  sessionId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'session_id'
+  },
+  tripId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'trip_id',
+    references: { model: 'trips', key: 'id' }
+  },
+  model: {
+    type: DataTypes.STRING(80),
+    allowNull: true
+  },
+  systemPrompt: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'system_prompt'
+  },
+  userPrompt: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'user_prompt'
+  },
+  requestMessages: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'request_messages'
+  },
+  requestPayload: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'request_payload'
+  },
+  rawResponse: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'raw_response'
+  },
+  parsedResponse: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'parsed_response'
+  },
+  tokenUsage: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'token_usage'
+  },
+  status: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'success'
+  },
+  errorMessage: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'error_message'
+  }
+}, {
+  sequelize,
+  underscored: true,
+  timestamps: true,
+  modelName: 'aiInteractionLog'
+})
+
+User.hasMany(AiInteractionLog, { foreignKey: 'userId' })
+AiInteractionLog.belongsTo(User, { foreignKey: 'userId' })
+AiInteractionLog.belongsTo(Trip, { foreignKey: 'tripId' })
+User.hasMany(Trip, { foreignKey: 'ownerUserId', as: 'ownedTrips' })
+Trip.belongsTo(User, { foreignKey: 'ownerUserId', as: 'owner' })
+
 // Relations for new models
 Stage.hasMany(Flight, { foreignKey: 'stageId' })
 Flight.belongsTo(Stage, { foreignKey: 'stageId' })
@@ -1133,5 +1250,5 @@ module.exports = {
   Language, Translation, User, Country, Trip, Stage, ActivityType, Activity,
   TransportType, Transport, AccommodationType, Accommodation,
   ExpenseCategory, Expense, NotificationType, Notification, TripList,
-  Flight, Lodging, CarRental, TripPlanningSession, TripAdaptationSession
+  Flight, Lodging, CarRental, TripPlanningSession, TripAdaptationSession, AiInteractionLog
 }

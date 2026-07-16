@@ -7,6 +7,8 @@ export interface User {
   lastName?: string;
   language?: string;
   defaultDepartureLocation?: string | null;
+  role?: 'user' | 'admin';
+  mustSetPassword?: boolean;
 }
 
 export interface LoginCredentials {
@@ -32,6 +34,8 @@ export interface Trip {
   budget?: number | null;
   currency?: string | null;
   departureLocation?: string | null;
+  ownerUserId?: number | null;
+  owner?: { id: number; username: string; name: string } | null;
   stages?: Stage[];
 }
 
@@ -243,4 +247,36 @@ export interface DuplicateActivity {
 export interface DuplicateAnalysis {
   duplicates: DuplicateActivity[];
   count: number;
+}
+
+export interface AdminUserOption {
+  id: number;
+  username: string;
+  name: string;
+  role?: string;
+}
+
+export interface AiInteractionLogSummary {
+  id: number;
+  userId: number | null;
+  feature: string;
+  operation: string;
+  sessionType: string | null;
+  sessionId: number | null;
+  tripId: number | null;
+  model: string | null;
+  status: string;
+  createdAt: string;
+  user?: AdminUserOption | null;
+}
+
+export interface AiInteractionLogDetail extends AiInteractionLogSummary {
+  systemPrompt: string | null;
+  userPrompt: string | null;
+  requestMessages: unknown;
+  requestPayload: unknown;
+  rawResponse: string | null;
+  parsedResponse: unknown;
+  tokenUsage: unknown;
+  errorMessage: string | null;
 }

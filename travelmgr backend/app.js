@@ -100,6 +100,7 @@ app.use('/api/import', require('./controllers/import'))
 app.use('/api/ai-import', require('./controllers/ai-import'))
 app.use('/api/ai-planning', require('./controllers/ai-planning'))
 app.use('/api/ai-adapt', require('./controllers/ai-adapt'))
+app.use('/api/admin', require('./controllers/admin'))
 
 connectToDatabase()
 
