@@ -1,7 +1,7 @@
 import React from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box,
-  FormControl, InputLabel, Select, MenuItem, Chip, Link
+  FormControl, InputLabel, Select, MenuItem, Chip, Link, Typography
 } from '@mui/material'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { ActivityType, ReservationStatus, Stage } from '../../types'
