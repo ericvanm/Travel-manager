@@ -2,7 +2,7 @@ version: 2
 
 updates:
   - package-ecosystem: npm
-    directory: /travelmgr/backend
+    directory: "/travelmgr backend"
     schedule:
       interval: weekly
       day: monday
@@ -16,7 +16,7 @@ updates:
           - patch
 
   - package-ecosystem: npm
-    directory: /travelmgr/frontend
+    directory: "/travelmgr frontend"
     schedule:
       interval: weekly
       day: monday
