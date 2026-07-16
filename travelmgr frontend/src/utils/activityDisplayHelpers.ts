@@ -21,7 +21,9 @@ const formatEndpointRoute = (from?: string | null, to?: string | null): string |
 }
 
 export const getTransportIdentificationLine = (activity: Activity): string | null => {
-  if (activity.activityTypeId === ACTIVITY_TYPE.FLIGHT) {
+  const transportTypeId = resolveEffectiveTransportTypeId(activity)
+
+  if (transportTypeId === ACTIVITY_TYPE.FLIGHT) {
     const parts = [
       activity.flightNumber,
       activity.airline,
@@ -31,7 +33,7 @@ export const getTransportIdentificationLine = (activity: Activity): string | nul
     return parts.length > 0 ? parts.join(' · ') : null
   }
 
-  if (activity.activityTypeId === ACTIVITY_TYPE.CAR_RENTAL) {
+  if (transportTypeId === ACTIVITY_TYPE.CAR_RENTAL) {
     const parts = [
       activity.company,
       activity.carType,
@@ -41,7 +43,12 @@ export const getTransportIdentificationLine = (activity: Activity): string | nul
     return parts.length > 0 ? parts.join(' · ') : null
   }
 
-  if (activity.activityTypeId != null && GROUND_TRANSPORT_TYPE_IDS.has(activity.activityTypeId)) {
+  if (transportTypeId === ACTIVITY_TYPE.PRIVATE_CAR) {
+    const route = formatEndpointRoute(activity.departureLocation, activity.arrivalLocation)
+    return route ? `Voiture personnelle · ${route}` : 'Voiture personnelle'
+  }
+
+  if (transportTypeId != null && GROUND_TRANSPORT_TYPE_IDS.has(transportTypeId)) {
     const parts = [
       activity.company,
       activity.transportLine,
@@ -69,3 +76,42 @@ export const getTransportIdentificationLine = (activity: Activity): string | nul
 
 export const getActivitySecondaryLine = (activity: Activity): string | null =>
   getAccommodationLocationLine(activity) || getTransportIdentificationLine(activity)
+
+const resolveEffectiveTransportTypeId = (activity: Activity): number | undefined => {
+  const typeId = activity.activityTypeId
+  if (typeId == null) return undefined
+
+  const label = `${activity.name || ''} ${activity.comments || ''}`.toLowerCase()
+  if (/voiture personnelle|personal car|private car|voiture perso/.test(label)) {
+    return ACTIVITY_TYPE.PRIVATE_CAR
+  }
+
+  if (typeId === ACTIVITY_TYPE.FLIGHT) {
+    const hasFlightDetails = Boolean(
+      activity.flightNumber || activity.airline || activity.departureAirport || activity.arrivalAirport
+    )
+    if (!hasFlightDetails && (activity.departureLocation || activity.arrivalLocation)) {
+      return ACTIVITY_TYPE.PRIVATE_CAR
+    }
+  }
+
+  return typeId
+}
+
+export const getTransportIconPrefix = (activity: Activity): string => {
+  switch (resolveEffectiveTransportTypeId(activity)) {
+    case ACTIVITY_TYPE.FLIGHT:
+      return '✈'
+    case ACTIVITY_TYPE.TRAIN:
+      return '🚆'
+    case ACTIVITY_TYPE.BUS:
+      return '🚌'
+    case ACTIVITY_TYPE.PUBLIC_TRANSPORT:
+      return '🚇'
+    case ACTIVITY_TYPE.CAR_RENTAL:
+    case ACTIVITY_TYPE.PRIVATE_CAR:
+      return '🚗'
+    default:
+      return ''
+  }
+}

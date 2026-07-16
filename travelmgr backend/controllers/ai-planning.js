@@ -16,7 +16,7 @@ const {
 } = require('../utils/ai-planning-service')
 const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
 const { linkTripToUser } = require('../utils/trip-ownership')
-const { buildAccommodationDateTimes } = require('../utils/hotel-datetime')
+const { buildAccommodationDateTimes, resolveAccommodationTimezone } = require('../utils/hotel-datetime')
 
 const findSessionForUser = async (sessionId, userId) => {
   const where = { id: sessionId }
@@ -67,14 +67,16 @@ const createTripFromItinerary = async (itinerary, formData = {}, userId = null) 
 
   const createTransportActivity = async (stage, transport) => {
     if (!transport) return
+    const activityType = transport.activityType || 'tour'
+    const activityTypeId = getActivityTypeId(activityType)
     await Activity.create({
       stageId: stage.id,
-      activityTypeId: getActivityTypeId(transport.activityType || 'tour'),
+      activityTypeId,
       name: transport.label || transport.description,
       startDateTime: transport.startDateTime || null,
       endDateTime: transport.endDateTime || null,
       comments: transport.description || `Mode: ${transport.mode}`,
-      cost: transport.estimatedCost || null,
+      cost: activityType === 'private_car' ? 0 : (transport.estimatedCost ?? null),
       city: transport.arrivalLocation || null,
       departureLocation: transport.departureLocation || null,
       arrivalLocation: transport.arrivalLocation || null,
@@ -99,6 +101,8 @@ const createTripFromItinerary = async (itinerary, formData = {}, userId = null) 
       cost: data.estimatedCost || data.cost || null,
       checkInDate: data.checkInDate || null,
       checkOutDate: data.checkOutDate || null,
+      checkInTime: data.checkInTime || null,
+      checkOutTime: data.checkOutTime || null,
       reservationStatus: data.reservationStatus || 'to_reserve',
       bookingUrl: data.bookingUrl || null,
       latitude: data.latitude || null,
@@ -137,13 +141,16 @@ const createTripFromItinerary = async (itinerary, formData = {}, userId = null) 
 
     for (const accommodation of stageData.accommodations || []) {
       const stageCity = (stageData.name || '').split('—')[0].split(',')[0].trim()
-      const { startDateTime, endDateTime } = buildAccommodationDateTimes(accommodation)
+      const stageTimezone = country?.timezone || resolveAccommodationTimezone(accommodation, stageData)
+      const { startDateTime, endDateTime, checkInTime, checkOutTime } = buildAccommodationDateTimes(accommodation, stageTimezone)
       await createActivityFromData(stage, {
         ...accommodation,
         activityType: 'hotel',
         city: accommodation.city || stageCity || null,
         startDateTime: accommodation.startDateTime || startDateTime,
         endDateTime: accommodation.endDateTime || endDateTime,
+        checkInTime: accommodation.checkInTime || checkInTime,
+        checkOutTime: accommodation.checkOutTime || checkOutTime,
         address: accommodation.address || null,
         phone: accommodation.phone || null,
         comments: accommodation.comments || `Type: ${accommodation.type || 'hôtel'}. Suggestion IA — à confirmer.`

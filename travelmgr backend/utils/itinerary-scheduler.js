@@ -1,5 +1,5 @@
 const { suggestBookingUrl } = require('./booking-urls')
-const { resolveTransportActivityType } = require('./activity-field-cleanup')
+const { resolveTransportActivityType, isPersonalCarTransport } = require('./activity-field-cleanup')
 
 const TRANSPORT_DURATION_HOURS = {
   flight: 8,
@@ -34,6 +34,7 @@ const addHoursToIso = (dateStr, hour, durationHours) => {
 }
 
 const inferInterStageMode = (formData, fromLoc, toLoc) => {
+  if (isPersonalCarTransport(formData)) return 'car'
   const local = (formData.localTransport || '').toLowerCase()
   if (local.includes('voiture') || local.includes('car')) return 'car'
   if (local.includes('bus')) return 'bus'

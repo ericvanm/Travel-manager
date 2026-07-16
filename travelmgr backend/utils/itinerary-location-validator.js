@@ -1,4 +1,4 @@
-const { geocodePlace, geocodePlaces } = require('./geocoding')
+const { geocodePlaces } = require('./geocoding')
 const { parseDateOnly, addDays } = require('./date-only')
 const { listNightsToCover } = require('./trip-accommodation-validation')
 const { accommodationCoversNight } = require('./accommodation-planning')

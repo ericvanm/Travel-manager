@@ -30,8 +30,54 @@ const wallClockDateInTimezone = (iso, timeZone = 'UTC') =>
 const wallClockTimeInTimezone = (iso, timeZone = 'UTC') =>
   wallClockParts(iso, timeZone)?.time || null
 
+/** Convert wall-clock date+time in IANA timezone to UTC ISO string. */
+const combineDateAndTimeInTimezone = (date, time, timeZone = 'UTC') => {
+  if (!date) return null
+  const targetDate = date
+  const targetTime = (time || '00:00').slice(0, 5)
+
+  let candidate = Date.parse(`${targetDate}T${targetTime}:00Z`)
+  if (Number.isNaN(candidate)) return null
+
+  for (let i = 0; i < 6; i += 1) {
+    const wall = wallClockParts(new Date(candidate).toISOString(), timeZone || 'UTC')
+    if (!wall) break
+    if (wall.date === targetDate && wall.time === targetTime) {
+      return new Date(candidate).toISOString()
+    }
+    const targetMs = Date.parse(`${targetDate}T${targetTime}:00Z`)
+    const actualMs = Date.parse(`${wall.date}T${wall.time}:00Z`)
+    candidate += targetMs - actualMs
+  }
+
+  return new Date(candidate).toISOString()
+}
+
+const TIMEZONE_BY_COUNTRY = {
+  FR: 'Europe/Paris',
+  ES: 'Europe/Madrid',
+  IT: 'Europe/Rome',
+  DE: 'Europe/Berlin',
+  GB: 'Europe/London',
+  UK: 'Europe/London',
+  US: 'America/New_York',
+  JP: 'Asia/Tokyo',
+  NL: 'Europe/Amsterdam',
+  BE: 'Europe/Brussels',
+  CH: 'Europe/Zurich',
+  PT: 'Europe/Lisbon'
+}
+
+const resolveTimezoneForCountry = (countryCode, fallback = 'Europe/Paris') => {
+  const code = String(countryCode || '').trim().toUpperCase()
+  return TIMEZONE_BY_COUNTRY[code] || fallback
+}
+
 module.exports = {
   wallClockParts,
   wallClockDateInTimezone,
   wallClockTimeInTimezone,
+  combineDateAndTimeInTimezone,
+  resolveTimezoneForCountry,
+  TIMEZONE_BY_COUNTRY
 }

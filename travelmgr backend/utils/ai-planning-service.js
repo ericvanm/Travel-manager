@@ -25,24 +25,18 @@ const {
   validateItineraryActivityHours,
   finalizeItineraryActivityTiming
 } = require('./itinerary-activity-hours')
-const { resolveTransportActivityType } = require('./activity-field-cleanup')
+const { normalizeItineraryTransports } = require('./itinerary-transport')
+const { normalizeItineraryActivities, cleanActivityTitle } = require('./activity-content')
+const {
+  resolveTransportActivityType,
+  isPersonalCarTransport
+} = require('./activity-field-cleanup')
 
 const {
   ACTIVITY_TYPE_MAP,
   ACTIVITY_TYPE_LABELS,
   getActivityTypeId
 } = require('./activity-types')
-
-const REQUIRED_FORM_FIELDS = [
-  'departureLocation',
-  'geographicZone',
-  'durationDays',
-  'travelStyle',
-  'localTransport',
-  'accommodationType',
-  'budget',
-  'currency'
-]
 
 const normalizeFormData = (formData = {}) => ({
   departureLocation: String(formData.departureLocation || '').trim(),
@@ -68,6 +62,16 @@ const isLikelySameRegion = (departure, destination) => {
 }
 
 const suggestOutboundTransportOptions = (formData) => {
+  if (isPersonalCarTransport(formData)) {
+    const personalCar = {
+      mode: 'car',
+      label: 'Voiture personnelle',
+      estimatedCost: 0,
+      durationHint: 'flexible'
+    }
+    return { options: [personalCar], recommended: personalCar }
+  }
+
   const sameRegion = isLikelySameRegion(formData.departureLocation, formData.geographicZone)
   const base = Math.round(formData.budget * 0.12)
 
@@ -271,7 +275,7 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
       for (let slot = 0; slot < slotsPerDay; slot += 1) {
         const startHour = 9 + slot * 3
         activities.push({
-          name: `Jour ${day + 1} — ${style.includes('plage') ? 'Détente' : 'Visite'} ${slot + 1} (${stageName})`,
+          name: cleanActivityTitle(null, stageName, formData),
           activityType: style.includes('museum') || style.includes('culturel') ? 'museum' : 'tour',
           startDateTime: `${dayDate}T${String(startHour).padStart(2, '0')}:00:00Z`,
           endDateTime: `${dayDate}T${String(startHour + slotHours).padStart(2, '0')}:00:00Z`,
@@ -306,9 +310,13 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
 
   const outboundTransport = {
     mode: outbound.mode,
-    label: `${outbound.label} : ${formData.departureLocation} → ${zone}`,
-    description: `Trajet aller depuis ${formData.departureLocation} vers ${zone} (${outbound.durationHint}).`,
-    estimatedCost: outbound.estimatedCost,
+    label: isPersonalCarTransport(formData)
+      ? `Voiture personnelle : ${formData.departureLocation} → ${zone.split(',')[0].trim()}`
+      : `${outbound.label} : ${formData.departureLocation} → ${zone}`,
+    description: isPersonalCarTransport(formData)
+      ? `Trajet aller en voiture personnelle depuis ${formData.departureLocation} vers ${zone}.`
+      : `Trajet aller depuis ${formData.departureLocation} vers ${zone} (${outbound.durationHint}).`,
+    estimatedCost: isPersonalCarTransport(formData) ? 0 : outbound.estimatedCost,
     departureLocation: formData.departureLocation,
     arrivalLocation: zone.split(',')[0].trim(),
     activityType: resolveTransportActivityType(outbound.mode, formData)
@@ -316,9 +324,13 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
 
   const returnTransportLeg = {
     mode: returnTransport.mode,
-    label: `${returnTransport.label} : ${zone} → ${formData.departureLocation}`,
-    description: `Trajet retour vers ${formData.departureLocation}.`,
-    estimatedCost: returnTransport.estimatedCost,
+    label: isPersonalCarTransport(formData)
+      ? `Voiture personnelle : ${zone.split(',')[0].trim()} → ${formData.departureLocation}`
+      : `${returnTransport.label} : ${zone} → ${formData.departureLocation}`,
+    description: isPersonalCarTransport(formData)
+      ? `Trajet retour en voiture personnelle vers ${formData.departureLocation}.`
+      : `Trajet retour vers ${formData.departureLocation}.`,
+    estimatedCost: isPersonalCarTransport(formData) ? 0 : returnTransport.estimatedCost,
     departureLocation: zone.split(',')[0].trim(),
     arrivalLocation: formData.departureLocation,
     activityType: resolveTransportActivityType(returnTransport.mode, formData)
@@ -407,9 +419,15 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
 }
 
 const parseJsonFromContent = (content) => {
-  const trimmed = content.trim()
+  const trimmed = String(content || '').trim()
+  if (!trimmed) {
+    throw new Error('Empty AI response')
+  }
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)
   const jsonText = fenced ? fenced[1].trim() : trimmed
+  if (!jsonText) {
+    throw new Error('Empty AI JSON payload')
+  }
   return JSON.parse(jsonText)
 }
 
@@ -742,6 +760,7 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary, 
   }
 
   itinerary = scheduleItinerary(itinerary, formData)
+  itinerary = normalizeItineraryTransports(itinerary, formData)
 
   const activityHoursResult = ensureDailyActivityHours(itinerary, formData)
   itinerary = activityHoursResult.itinerary
@@ -751,6 +770,8 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary, 
   if (activityHoursResult.filledDays.length > 0) {
     itinerary.activityHoursFilledDays = activityHoursResult.filledDays
   }
+
+  itinerary = normalizeItineraryActivities(itinerary, formData)
 
   itinerary = finalizeItineraryActivityTiming(itinerary)
 

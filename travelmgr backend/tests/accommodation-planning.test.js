@@ -5,7 +5,7 @@ const {
   normalizeAccommodationCheckoutDates
 } = require('../utils/accommodation-planning')
 const { ensureDailyAccommodation } = require('../utils/itinerary-location-validator')
-const { buildAccommodationDateTimes, getDefaultCheckInTime } = require('../utils/hotel-datetime')
+const { buildAccommodationDateTimes } = require('../utils/hotel-datetime')
 
 describe('accommodation planning', () => {
   test('stripReturnDayAccommodations removes lodging starting on trip end date', () => {
@@ -70,23 +70,16 @@ describe('accommodation planning', () => {
     assert.strictEqual(itinerary.stages[0].accommodations[0].checkOutDate, '2027-04-15')
   })
 
-  test('buildAccommodationDateTimes uses type defaults and explicit times', () => {
+  test('buildAccommodationDateTimes uses local wall clock in stage timezone', () => {
     const hotelTimes = buildAccommodationDateTimes({
       checkInDate: '2027-04-10',
       checkOutDate: '2027-04-12',
-      type: 'hotel'
-    })
-    assert.strictEqual(hotelTimes.startDateTime, '2027-04-10T15:00:00.000Z')
-    assert.strictEqual(hotelTimes.endDateTime, '2027-04-12T11:00:00.000Z')
-
-    const customTimes = buildAccommodationDateTimes({
-      checkInDate: '2027-04-10',
-      checkOutDate: '2027-04-12',
-      type: 'airbnb',
-      checkInTime: '16:30',
-      checkOutTime: '10:00'
-    })
-    assert.strictEqual(customTimes.startDateTime, '2027-04-10T16:30:00.000Z')
-    assert.strictEqual(getDefaultCheckInTime('airbnb'), '16:00')
+      type: 'hotel',
+      checkInTime: '15:00',
+      checkOutTime: '11:00'
+    }, 'Europe/Paris')
+    assert.notStrictEqual(hotelTimes.startDateTime, '2027-04-10T15:00:00.000Z')
+    assert.ok(hotelTimes.startDateTime.endsWith('Z'))
+    assert.strictEqual(hotelTimes.checkInTime, '15:00')
   })
 })

@@ -110,8 +110,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
     try {
       const detail = await getAdminAiLogDetail(logId);
       setSelectedLog(detail);
-    } catch {
-      setError(t('admin_load_error'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('admin_load_error');
+      setError(message);
       setLogDialogOpen(false);
     } finally {
       setLogLoading(false);
@@ -311,7 +312,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
               </Paper>
               <Typography variant="subtitle2">{t('admin_parsed_response')}</Typography>
               <Paper variant="outlined" sx={{ p: 2, maxHeight: 240, overflow: 'auto', fontFamily: 'monospace', fontSize: 12 }}>
-                <pre style={{ margin: 0 }}>{JSON.stringify(selectedLog.parsedResponse, null, 2)}</pre>
+                <pre style={{ margin: 0 }}>
+                  {selectedLog.parsedResponse != null
+                    ? JSON.stringify(selectedLog.parsedResponse, null, 2)
+                    : '—'}
+                </pre>
               </Paper>
               {selectedLog.errorMessage && (
                 <>

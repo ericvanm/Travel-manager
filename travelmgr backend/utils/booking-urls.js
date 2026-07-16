@@ -1,4 +1,5 @@
 const { renderSiteUrl, resolveInspirationSites } = require('./activity-inspiration-sites')
+const { buildActivitySearchQuery } = require('./activity-content')
 
 const encodeQuery = (query) => encodeURIComponent(String(query || '').trim())
 
@@ -59,13 +60,6 @@ const isSearchResultsUrl = (url) => {
 
 const buildGoogleSearchUrl = (query) =>
   `https://www.google.com/search?q=${encodeQuery(query)}`
-
-const buildActivitySearchQuery = (activity, formData = null) => {
-  const city = activity.city || activity.arrivalLocation || ''
-  const name = activity.name || ''
-  const zone = formData?.geographicZone || ''
-  return [city, name, zone].filter(Boolean).join(' ').trim() || name || zone || 'activities'
-}
 
 const pickInspirationSiteTemplate = (formData = null) => {
   const sites = resolveInspirationSites(formData || {})

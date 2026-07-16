@@ -1,7 +1,7 @@
 const { listDateRange, parseDateOnly, MAX_TRIP_DAYS } = require('./date-only')
 const { wallClockDateInTimezone, wallClockTimeInTimezone } = require('./datetime-timezone')
 
-const TRANSPORT_TYPE_IDS = new Set([6, 8, 9, 10, 11])
+const TRANSPORT_TYPE_IDS = new Set([6, 8, 9, 10, 11, 12])
 const HOTEL_TYPE_ID = 7
 
 const stageTimezone = (stage) => stage?.Country?.timezone || 'UTC'

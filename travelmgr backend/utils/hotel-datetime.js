@@ -1,3 +1,5 @@
+const { combineDateAndTimeInTimezone, resolveTimezoneForCountry } = require('./datetime-timezone')
+
 const CHECK_IN_BY_TYPE = {
   hotel: '15:00',
   hôtel: '15:00',
@@ -52,17 +54,27 @@ const toDateOnly = (value) => {
   return str.length >= 10 ? str.slice(0, 10) : str
 }
 
-const buildAccommodationDateTimes = (accommodation) => {
+const resolveAccommodationTimezone = (accommodation, stage = null) => {
+  if (accommodation?.timezone) return accommodation.timezone
+  if (stage?.timezone) return stage.timezone
+  return resolveTimezoneForCountry(stage?.countryCode || accommodation?.countryCode)
+}
+
+const buildAccommodationDateTimes = (accommodation, timeZone = 'Europe/Paris') => {
   const checkInDate = toDateOnly(accommodation?.checkInDate)
   const checkOutDate = toDateOnly(accommodation?.checkOutDate)
   if (!checkInDate || !checkOutDate) {
-    return { startDateTime: null, endDateTime: null }
+    return { startDateTime: null, endDateTime: null, checkInTime: null, checkOutTime: null }
   }
   const checkInTime = getCheckInTime(accommodation)
   const checkOutTime = getCheckOutTime(accommodation)
+  const tz = timeZone || 'Europe/Paris'
+
   return {
-    startDateTime: `${checkInDate}T${checkInTime}:00.000Z`,
-    endDateTime: `${checkOutDate}T${checkOutTime}:00.000Z`
+    checkInTime,
+    checkOutTime,
+    startDateTime: combineDateAndTimeInTimezone(checkInDate, checkInTime, tz),
+    endDateTime: combineDateAndTimeInTimezone(checkOutDate, checkOutTime, tz)
   }
 }
 
@@ -71,5 +83,6 @@ module.exports = {
   getDefaultCheckOutTime,
   getCheckInTime,
   getCheckOutTime,
+  resolveAccommodationTimezone,
   buildAccommodationDateTimes
 }

@@ -56,8 +56,8 @@ const clearIncompatibleActivityFields = (payload, activityTypeId) => {
 }
 
 const isPersonalCarTransport = (formData = {}) => {
-  const hint = `${formData.localTransport || ''} ${formData.remarks || ''}`.toLowerCase()
-  return /personnel|privée|privee|personal car|own car|ma voiture|voiture perso/.test(hint)
+  const hint = `${formData.localTransport || ''} ${formData.remarks || ''} ${formData.departureLocation || ''}`.toLowerCase()
+  return /personnel|privée|privee|personal car|own car|ma voiture|voiture perso|y aller en voiture|en voiture personnelle/.test(hint)
 }
 
 const resolveCarActivityType = (formData = {}) =>

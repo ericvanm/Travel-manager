@@ -188,7 +188,7 @@ const buildTripMapData = async (trip, stages, activities, language = 'en') => {
   }
 
   // Local displacement: stage/accommodation hub → each activity on site
-  for (const { activity, stage, point } of activityPoints) {
+  for (const { stage, point } of activityPoints) {
     const hub = stageHubById.get(stage?.id)
       || activityPoints.find((ap) =>
         ap.stage?.id === stage?.id && ap.activity.activityTypeId === 7

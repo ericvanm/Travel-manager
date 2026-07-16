@@ -1,5 +1,5 @@
 const { parseDateOnly, compareDateOnly } = require('./date-only')
-const { buildAccommodationDateTimes } = require('./hotel-datetime')
+const { buildAccommodationDateTimes, resolveAccommodationTimezone } = require('./hotel-datetime')
 
 const accommodationCoversNight = (day, accommodation) => {
   const checkIn = parseDateOnly(accommodation.checkInDate)
@@ -66,9 +66,16 @@ const buildAccommodationComments = (accommodation, formData) => {
 
 const normalizeAccommodationDetails = (itinerary, formData = null) => {
   for (const stage of itinerary.stages || []) {
+    const timeZone = resolveAccommodationTimezone(null, stage)
     stage.accommodations = (stage.accommodations || []).map((acc) => {
       const next = { ...acc }
-      const { startDateTime, endDateTime } = buildAccommodationDateTimes(next)
+      if (next.availabilityConfirmed === false) {
+        next.comments = [next.comments, '⚠ Disponibilité non confirmée pour ces dates — à remplacer.'].filter(Boolean).join(' — ')
+      }
+      const { startDateTime, endDateTime, checkInTime, checkOutTime } =
+        buildAccommodationDateTimes(next, timeZone)
+      next.checkInTime = checkInTime
+      next.checkOutTime = checkOutTime
       next.startDateTime = startDateTime
       next.endDateTime = endDateTime
       next.comments = buildAccommodationComments(next, formData)

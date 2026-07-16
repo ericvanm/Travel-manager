@@ -89,7 +89,26 @@ router.get('/ai-logs/:id', async (req, res) => {
       return res.status(404).json({ error: 'Log not found' })
     }
 
-    res.json(log)
+    const plain = log.get({ plain: true })
+    if (plain.parsedResponse === undefined) plain.parsedResponse = null
+    if (plain.requestPayload === undefined) plain.requestPayload = null
+    if (typeof plain.requestPayload === 'string') {
+      try {
+        plain.requestPayload = JSON.parse(plain.requestPayload)
+      } catch {
+        plain.requestPayload = { raw: plain.requestPayload }
+      }
+    }
+    if (typeof plain.parsedResponse === 'string') {
+      try {
+        plain.parsedResponse = JSON.parse(plain.parsedResponse)
+      } catch {
+        plain.parsedResponse = { raw: plain.parsedResponse }
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8')
+    res.status(200).send(JSON.stringify(plain))
   } catch (error) {
     console.error('Admin AI log detail error:', error)
     res.status(500).json({ error: 'Failed to fetch AI log' })

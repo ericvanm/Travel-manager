@@ -59,6 +59,9 @@ export const formatTimeForInputInTimezone = (
   defaultTime = '09:00'
 ): string => {
   if (!iso) return defaultTime
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(iso).trim())) {
+    return defaultTime
+  }
   return wallClockInTimezone(new Date(iso).getTime(), timeZone).time || defaultTime
 }
 

@@ -106,6 +106,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
         endDateTime,
         checkInDate: form.checkInDate || null,
         checkOutDate: form.checkOutDate || null,
+        checkInTime: form.checkInTime || '15:00',
+        checkOutTime: form.checkOutTime || '11:00',
       };
     }
     return {
@@ -164,6 +166,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     if (activityTypeId === 7) {
       activityData.checkInDate = (dateTimes.checkInDate ?? form.checkInDate) || null
       activityData.checkOutDate = (dateTimes.checkOutDate ?? form.checkOutDate) || null
+      activityData.checkInTime = (dateTimes.checkInTime ?? form.checkInTime) || '15:00'
+      activityData.checkOutTime = (dateTimes.checkOutTime ?? form.checkOutTime) || '11:00'
       activityData.address = form.address || null
       activityData.phone = form.phone || null
       activityData.confirmationNumber = form.confirmationNumber || null
@@ -254,6 +258,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     if (activityTypeId === 7) {
       activityData.checkInDate = (dateTimes.checkInDate ?? form.checkInDate) || null
       activityData.checkOutDate = (dateTimes.checkOutDate ?? form.checkOutDate) || null
+      activityData.checkInTime = (dateTimes.checkInTime ?? form.checkInTime) || '15:00'
+      activityData.checkOutTime = (dateTimes.checkOutTime ?? form.checkOutTime) || '11:00'
       activityData.address = form.address || null
       activityData.phone = form.phone || null
       activityData.roomType = form.roomType || null
@@ -504,8 +510,8 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     setSelectedStage(stage);
     const timezone = getStageTimezone(stage);
 
-    const checkInSource = activity.checkInDate || activity.startDateTime;
-    const checkOutSource = activity.checkOutDate || activity.endDateTime;
+    const checkInSource = activity.startDateTime || activity.checkInDate;
+    const checkOutSource = activity.endDateTime || activity.checkOutDate;
 
     setNewActivity({
       name: activity.name || '',
@@ -524,11 +530,13 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       terminal: activity.terminal || '',
       checkInDate: activity.activityTypeId === 7 ? formatDateForInputInTimezone(checkInSource, timezone) : '',
       checkOutDate: activity.activityTypeId === 7 ? formatDateForInputInTimezone(checkOutSource, timezone) : '',
-      checkInTime: activity.activityTypeId === 7 && checkInSource
-        ? formatTimeForInputInTimezone(checkInSource, timezone, '15:00')
+      checkInTime: activity.activityTypeId === 7
+        ? (activity.checkInTime
+          || (checkInSource ? formatTimeForInputInTimezone(checkInSource, timezone, '15:00') : '15:00'))
         : '',
-      checkOutTime: activity.activityTypeId === 7 && checkOutSource
-        ? formatTimeForInputInTimezone(checkOutSource, timezone, '11:00')
+      checkOutTime: activity.activityTypeId === 7
+        ? (activity.checkOutTime
+          || (checkOutSource ? formatTimeForInputInTimezone(checkOutSource, timezone, '11:00') : '11:00'))
         : '',
       address: activity.address || '',
       phone: activity.phone || '',

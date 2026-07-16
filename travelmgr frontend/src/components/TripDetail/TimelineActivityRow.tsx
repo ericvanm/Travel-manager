@@ -5,7 +5,7 @@ import { Activity, ActivityType, Stage, TimelineActivity, TimelineActivityStatus
 import { useLanguage } from '../../contexts/LanguageContext';
 import { formatTime } from '../../utils/localeHelpers';
 import { getActivityStageTimezone } from '../../utils/tripTimezoneHelpers';
-import { getAccommodationLocationLine, getTransportIdentificationLine, isTransportActivity } from '../../utils/activityDisplayHelpers';
+import { getAccommodationLocationLine, getTransportIdentificationLine, getTransportIconPrefix, isTransportActivity } from '../../utils/activityDisplayHelpers';
 
 const TIMELINE_STATUS_COLORS: Record<TimelineActivityStatus, string> = {
   starts: 'success.main',
@@ -37,6 +37,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
   const activityTypeLabel = activityTypes.find((type) => type.id === activity.activityTypeId)?.label || 'N/A';
   const accommodationLine = getAccommodationLocationLine(activity);
   const transportLine = getTransportIdentificationLine(activity);
+  const transportIcon = getTransportIconPrefix(activity);
   const timeZone = activity.stage?.timezone || getActivityStageTimezone(activity.stageId, stages);
 
   const handleClick = () => {
@@ -106,7 +107,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
         )}
         {transportLine && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-            ✈ {transportLine}
+            {transportIcon ? `${transportIcon} ` : ''}{transportLine}
           </Typography>
         )}
         {isTransportActivity(activity) && !transportLine && (activity.departureLocation || activity.arrivalLocation) && (

@@ -1,13 +1,30 @@
 version: 2
+
 updates:
   - package-ecosystem: npm
-    directory: /travelmgr backend
+    directory: /travelmgr/backend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: npm
-    directory: /travelmgr frontend
+    directory: /travelmgr/frontend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

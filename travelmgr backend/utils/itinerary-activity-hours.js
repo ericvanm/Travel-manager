@@ -1,4 +1,5 @@
 const { parseDateOnly, addDays, listDateRange } = require('./date-only')
+const { cleanActivityTitle } = require('./activity-content')
 const { formatInspirationSitesForPrompt } = require('./activity-inspiration-sites')
 const { ensureActivityAfterArrival, getStageArrivalEnd } = require('./itinerary-scheduler')
 
@@ -125,7 +126,7 @@ const buildFillerActivity = ({
   const hour = startHour + slotIndex * 3
 
   const filler = {
-    name: `${city} — ${style} (${day}, activité ${slotIndex + 1})`,
+    name: cleanActivityTitle(null, city, formData),
     activityType: style.toLowerCase().includes('museum') || style.toLowerCase().includes('culturel')
       ? 'museum'
       : 'tour',

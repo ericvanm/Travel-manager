@@ -16,8 +16,7 @@ const {
   getTransportArrival,
   getTransportDeparture,
   isTransportActivity: isTransportForLocation,
-  isTransportStageCoherent,
-  isReturnHomeTransport
+  isTransportStageCoherent
 } = require('./trip-location-validation')
 
 const parseTime = (value) => {

@@ -32,13 +32,20 @@ const isOpenAIEnabled = () =>
   process.env.OPENAI_API_KEY && process.env.USE_OPENAI === 'true'
 
 const parseJsonFromContent = (content) => {
-  const trimmed = content.trim()
+  const trimmed = String(content || '').trim()
+  if (!trimmed) {
+    throw new Error('Empty AI response')
+  }
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)
-  return JSON.parse(fenced ? fenced[1].trim() : trimmed)
+  const jsonText = fenced ? fenced[1].trim() : trimmed
+  if (!jsonText) {
+    throw new Error('Empty AI JSON payload')
+  }
+  return JSON.parse(jsonText)
 }
 
 const ACTIVITY_DETAIL_FIELDS = [
-  'address', 'phone', 'checkInDate', 'checkOutDate', 'roomType', 'confirmationNumber',
+  'address', 'phone', 'checkInDate', 'checkOutDate', 'checkInTime', 'checkOutTime', 'roomType', 'confirmationNumber',
   'airline', 'flightNumber', 'departureAirport', 'arrivalAirport', 'confirmationCode',
   'seat', 'gate', 'terminal', 'departureLocation', 'arrivalLocation',
   'company', 'pickupLocation', 'dropoffLocation', 'carType', 'bookingUrl', 'bookingCode',
@@ -251,7 +258,7 @@ const STRIP_FROM_ACTIVITY_PAYLOAD = new Set([
   'entityType', 'entityId', 'action', 'data'
 ])
 
-const normalizeHotelDates = (payload, activityTypeId) => {
+const normalizeHotelDates = (payload, activityTypeId, timeZone = 'Europe/Paris') => {
   if (activityTypeId !== 7) return payload
   const next = { ...payload }
   if (!next.checkInDate && next.startDateTime) {
@@ -267,18 +274,22 @@ const normalizeHotelDates = (payload, activityTypeId) => {
     next.checkOutDate = addDays(next.checkInDate, 1)
   }
   if (next.checkInDate && !next.startDateTime) {
-    const { startDateTime, endDateTime } = buildAccommodationDateTimes(next)
+    const { startDateTime, endDateTime, checkInTime, checkOutTime } =
+      buildAccommodationDateTimes(next, timeZone)
     next.startDateTime = startDateTime
+    next.checkInTime = checkInTime
+    next.checkOutTime = checkOutTime
     if (!next.endDateTime) next.endDateTime = endDateTime
   }
   if (next.checkOutDate && !next.endDateTime) {
-    const { endDateTime } = buildAccommodationDateTimes(next)
+    const { endDateTime, checkOutTime } = buildAccommodationDateTimes(next, timeZone)
     next.endDateTime = endDateTime
+    if (checkOutTime) next.checkOutTime = checkOutTime
   }
   return next
 }
 
-const sanitizeActivityPayload = (payload, activityTypeId) => {
+const sanitizeActivityPayload = (payload, activityTypeId, timeZone = 'Europe/Paris') => {
   const cleaned = { ...payload }
   for (const key of STRIP_FROM_ACTIVITY_PAYLOAD) {
     delete cleaned[key]
@@ -288,7 +299,7 @@ const sanitizeActivityPayload = (payload, activityTypeId) => {
     cleaned.cost = Number.isFinite(cost) ? cost : null
   }
   return clearIncompatibleActivityFields(
-    normalizeHotelDates(cleaned, activityTypeId),
+    normalizeHotelDates(cleaned, activityTypeId, timeZone),
     activityTypeId
   )
 }
@@ -341,7 +352,7 @@ const resolveStageIdForActivityChange = (change, stages = []) => {
   return null
 }
 
-const buildActivityUpdates = (change, activity) => {
+const buildActivityUpdates = (change, activity, timeZone = 'Europe/Paris') => {
   const activityTypeId = resolveActivityTypeId(change) || activity.activityTypeId
   const merged = mergeActivityDetailFields(change, {
     ...(change.data || {}),
@@ -353,10 +364,10 @@ const buildActivityUpdates = (change, activity) => {
     comments: change.description || change.data?.comments || activity.comments,
     activityTypeId
   })
-  return sanitizeActivityPayload(merged, activityTypeId)
+  return sanitizeActivityPayload(merged, activityTypeId, timeZone)
 }
 
-const buildActivityCreatePayload = (change, stageId) => {
+const buildActivityCreatePayload = (change, stageId, timeZone = 'Europe/Paris') => {
   const activityTypeId = resolveActivityTypeId(change)
   const merged = mergeActivityDetailFields(change, {
     ...(change.data || {}),
@@ -371,7 +382,7 @@ const buildActivityCreatePayload = (change, stageId) => {
     reservationStatus: change.data?.reservationStatus || 'to_reserve',
     bookingUrl: change.data?.bookingUrl || suggestBookingUrl('activity', change.data || {})
   })
-  return sanitizeActivityPayload(merged, activityTypeId)
+  return sanitizeActivityPayload(merged, activityTypeId, timeZone)
 }
 
 const proposeAdaptations = async (snapshot, adaptationRequest, language, logContext = null) => {
@@ -398,12 +409,20 @@ const proposeAdaptations = async (snapshot, adaptationRequest, language, logCont
 }
 
 const applyProposedChanges = async (tripId, proposedChanges) => {
-  const { Trip, Stage, Activity } = require('../models/DBmodels')
+  const { Trip, Stage, Activity, Country } = require('../models/DBmodels')
   const applied = { trip: 0, stages: 0, activities: 0 }
   const errors = []
 
-  const existingStages = await Stage.findAll({ where: { tripId } })
+  const existingStages = await Stage.findAll({
+    where: { tripId },
+    include: [{ model: Country, attributes: ['timezone'] }]
+  })
   const defaultCountryId = existingStages[0]?.countryId || null
+
+  const stageTimezone = (stageId) => {
+    const stage = existingStages.find((s) => s.id === stageId)
+    return stage?.Country?.timezone || 'Europe/Paris'
+  }
 
   for (const change of proposedChanges?.changes || []) {
     try {
@@ -453,7 +472,7 @@ const applyProposedChanges = async (tripId, proposedChanges) => {
           if (!activity) continue
           const stage = await Stage.findByPk(activity.stageId)
           if (stage?.tripId !== tripId) continue
-          const updates = buildActivityUpdates(change, activity)
+          const updates = buildActivityUpdates(change, activity, stageTimezone(activity.stageId))
           await activity.update(updates)
           applied.activities += 1
         }
@@ -470,7 +489,7 @@ const applyProposedChanges = async (tripId, proposedChanges) => {
             errors.push(`Activity create skipped: invalid stageId ${stageId}`)
             continue
           }
-          const payload = buildActivityCreatePayload(change, stageId)
+          const payload = buildActivityCreatePayload(change, stageId, stageTimezone(stageId))
           await Activity.create(payload)
           applied.activities += 1
         }
