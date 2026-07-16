@@ -113,3 +113,74 @@ describe('POST /api/auth/logout', () => {
     assert.strictEqual(verifyResponse.status, 401)
   })
 })
+
+describe('POST /api/auth/forgot-password', () => {
+  test('returns success even for unknown email', async () => {
+    const response = await api.post('/api/auth/forgot-password').send({ email: 'unknown@example.com' })
+    assert.strictEqual(response.status, 200)
+    assert.strictEqual(response.body.message, 'password_reset_requested')
+  })
+
+  test('stores reset token for registered user with email', async () => {
+    await api.post('/api/auth/register').send({
+      username: 'resetuser',
+      password: 'secret',
+      name: 'Reset User',
+      email: 'resetuser@example.com'
+    })
+
+    const response = await api.post('/api/auth/forgot-password').send({ email: 'resetuser@example.com' })
+    assert.strictEqual(response.status, 200)
+
+    const { User } = require('../models/DBmodels')
+    const user = await User.findOne({ where: { username: 'resetuser' } })
+    assert.ok(user.passwordResetTokenHash)
+    assert.ok(user.passwordResetExpiresAt)
+  })
+})
+
+describe('POST /api/auth/reset-password', () => {
+  test('resets password with valid token and logs in', async () => {
+    const crypto = require('crypto')
+    const { User } = require('../models/DBmodels')
+
+    await api.post('/api/auth/register').send({
+      username: 'tokenuser',
+      password: 'oldsecret',
+      name: 'Token User',
+      email: 'tokenuser@example.com'
+    })
+
+    const token = crypto.randomBytes(32).toString('hex')
+    const hash = crypto.createHash('sha256').update(token).digest('hex')
+    const user = await User.findOne({ where: { username: 'tokenuser' } })
+    await user.update({
+      passwordResetTokenHash: hash,
+      passwordResetExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
+    })
+
+    const agent = supertest.agent(app)
+    const response = await agent.post('/api/auth/reset-password').send({
+      token,
+      newPassword: 'newsecret8'
+    })
+
+    assert.strictEqual(response.status, 200)
+    assert.strictEqual(response.body.username, 'tokenuser')
+
+    const loginResponse = await agent.post('/api/auth/login').send({
+      username: 'tokenuser',
+      password: 'newsecret8'
+    })
+    assert.strictEqual(loginResponse.status, 200)
+  })
+
+  test('rejects invalid token', async () => {
+    const response = await api.post('/api/auth/reset-password').send({
+      token: 'invalid-token',
+      newPassword: 'newsecret8'
+    })
+    assert.strictEqual(response.status, 400)
+    assert.strictEqual(response.body.error, 'reset_token_invalid')
+  })
+})

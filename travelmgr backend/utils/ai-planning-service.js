@@ -10,6 +10,11 @@ const {
   haversineKm
 } = require('./itinerary-location-validator')
 const {
+  stripReturnDayAccommodations,
+  normalizeAccommodationCheckoutDates,
+  normalizeAccommodationDetails
+} = require('./accommodation-planning')
+const {
   buildSynthesisPrompt,
   buildItineraryPrompt,
   getSystemMessage
@@ -289,7 +294,7 @@ const buildFallbackItinerary = (formData, revisionFeedback) => {
         type: formData.accommodationType,
         city: stageName,
         checkInDate: stageStart,
-        checkOutDate: addDays(stageEnd, 1),
+        checkOutDate: stageEnd === endDate ? endDate : addDays(stageEnd, 1),
         estimatedCost: lodgingBudget,
         latitude: null,
         longitude: null
@@ -751,7 +756,11 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary, 
   }
 
   itinerary = normalizeStageLocations(itinerary, formData)
+  itinerary = stripReturnDayAccommodations(itinerary)
+  itinerary = normalizeAccommodationCheckoutDates(itinerary)
   itinerary = ensureDailyAccommodation(itinerary, formData)
+  itinerary = stripReturnDayAccommodations(itinerary)
+  itinerary = normalizeAccommodationDetails(itinerary, formData)
   itinerary = await geocodeItineraryLocations(itinerary, formData)
   itinerary = await enrichItineraryGeoAndBudget(itinerary, formData)
   itinerary = await normalizeItineraryBookingUrls(itinerary, formData)

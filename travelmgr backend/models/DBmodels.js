@@ -120,6 +120,16 @@ User.init({
     type: DataTypes.STRING(255),
     allowNull: true,
     field: 'default_departure_location'
+  },
+  passwordResetTokenHash: {
+    type: DataTypes.STRING(128),
+    allowNull: true,
+    field: 'password_reset_token_hash'
+  },
+  passwordResetExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'password_reset_expires_at'
   }
 }, {
   sequelize,

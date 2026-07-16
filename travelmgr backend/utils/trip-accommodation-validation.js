@@ -206,6 +206,7 @@ const fillAccommodationGaps = async (tripId, snapshot) => {
 
   const { Activity } = require('../models/DBmodels')
   const { suggestBookingUrl } = require('./booking-urls')
+const { buildAccommodationDateTimes } = require('./hotel-datetime')
   const createdNights = []
 
   for (const day of coverage.uncoveredNights) {
@@ -216,6 +217,12 @@ const fillAccommodationGaps = async (tripId, snapshot) => {
     const checkOut = addDays(day, 1)
     if (!checkOut) continue
 
+    const { startDateTime, endDateTime } = buildAccommodationDateTimes({
+      checkInDate: day,
+      checkOutDate: checkOut,
+      type: 'hotel'
+    })
+
     await Activity.create({
       stageId: stage.id,
       activityTypeId: HOTEL_TYPE_ID,
@@ -223,10 +230,10 @@ const fillAccommodationGaps = async (tripId, snapshot) => {
       city: stageCity,
       checkInDate: day,
       checkOutDate: checkOut,
-      startDateTime: `${day}T15:00:00.000Z`,
-      endDateTime: `${checkOut}T11:00:00.000Z`,
+      startDateTime,
+      endDateTime,
       reservationStatus: 'to_reserve',
-      bookingUrl: suggestBookingUrl('activity', { activityType: 'hotel', name: stageCity, city: stageCity }),
+      bookingUrl: suggestBookingUrl('accommodation', { activityType: 'hotel', name: stageCity, city: stageCity, checkInDate: day, checkOutDate: checkOut }),
       comments: `Nuit du ${day} — hébergement ajouté automatiquement pour couvrir le voyage.`
     })
     createdNights.push(day)

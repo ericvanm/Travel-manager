@@ -1,5 +1,7 @@
 const { geocodePlace, geocodePlaces } = require('./geocoding')
-const { parseDateOnly, addDays, listTripDays } = require('./date-only')
+const { parseDateOnly, addDays } = require('./date-only')
+const { listNightsToCover } = require('./trip-accommodation-validation')
+const { accommodationCoversNight } = require('./accommodation-planning')
 
 const extractStageCity = (stage, formData) => {
   const raw = (stage?.name || '').split('—')[0].split(',')[0].trim()
@@ -59,13 +61,6 @@ const normalizeStageLocations = (itinerary, formData) => {
   return itinerary
 }
 
-const accommodationCoversNight = (day, accommodation) => {
-  const checkIn = parseDateOnly(accommodation.checkInDate)
-  const checkOut = parseDateOnly(accommodation.checkOutDate)
-  if (!checkIn || !checkOut) return false
-  return checkIn <= day && day < checkOut
-}
-
 const findStageForDay = (stages, day) => {
   for (const stage of stages) {
     const start = parseDateOnly(stage.startDate)
@@ -77,17 +72,18 @@ const findStageForDay = (stages, day) => {
 
 const ensureDailyAccommodation = (itinerary, formData) => {
   const trip = itinerary.trip || {}
-  const days = listTripDays(trip, itinerary.stages || [])
+  const stages = itinerary.stages || []
+  const days = listNightsToCover(trip, stages)
   if (days.length === 0) return itinerary
 
-  const allAccommodations = (itinerary.stages || []).flatMap((s) => s.accommodations || [])
+  const allAccommodations = stages.flatMap((s) => s.accommodations || [])
   const lodgingBudget = Math.round((formData?.budget || 0) * 0.35 / Math.max(days.length, 1))
 
   for (const day of days) {
     const covered = allAccommodations.some((acc) => accommodationCoversNight(day, acc))
     if (covered) continue
 
-    const stage = findStageForDay(itinerary.stages || [], day)
+    const stage = findStageForDay(stages, day)
     if (!stage) continue
 
     const stageCity = extractStageCity(stage, formData)

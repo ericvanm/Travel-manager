@@ -11,9 +11,10 @@ import SetInitialPassword from './SetInitialPassword';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
+  onForgotPassword?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
+const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onForgotPassword }) => {
   const [credentials, setCredentials] = useState<LoginCredentials>({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -84,9 +85,14 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister }) => {
           margin="normal"
           helperText={t('login_password_optional_hint')}
         />
-        <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={loading}>
+        <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 1 }} disabled={loading}>
           {loading ? t('logging_in') : t('login')}
         </Button>
+        {onForgotPassword && (
+          <Button fullWidth variant="text" onClick={onForgotPassword} sx={{ mb: 1 }}>
+            {t('forgot_password')}
+          </Button>
+        )}
         <Button fullWidth variant="text" onClick={onSwitchToRegister}>
           {t('no_account')}
         </Button>

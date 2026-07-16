@@ -16,6 +16,7 @@ const {
 } = require('../utils/ai-planning-service')
 const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
 const { linkTripToUser } = require('../utils/trip-ownership')
+const { buildAccommodationDateTimes } = require('../utils/hotel-datetime')
 
 const findSessionForUser = async (sessionId, userId) => {
   const where = { id: sessionId }
@@ -93,6 +94,8 @@ const createTripFromItinerary = async (itinerary, formData = {}, userId = null) 
       endDateTime: data.endDateTime || null,
       city: data.city || null,
       comments: data.comments || null,
+      address: data.address || null,
+      phone: data.phone || null,
       cost: data.estimatedCost || data.cost || null,
       checkInDate: data.checkInDate || null,
       checkOutDate: data.checkOutDate || null,
@@ -134,12 +137,15 @@ const createTripFromItinerary = async (itinerary, formData = {}, userId = null) 
 
     for (const accommodation of stageData.accommodations || []) {
       const stageCity = (stageData.name || '').split('—')[0].split(',')[0].trim()
+      const { startDateTime, endDateTime } = buildAccommodationDateTimes(accommodation)
       await createActivityFromData(stage, {
         ...accommodation,
         activityType: 'hotel',
         city: accommodation.city || stageCity || null,
-        startDateTime: accommodation.checkInDate ? `${accommodation.checkInDate}T15:00:00Z` : null,
-        endDateTime: accommodation.checkOutDate ? `${accommodation.checkOutDate}T11:00:00Z` : null,
+        startDateTime: accommodation.startDateTime || startDateTime,
+        endDateTime: accommodation.endDateTime || endDateTime,
+        address: accommodation.address || null,
+        phone: accommodation.phone || null,
         comments: accommodation.comments || `Type: ${accommodation.type || 'hôtel'}. Suggestion IA — à confirmer.`
       })
     }

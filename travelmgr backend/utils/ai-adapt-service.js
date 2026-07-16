@@ -4,6 +4,7 @@ const { getLanguageLabel } = require('./auth-helpers')
 const { ACTIVITY_TYPE_LABELS } = require('./trip-snapshot')
 const { getActivityTypeId } = require('./activity-types')
 const { suggestBookingUrl } = require('./booking-urls')
+const { buildAccommodationDateTimes } = require('./hotel-datetime')
 const { parseDateOnly, addDays } = require('./date-only')
 const { extractStageCity, locationsCompatible } = require('./trip-location-validation')
 
@@ -264,10 +265,13 @@ const normalizeHotelDates = (payload, activityTypeId) => {
     next.checkOutDate = addDays(next.checkInDate, 1)
   }
   if (next.checkInDate && !next.startDateTime) {
-    next.startDateTime = `${next.checkInDate}T15:00:00.000Z`
+    const { startDateTime, endDateTime } = buildAccommodationDateTimes(next)
+    next.startDateTime = startDateTime
+    if (!next.endDateTime) next.endDateTime = endDateTime
   }
   if (next.checkOutDate && !next.endDateTime) {
-    next.endDateTime = `${next.checkOutDate}T11:00:00.000Z`
+    const { endDateTime } = buildAccommodationDateTimes(next)
+    next.endDateTime = endDateTime
   }
   return next
 }

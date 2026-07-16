@@ -114,8 +114,25 @@ const suggestTransportBookingUrl = (transport) => {
 }
 
 const suggestAccommodationBookingUrl = (accommodation, formData) => {
-  const name = accommodation.name || accommodation.city || formData?.geographicZone || ''
-  return `https://www.booking.com/searchresults.html?ss=${encodeQuery(name)}`
+  const city = accommodation.city || ''
+  const name = accommodation.name || city || formData?.geographicZone || ''
+  const searchTerm = city && !String(name).toLowerCase().includes(city.toLowerCase())
+    ? `${name} ${city}`.trim()
+    : String(name).trim()
+
+  const params = new URLSearchParams()
+  params.set('ss', searchTerm)
+
+  const checkIn = accommodation.checkInDate
+    ? String(accommodation.checkInDate).slice(0, 10)
+    : null
+  const checkOut = accommodation.checkOutDate
+    ? String(accommodation.checkOutDate).slice(0, 10)
+    : null
+  if (checkIn) params.set('checkin', checkIn)
+  if (checkOut) params.set('checkout', checkOut)
+
+  return `https://www.booking.com/searchresults.html?${params.toString()}`
 }
 
 const normalizeGetYourGuideUrl = (url, item, formData = null) => {

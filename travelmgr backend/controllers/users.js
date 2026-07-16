@@ -1,9 +1,13 @@
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
 const router = require('express').Router()
 const { User } = require('../models/DBmodels')
 const { requireAuth, buildUserPayload } = require('../utils/auth-helpers')
 const { SECRET } = require('../utils/config')
+const { sendPasswordResetEmail } = require('../utils/email-service')
+
+const hashResetToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex')
 
 const signInUser = (req, user) => {
   const userForToken = {
@@ -93,6 +97,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username already exists' })
     }
 
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : null
     const saltRounds = 10
     const passwordHash = await bcrypt.hash(password, saltRounds)
 
@@ -102,7 +107,7 @@ router.post('/register', async (req, res) => {
       name: name || username,
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       language: 'en',
       role: 'user',
       mustSetPassword: false
@@ -112,6 +117,82 @@ router.post('/register', async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error)
     res.status(500).json({ error: 'Registration failed' })
+  }
+})
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body
+    const genericResponse = { message: 'password_reset_requested' }
+
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ error: 'email_required' })
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+    const user = await User.findOne({
+      where: { email: normalizedEmail, disabled: false }
+    })
+
+    if (!user || user.role === 'admin' || !user.passwordHash) {
+      return res.json(genericResponse)
+    }
+
+    const token = crypto.randomBytes(32).toString('hex')
+    await user.update({
+      passwordResetTokenHash: hashResetToken(token),
+      passwordResetExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
+    })
+
+    await sendPasswordResetEmail({
+      to: user.email,
+      username: user.username,
+      token,
+      language: user.language || 'fr'
+    })
+
+    res.json(genericResponse)
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    res.status(500).json({ error: 'password_reset_failed' })
+  }
+})
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'reset_token_invalid' })
+    }
+
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ error: 'password_too_short', minLength: 8 })
+    }
+
+    const user = await User.findOne({
+      where: {
+        passwordResetTokenHash: hashResetToken(token),
+        disabled: false
+      }
+    })
+
+    if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+      return res.status(400).json({ error: 'reset_token_invalid' })
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+    await user.update({
+      passwordHash,
+      mustSetPassword: false,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null
+    })
+
+    res.json(signInUser(req, user))
+  } catch (error) {
+    console.error('Reset password error:', error)
+    res.status(500).json({ error: 'password_reset_failed' })
   }
 })
 
