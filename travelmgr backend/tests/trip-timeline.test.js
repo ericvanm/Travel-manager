@@ -32,4 +32,40 @@ describe('trip-timeline timezone', () => {
     assert.ok(day)
     assert.ok(day.activities.some((a) => a.id === 100))
   })
+
+  it('groups transport and accommodation items on timeline days', () => {
+    const stages = [{
+      id: 2,
+      name: 'Paris',
+      startDate: '2027-06-01',
+      endDate: '2027-06-03',
+      Country: { timezone: 'Europe/Paris' }
+    }]
+    const activities = [
+      {
+        id: 201,
+        stageId: 2,
+        activityTypeId: 6,
+        name: 'Flight in',
+        startDateTime: '2027-06-01T08:00:00.000Z',
+        endDateTime: '2027-06-01T12:00:00.000Z'
+      },
+      {
+        id: 202,
+        stageId: 2,
+        activityTypeId: 7,
+        name: 'Hotel Paris',
+        checkInDate: '2027-06-01',
+        checkOutDate: '2027-06-03',
+        startDateTime: '2027-06-01T15:00:00.000Z',
+        endDateTime: '2027-06-03T11:00:00.000Z'
+      }
+    ]
+
+    const timeline = buildTripTimeline(stages, activities)
+    assert.ok(timeline.length > 0)
+    const allItems = timeline.flatMap((day) => day.activities)
+    assert.ok(allItems.some((item) => item.id === 201))
+    assert.ok(allItems.some((item) => item.id === 202))
+  })
 })

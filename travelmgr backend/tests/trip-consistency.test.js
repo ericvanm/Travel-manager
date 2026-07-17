@@ -1,6 +1,12 @@
 const { test, describe } = require('node:test')
 const assert = require('node:assert')
-const { validateTripConsistency } = require('../utils/trip-consistency')
+const {
+  validateTripConsistency,
+  buildConsistencyFixRequest,
+  renderIssueLabel,
+  toSummary,
+  computeBudgetStatus
+} = require('../utils/trip-consistency')
 const { validateTripAccommodationCoverage } = require('../utils/trip-accommodation-validation')
 const { deriveTripDateBounds } = require('../utils/date-only')
 
@@ -137,5 +143,53 @@ describe('trip accommodation consistency', () => {
       transportChanges: 0
     }
     assert.strictEqual(isTransportActivity(activity), true)
+  })
+
+  test('buildConsistencyFixRequest renders actionable fix instructions', () => {
+    const report = validateTripConsistency({
+      trip: { id: 1, startDate: '2027-06-01', endDate: '2027-06-03' },
+      stages: [{
+        id: 1,
+        name: 'Paris',
+        startDate: '2027-06-01',
+        endDate: '2027-06-03',
+        activities: [{ id: 1, activityTypeId: 2, name: 'Museum', city: 'Paris' }]
+      }]
+    })
+    const request = buildConsistencyFixRequest(report, 'fr')
+    assert.ok(request.includes('Corrige ce voyage'))
+    assert.ok(report.issues.length > 0)
+    assert.ok(request.includes('1.'))
+  })
+
+  test('toSummary and computeBudgetStatus expose report metrics', () => {
+    const snapshot = {
+      trip: { id: 1, budget: 1000, currency: 'EUR', startDate: '2027-06-01', endDate: '2027-06-05' },
+      stages: [{
+        id: 1,
+        name: 'Paris',
+        startDate: '2027-06-01',
+        endDate: '2027-06-05',
+        activities: [
+          { id: 1, activityTypeId: 7, name: 'Hotel', city: 'Paris', checkInDate: '2027-06-01', checkOutDate: '2027-06-05', cost: 400 },
+          { id: 2, activityTypeId: 3, name: 'Tour', city: 'Paris', cost: 100 }
+        ]
+      }]
+    }
+    const report = validateTripConsistency(snapshot)
+    const summary = toSummary(report)
+    assert.ok(summary.issueCount >= 0)
+    assert.ok(['ok', 'warning', 'error'].includes(summary.health))
+    const budget = computeBudgetStatus(snapshot.trip, snapshot.stages[0].activities)
+    assert.strictEqual(budget.actual, 500)
+    assert.strictEqual(budget.planned, 1000)
+  })
+
+  test('renderIssueLabel substitutes issue parameters', () => {
+    const label = renderIssueLabel({
+      code: 'ACCOMMODATION_NIGHT_UNCOVERED',
+      params: { date: '2027-06-02' }
+    }, 'fr')
+    assert.ok(label.includes('2027-06-02'))
   })
 })

@@ -50,6 +50,26 @@ describe('booking-urls search format', () => {
     )
     assert.ok(sanitized.includes('q=') || sanitized.includes('google.com/search'))
   })
+
+  test('suggestBookingUrl builds transport search links', () => {
+    const { suggestBookingUrl } = require('../utils/booking-urls')
+    const url = suggestBookingUrl('transport', {
+      activityType: 'train',
+      departureLocation: 'Paris',
+      arrivalLocation: 'Lyon'
+    })
+    assert.ok(url.includes('http'))
+  })
+
+  test('suggestBookingUrl respects inspiration sites for activities', () => {
+    const { suggestBookingUrl } = require('../utils/booking-urls')
+    const url = suggestBookingUrl(
+      'activity',
+      { name: 'Cooking class', city: 'Florence', activityType: 'tour' },
+      { activityInspirationSites: 'Viator' }
+    )
+    assert.ok(url.includes('viator.com') || url.includes('q='))
+  })
 })
 
 describe('transport type cleanup', () => {
