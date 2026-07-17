@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { sanitizeForLlm } = require('./log-sanitizer')
+const { sanitizeUserPromptInput } = require('./llm-client')
 
 const DEFAULT_CONFIG_PATH = path.join(__dirname, '..', 'config', 'ai-planning-prompts.json')
 
@@ -59,24 +60,25 @@ const loadPromptsConfig = () => {
 
 const buildFormVariables = (formData, language = 'fr') => {
   const { formatInspirationSitesForPrompt } = require('./activity-inspiration-sites')
+  const safeForm = sanitizeForLlm(formData || {})
   return {
-    departureLocation: formData.departureLocation,
-    geographicZone: formData.geographicZone,
-    durationDays: formData.durationDays,
-    startDate: formData.startDate || 'flexible',
-    travelStyle: formData.travelStyle,
-    localTransport: formData.localTransport,
-    accommodationType: formData.accommodationType,
-    budget: formData.budget,
-    currency: formData.currency,
-    minActivityHoursPerDay: formData.minActivityHoursPerDay ?? 4,
-    maxActivityHoursPerDay: formData.maxActivityHoursPerDay ?? 8,
-    activityInspirationSites: formatInspirationSitesForPrompt(formData),
+    departureLocation: sanitizeUserPromptInput(safeForm.departureLocation, 200),
+    geographicZone: sanitizeUserPromptInput(safeForm.geographicZone, 200),
+    durationDays: safeForm.durationDays,
+    startDate: sanitizeUserPromptInput(safeForm.startDate || 'flexible', 40),
+    travelStyle: sanitizeUserPromptInput(safeForm.travelStyle, 120),
+    localTransport: sanitizeUserPromptInput(safeForm.localTransport, 120),
+    accommodationType: sanitizeUserPromptInput(safeForm.accommodationType, 120),
+    budget: safeForm.budget,
+    currency: sanitizeUserPromptInput(safeForm.currency, 10),
+    minActivityHoursPerDay: safeForm.minActivityHoursPerDay ?? 4,
+    maxActivityHoursPerDay: safeForm.maxActivityHoursPerDay ?? 8,
+    activityInspirationSites: formatInspirationSitesForPrompt(safeForm),
     expectedActivitiesPerDay: Math.max(
       1,
-      Math.ceil(((formData.minActivityHoursPerDay ?? 4) + (formData.maxActivityHoursPerDay ?? 8)) / 4)
+      Math.ceil(((safeForm.minActivityHoursPerDay ?? 4) + (safeForm.maxActivityHoursPerDay ?? 8)) / 4)
     ),
-    remarks: String(formData.remarks || '').trim() || '(aucune)',
+    remarks: sanitizeUserPromptInput(String(safeForm.remarks || '').trim(), 1000) || '(aucune)',
     language,
     languageLabel: { en: 'English', fr: 'French', es: 'Spanish', nl: 'Dutch' }[language] || 'French'
   }
@@ -100,7 +102,7 @@ const buildRevisionBlock = (revisionFeedback, previousItinerary) => {
   if (!revisionFeedback) return ''
   const config = loadPromptsConfig()
   const block = renderTemplate(config.revisionBlockTemplate, {
-    revisionFeedback,
+    revisionFeedback: sanitizeUserPromptInput(revisionFeedback, 2000),
     previousItinerary: JSON.stringify(sanitizeForLlm(previousItinerary))
   })
   return block ? `\n${block}\n` : ''

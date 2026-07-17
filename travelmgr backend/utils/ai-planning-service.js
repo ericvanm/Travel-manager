@@ -439,22 +439,21 @@ const buildPlanningPrompt = (formData, mode, previousItinerary, revisionFeedback
 }
 
 const { logAiInteraction } = require('./ai-interaction-logger')
-const { sanitizeLlmMessages } = require('./log-sanitizer')
+const { createChatCompletion } = require('./llm-client')
 
 const callOpenAI = async (prompt, language = 'fr', logContext = null) => {
   const { OpenAI } = require('openai')
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
   const systemMessage = getSystemMessage(language)
-  const messages = sanitizeLlmMessages([
-    { role: 'system', content: systemMessage },
-    { role: 'user', content: prompt }
-  ])
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await createChatCompletion(openai, {
       model,
-      messages,
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: prompt }
+      ],
       temperature: 0.4,
       max_tokens: 6000,
       response_format: { type: 'json_object' }
@@ -469,7 +468,10 @@ const callOpenAI = async (prompt, language = 'fr', logContext = null) => {
         model,
         systemPrompt: systemMessage,
         userPrompt: prompt,
-        requestMessages: messages,
+        requestMessages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: prompt }
+        ],
         rawResponse,
         parsedResponse: parsed,
         tokenUsage: response.usage || null,
@@ -485,7 +487,10 @@ const callOpenAI = async (prompt, language = 'fr', logContext = null) => {
         model,
         systemPrompt: systemMessage,
         userPrompt: prompt,
-        requestMessages: messages,
+        requestMessages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: prompt }
+        ],
         status: 'error',
         errorMessage: error.message
       })
