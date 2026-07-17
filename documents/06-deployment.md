@@ -62,7 +62,7 @@ https://your-app.vercel.app
 
 Production image: `travelmgr backend/Dockerfile`
 
-- Base: `node:18-bookworm-slim`
+- Base: `node:20`
 - Non-root user `nodejs` (UID/GID 1001)
 - `npm ci --omit=dev --ignore-scripts`
 - Exposes port 3001

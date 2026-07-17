@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:20
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --gid 1001 nodejs
