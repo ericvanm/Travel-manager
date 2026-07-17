@@ -60,19 +60,18 @@ const MapBoundsController: React.FC<{
     }
 
     const valid = points.filter((p) => p.lat && p.lng)
-    if (valid.length === 0) return cancelPendingTransition
-
-    if (focusMode === 'global' && valid.length >= 2) {
-      const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]))
-      fitSafely(bounds, 0.35)
-      return cancelPendingTransition
+    if (valid.length !== 0) {
+        if (focusMode === 'global' && valid.length >= 2) {
+          const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]))
+          fitSafely(bounds, 0.35)
+        }
+        else {
+            const stagePoints = valid.filter((p) => ['stage', 'activity', 'accommodation', 'transport'].includes(p.type))
+            const target = stagePoints.length > 0 ? stagePoints : valid
+            const bounds = L.latLngBounds(target.map((p) => [p.lat, p.lng]))
+            fitSafely(bounds, 0.15)
+        }
     }
-
-    const stagePoints = valid.filter((p) => ['stage', 'activity', 'accommodation', 'transport'].includes(p.type))
-    const target = stagePoints.length > 0 ? stagePoints : valid
-    const bounds = L.latLngBounds(target.map((p) => [p.lat, p.lng]))
-    fitSafely(bounds, 0.15)
-
     return cancelPendingTransition
   }, [map, points, focusMode])
 
