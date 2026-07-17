@@ -1,9 +1,12 @@
-const { describe, it } = require('node:test')
+const { describe, it, before, after } = require('node:test')
 const assert = require('node:assert/strict')
 const {
   validateFormData,
   normalizeFormData,
-  buildSynthesisText
+  buildSynthesisText,
+  suggestOutboundTransportOptions,
+  generateSynthesis,
+  generateItinerary
 } = require('../utils/ai-planning-service')
 
 describe('ai-planning-service', () => {
@@ -18,6 +21,15 @@ describe('ai-planning-service', () => {
     budget: 2500,
     currency: 'EUR'
   }
+
+  before(() => {
+    process.env.USE_OPENAI = 'false'
+    delete process.env.OPENAI_API_KEY
+  })
+
+  after(() => {
+    delete process.env.USE_OPENAI
+  })
 
   it('normalizes form data', () => {
     const normalized = normalizeFormData({ ...validForm, budget: '2500' })
@@ -53,5 +65,39 @@ describe('ai-planning-service', () => {
     const synthesis = buildSynthesisText(validation.formData, validation.warnings)
     assert.ok(synthesis.summary.includes('Provence'))
     assert.equal(synthesis.estimatedDailyBudget, Math.round(2500 / 7))
+  })
+
+  it('suggestOutboundTransportOptions prefers train in same region', () => {
+    const transport = suggestOutboundTransportOptions({
+      ...validForm,
+      departureLocation: 'Paris, France',
+      geographicZone: 'Lyon, France'
+    })
+    assert.ok(transport.options.length >= 2)
+    assert.equal(transport.recommended.mode, 'train')
+  })
+
+  it('suggestOutboundTransportOptions uses personal car when selected', () => {
+    const transport = suggestOutboundTransportOptions({
+      ...validForm,
+      localTransport: 'voiture personnelle'
+    })
+    assert.equal(transport.recommended.mode, 'car')
+    assert.equal(transport.recommended.estimatedCost, 0)
+  })
+
+  it('generateSynthesis falls back without OpenAI', async () => {
+    const result = await generateSynthesis(validForm, 'fr')
+    assert.equal(result.source, 'fallback')
+    assert.ok(result.summary.includes('Provence'))
+  })
+
+  it('generateItinerary builds fallback itinerary pipeline', async () => {
+    const itinerary = await generateItinerary(validForm, null, null, 'fr')
+    assert.equal(itinerary.source, 'fallback')
+    assert.ok(Array.isArray(itinerary.stages))
+    assert.ok(itinerary.stages.length > 0)
+    assert.ok(itinerary.outboundTransport)
+    assert.ok(itinerary.stages[0].accommodations.length > 0)
   })
 })

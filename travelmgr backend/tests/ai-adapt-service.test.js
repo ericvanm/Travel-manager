@@ -3,7 +3,10 @@ const assert = require('node:assert/strict')
 const {
   buildActivityCreatePayload,
   sanitizeActivityPayload,
-  resolveStageIdForActivityChange
+  resolveStageIdForActivityChange,
+  detectReservedImpacts,
+  normalizeProposedChanges,
+  buildAdaptPrompt
 } = require('../utils/ai-adapt-service')
 
 describe('ai-adapt-service activity create', () => {
@@ -45,5 +48,83 @@ describe('ai-adapt-service activity create', () => {
   it('does not strip stageId in sanitizeActivityPayload', () => {
     const cleaned = sanitizeActivityPayload({ stageId: 10, name: 'Test', activityTypeId: 3 }, 3)
     assert.equal(cleaned.stageId, 10)
+  })
+})
+
+describe('ai-adapt-service reserved impacts and prompts', () => {
+  const snapshot = {
+    stages: [{
+      id: 1,
+      name: 'Paris',
+      activities: [{
+        id: 42,
+        name: 'Reserved hotel',
+        reservationStatus: 'reserved'
+      }]
+    }]
+  }
+
+  it('detectReservedImpacts flags changes on reserved activities', () => {
+    const impacts = detectReservedImpacts(snapshot, {
+      changes: [{
+        action: 'update',
+        entityType: 'activity',
+        entityId: 42,
+        description: 'Change dates'
+      }],
+      reservedWarnings: []
+    })
+    assert.equal(impacts.length, 1)
+    assert.equal(impacts[0].entityId, 42)
+  })
+
+  it('normalizeProposedChanges merges nested activity detail fields', () => {
+    const normalized = normalizeProposedChanges({
+      changes: [{
+        action: 'update',
+        entityType: 'activity',
+        activityType: 'flight',
+        data: {
+          flightNumber: 'AF123',
+          departureLocation: 'Paris'
+        }
+      }]
+    })
+    assert.equal(normalized.changes[0].flightNumber, 'AF123')
+    assert.equal(normalized.changes[0].departureLocation, 'Paris')
+  })
+
+  it('buildAdaptPrompt isolates user request and redacts sensitive snapshot fields', () => {
+    const prompt = buildAdaptPrompt({
+      trip: {
+        id: 1,
+        name: 'Trip',
+        description: 'Desc',
+        startDate: '2027-06-01',
+        endDate: '2027-06-05',
+        budget: 1000,
+        currency: 'EUR',
+        departureLocation: 'Brussels'
+      },
+      stages: [{
+        id: 1,
+        name: 'Paris',
+        countryId: 1,
+        startDate: '2027-06-01',
+        endDate: '2027-06-05',
+        activities: [{
+          id: 1,
+          activityTypeId: 6,
+          name: 'Flight',
+          confirmationCode: 'SECRET',
+          confirmationNumber: 'PNR-1'
+        }]
+      }]
+    }, 'Add a museum visit', 'fr')
+
+    assert.ok(prompt.includes('Add a museum visit'))
+    assert.ok(prompt.includes('---'))
+    assert.ok(!prompt.includes('SECRET'))
+    assert.ok(!prompt.includes('PNR-1'))
   })
 })
