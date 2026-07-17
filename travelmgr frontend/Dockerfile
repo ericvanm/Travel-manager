@@ -1,5 +1,7 @@
 FROM node:20 AS build
 
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./

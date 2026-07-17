@@ -1,5 +1,7 @@
 FROM node:20
 
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --gid 1001 nodejs
 
