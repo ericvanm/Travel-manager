@@ -50,4 +50,11 @@ describe('geocoding', () => {
     assert.ok(results.Brussels)
     assert.strictEqual(callCount, 1)
   })
+
+  test('geocodePlace returns null when fetch throws', async () => {
+    globalThis.fetch = async () => {
+      throw new Error('network down')
+    }
+    assert.strictEqual(await geocodePlace('Paris'), null)
+  })
 })

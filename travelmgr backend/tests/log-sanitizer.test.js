@@ -79,4 +79,8 @@ describe('log-sanitizer', () => {
     assert.strictEqual(messages[0].role, 'system')
     assert.strictEqual(messages[1].content, '{"confirmationCode":"secret"}')
   })
+
+  test('sanitizeObject handles null input', () => {
+    assert.strictEqual(sanitizeObject(null), null)
+  })
 })

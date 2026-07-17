@@ -6,7 +6,7 @@ const {
   resolveStageIdForActivityChange,
   detectReservedImpacts,
   normalizeProposedChanges,
-  buildAdaptPrompt
+  buildAdaptPrompt,
 } = require('../utils/ai-adapt-service')
 
 describe('ai-adapt-service activity create', () => {
@@ -126,5 +126,41 @@ describe('ai-adapt-service reserved impacts and prompts', () => {
     assert.ok(prompt.includes('---'))
     assert.ok(!prompt.includes('SECRET'))
     assert.ok(!prompt.includes('PNR-1'))
+  })
+
+  it('sanitizeActivityPayload normalizes hotel dates and strips AI metadata', () => {
+    const cleaned = sanitizeActivityPayload({
+      entityType: 'activity',
+      action: 'create',
+      activityType: 'hotel',
+      checkInDate: '2027-06-01',
+      checkOutDate: '2027-06-01',
+      name: 'Hotel Paris',
+      cost: 120
+    }, 7)
+
+    assert.equal(cleaned.name, 'Hotel Paris')
+    assert.equal(cleaned.cost, 120)
+    assert.ok(cleaned.startDateTime)
+    assert.equal(cleaned.checkOutDate, '2027-06-02')
+  })
+
+  it('buildActivityCreatePayload normalizes hotel booking fields', () => {
+    const payload = buildActivityCreatePayload({
+      action: 'create',
+      entityType: 'activity',
+      location: 'Paris',
+      activityType: 'hotel',
+      checkInDate: '2027-06-01',
+      checkOutDate: '2027-06-03',
+      name: 'Hotel Paris',
+      estimatedCost: 180,
+      description: 'Central hotel'
+    }, 10)
+
+    assert.equal(payload.stageId, 10)
+    assert.equal(payload.activityTypeId, 7)
+    assert.equal(payload.cost, 180)
+    assert.ok(payload.startDateTime)
   })
 })

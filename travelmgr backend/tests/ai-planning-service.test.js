@@ -100,4 +100,29 @@ describe('ai-planning-service', () => {
     assert.ok(itinerary.outboundTransport)
     assert.ok(itinerary.stages[0].accommodations.length > 0)
   })
+
+  it('validateFormData collects multiple warnings and errors', () => {
+    const result = validateFormData({
+      departureLocation: 'Paris',
+      geographicZone: 'Paris',
+      durationDays: 25,
+      travelStyle: 'repos en ville',
+      localTransport: 'voiture en ville',
+      accommodationType: 'camping',
+      budget: 50,
+      currency: 'EU',
+      maxActivityHoursPerDay: 18,
+      startDate: 'invalid-date'
+    })
+
+    assert.equal(result.isValid, false)
+    assert.ok(result.errors.some((e) => e.includes('devise')))
+    assert.ok(result.errors.some((e) => e.includes('date')))
+    assert.ok(result.warnings.some((w) => w.includes('identiques')))
+    assert.ok(result.warnings.some((w) => w.includes('16 h')))
+    assert.ok(result.warnings.some((w) => w.includes('repos') || w.includes('budget journalier')))
+    assert.ok(result.warnings.some((w) => w.includes('camping')))
+    assert.ok(result.warnings.some((w) => w.includes('ville')))
+    assert.ok(result.warnings.some((w) => w.includes('serré')))
+  })
 })

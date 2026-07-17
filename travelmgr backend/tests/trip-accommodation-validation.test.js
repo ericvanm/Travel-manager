@@ -1,11 +1,30 @@
-const { test, describe } = require('node:test')
+const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
+const { connectToDatabase } = require('../utils/db')
 const {
   validateTripAccommodationCoverage,
   validateAdaptationAccommodation,
   simulateSnapshotAfterChanges,
-  findUncoveredNights
+  findUncoveredNights,
+  fillAccommodationGaps
 } = require('../utils/trip-accommodation-validation')
+const {
+  resetDatabase,
+  createTripForUser,
+  createAuthenticatedAgent,
+  createStage
+} = require('./setup')
+
+let app
+
+before(async () => {
+  await connectToDatabase()
+  app = require('../app')
+})
+
+beforeEach(async () => {
+  await resetDatabase()
+})
 
 const baseSnapshot = () => ({
   trip: { startDate: '2027-06-01', endDate: '2027-06-04' },
@@ -97,5 +116,30 @@ describe('trip-accommodation-validation', () => {
       }]
     })
     assert.strictEqual(report.covered, true)
+  })
+
+  test('fillAccommodationGaps creates hotels for uncovered nights', async () => {
+    const { user } = await createAuthenticatedAgent(app, { username: 'accouser' })
+    const trip = await createTripForUser(user.id)
+    const stage = await createStage(trip.id, {
+      name: 'Nice',
+      startDate: '2027-09-01',
+      endDate: '2027-09-03'
+    })
+
+    const snapshot = {
+      trip: { id: trip.id, startDate: '2027-09-01', endDate: '2027-09-03' },
+      stages: [{
+        id: stage.id,
+        name: 'Nice',
+        startDate: '2027-09-01',
+        endDate: '2027-09-03',
+        activities: []
+      }]
+    }
+
+    const result = await fillAccommodationGaps(trip.id, snapshot)
+    assert.ok(result.created > 0)
+    assert.ok(result.nights.length > 0)
   })
 })
