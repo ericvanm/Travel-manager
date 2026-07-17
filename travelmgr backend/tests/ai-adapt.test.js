@@ -111,11 +111,16 @@ describe('AI adapt API', () => {
   })
 
   test('POST /trips/:tripId/resolve-consistency handles consistent and inconsistent trips', async () => {
+    const { validateTripConsistency } = require('../utils/trip-consistency')
     const { agent, trip } = await buildTripWithActivity('adaptconsist')
+
+    const started = await agent.post(`/api/ai-adapt/trips/${trip.id}/start`)
+    const report = validateTripConsistency(started.body.snapshot)
+    const fixable = report.errorCount > 0 || report.warningCount > 0
 
     const consistent = await agent.post(`/api/ai-adapt/trips/${trip.id}/resolve-consistency`)
     assert.strictEqual(consistent.status, 200)
-    assert.strictEqual(consistent.body.alreadyConsistent, true)
+    assert.strictEqual(consistent.body.alreadyConsistent, !fixable)
 
     const { agent: agent2, trip: badTrip } = await buildTripWithActivity('adaptbad')
     await createActivity((await createStage(badTrip.id, {

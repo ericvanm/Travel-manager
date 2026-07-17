@@ -436,7 +436,7 @@ const applyProposedChanges = async (tripId, proposedChanges) => {
 
   const existingStages = await Stage.findAll({
     where: { tripId },
-    include: [{ model: Country, attributes: ['timezone'] }]
+    include: [{ model: Country, as: 'Country', attributes: ['timezone'] }]
   })
   const defaultCountryId = existingStages[0]?.countryId || null
 
