@@ -965,7 +965,8 @@ Lodging.init({
   sequelize,
   underscored: true,
   timestamps: true,
-  modelName: 'lodging'
+  modelName: 'lodging',
+  tableName: 'lodging'
 })
 
 // CarRental model

@@ -421,7 +421,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   };
 
   const handleDeleteTrip = async () => {
-    if (!window.confirm(t('delete_trip_confirm'))) return;
+    if (!window.confirm(t('delete_trip_confirm', { name: trip?.name || '' }))) return;
     try {
       await deleteTrip(tripId);
       onBack();

@@ -17,6 +17,7 @@ const {
 const logger = require('../utils/logger')
 const { loadTripSnapshot } = require('../utils/trip-snapshot')
 const { validateTripConsistency, toSummary } = require('../utils/trip-consistency')
+const { deleteTripById } = require('../utils/trip-delete')
 
 router.use(optionalAuth)
 
@@ -177,27 +178,13 @@ router.put('/:id', async (req, res) => {
 // DELETE trip
 router.delete('/:id', async (req, res) => {
   try {
-    const trip = await Trip.findByPk(req.params.id)
-    if (!trip) {
+    const result = await deleteTripById(req.params.id)
+    if (!result) {
       return res.status(404).json({ error: 'Trip not found' })
     }
 
-    const stages = await Stage.findAll({ where: { tripId: req.params.id } })
-    let totalActivities = 0
-
-    for (const stage of stages) {
-      const activities = await Activity.findAll({ where: { stageId: stage.id } })
-      totalActivities += activities.length
-    }
-
-    for (const stage of stages) {
-      await Activity.destroy({ where: { stageId: stage.id } })
-    }
-
-    await Stage.destroy({ where: { tripId: req.params.id } })
-    await trip.destroy()
-
-    const message = `Voyage "${trip.name}" supprime avec succes. ${stages.length} etape(s) et ${totalActivities} activite(s) ont egalement ete supprimees.`
+    const { trip, stageCount, totalActivities } = result
+    const message = `Voyage "${trip.name}" supprime avec succes. ${stageCount} etape(s) et ${totalActivities} activite(s) ont egalement ete supprimees.`
 
     res.json({ message })
   } catch (error) {

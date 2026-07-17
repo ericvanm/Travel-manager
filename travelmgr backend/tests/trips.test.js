@@ -2,7 +2,8 @@ const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const supertest = require('supertest')
 const { connectToDatabase } = require('../utils/db')
-const { resetDatabase, createTrip } = require('./setup')
+const { resetDatabase, createTrip, linkTripToUser, createUser, createStage, createActivity } = require('./setup')
+const { Trip, TripList, TripPlanningSession } = require('../models/DBmodels')
 
 let app
 let api
@@ -109,5 +110,43 @@ describe('DELETE /api/trips/:id', () => {
   test('returns 404 for unknown trip', async () => {
     const response = await api.delete('/api/trips/99999')
     assert.strictEqual(response.status, 404)
+  })
+
+  test('deletes a trip linked to user and AI planning session', async () => {
+    const user = await createUser({ username: 'tripowner' })
+    const trip = await createTrip({ name: 'AI Trip' })
+    await linkTripToUser(trip.id, user.id)
+    await createStage(trip.id, { name: 'Stage 1' })
+    await TripPlanningSession.create({
+      userId: user.id,
+      status: 'accepted',
+      formData: { geographicZone: 'Provence' },
+      tripId: trip.id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+
+    const response = await api.delete(`/api/trips/${trip.id}`)
+    assert.strictEqual(response.status, 200)
+
+    assert.strictEqual(await Trip.findByPk(trip.id), null)
+    assert.strictEqual(await TripList.count({ where: { tripId: trip.id } }), 0)
+
+    const session = await TripPlanningSession.findOne({ where: { userId: user.id } })
+    assert.ok(session)
+    assert.strictEqual(session.tripId, null)
+  })
+
+  test('deletes trip with activities in a transaction', async () => {
+    const trip = await createTrip({ name: 'Trip With Activities' })
+    const stage = await createStage(trip.id)
+    await createActivity(stage.id, { name: 'Museum visit' })
+
+    const response = await api.delete(`/api/trips/${trip.id}`)
+    assert.strictEqual(response.status, 200)
+    assert.match(response.body.message, /Trip With Activities/)
+
+    const getResponse = await api.get(`/api/trips/${trip.id}`)
+    assert.strictEqual(getResponse.status, 404)
   })
 })

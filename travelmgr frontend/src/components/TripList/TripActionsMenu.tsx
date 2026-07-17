@@ -59,7 +59,7 @@ const TripActionsMenu: React.FC<TripActionsMenuProps> = ({
         {t('import_csv')}
       </MenuItem>
       <MenuItem onClick={() => {
-        if (selectedTrip && window.confirm(t('delete_trip_confirm'))) {
+        if (selectedTrip && window.confirm(t('delete_trip_confirm', { name: selectedTrip.name }))) {
           onDelete(selectedTrip.id);
         }
         onClose();

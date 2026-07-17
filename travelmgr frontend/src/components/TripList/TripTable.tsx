@@ -78,7 +78,7 @@ const TripTable: React.FC<TripTableProps> = ({
                     onImportCsv={() => onImportCsv(trip)}
                     onAdaptAi={() => onAdaptAi(trip)}
                     onDelete={() => {
-                      if (window.confirm(t('delete_trip_confirm'))) onDelete(trip.id);
+                      if (window.confirm(t('delete_trip_confirm', { name: trip.name }))) onDelete(trip.id);
                     }}
                   />
                 </Box>

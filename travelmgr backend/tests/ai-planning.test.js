@@ -75,6 +75,16 @@ describe('AI planning API', () => {
     assert.strictEqual(session.status, 'accepted')
     assert.strictEqual(session.userId, user.id)
     assert.strictEqual(session.tripId, accepted.body.trip.id)
+
+    const deleted = await agent.delete(`/api/trips/${accepted.body.trip.id}`)
+    assert.strictEqual(deleted.status, 200)
+
+    const trips = await agent.get('/api/trips')
+    assert.strictEqual(trips.status, 200)
+    assert.ok(!trips.body.some((trip) => trip.id === accepted.body.trip.id))
+
+    const refreshedSession = await TripPlanningSession.findByPk(sessionId)
+    assert.strictEqual(refreshedSession.tripId, null)
   })
 
   test('POST /sessions updates an existing session when sessionId is provided', async () => {

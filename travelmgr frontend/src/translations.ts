@@ -260,7 +260,7 @@ export const translations = {
     // Trip Actions
     'export_csv': 'Export CSV',
     'import_csv': 'Import CSV',
-    'delete_trip_confirm': 'Are you sure you want to delete this trip?',
+    'delete_trip_confirm': 'Are you sure you want to delete the trip "{name}"?',
     
     // Stage Dialog
     'edit_stage': 'Edit Stage',
@@ -643,7 +643,7 @@ export const translations = {
     // Trip Actions
     'export_csv': 'Exporter CSV',
     'import_csv': 'Importer CSV',
-    'delete_trip_confirm': 'Êtes-vous sûr de vouloir supprimer ce voyage ?',
+    'delete_trip_confirm': 'Êtes-vous sûr de vouloir supprimer le voyage « {name} » ?',
     
     // Stage Dialog
     'edit_stage': 'Modifier Étape',
@@ -1026,7 +1026,7 @@ export const translations = {
     // Trip Actions
     'export_csv': 'Exportar CSV',
     'import_csv': 'Importar CSV',
-    'delete_trip_confirm': '¿Estás seguro de que quieres eliminar este viaje?',
+    'delete_trip_confirm': '¿Estás seguro de que quieres eliminar el viaje « {name} »?',
     
     // Stage Dialog
     'edit_stage': 'Editar Etapa',
@@ -1409,7 +1409,7 @@ export const translations = {
     // Trip Actions
     'export_csv': 'CSV Exporteren',
     'import_csv': 'CSV Importeren',
-    'delete_trip_confirm': 'Weet je zeker dat je deze reis wilt verwijderen?',
+    'delete_trip_confirm': 'Weet je zeker dat je de reis « {name} » wilt verwijderen?',
     
     // Stage Dialog
     'edit_stage': 'Etappe Bewerken',
