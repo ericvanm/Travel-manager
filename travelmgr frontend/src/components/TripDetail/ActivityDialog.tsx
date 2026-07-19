@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box,
   FormControl, InputLabel, Select, MenuItem, Chip, Link, Typography
 } from '@mui/material'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import { OpenInNew } from '@mui/icons-material'
 import { ActivityType, ReservationStatus, Stage } from '../../types'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { combineDateAndTime, getDatePart, getTimePart } from '../../utils/dateTimeInputHelpers'
@@ -92,7 +92,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
           <Box sx={{ mb: 1 }}>
             <Link href={newActivity.bookingUrl} target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
               {t('open_booking_site')}
-              <OpenInNewIcon fontSize="small" />
+              <OpenInNew fontSize="small" />
             </Link>
           </Box>
         )}
@@ -416,7 +416,7 @@ const ActivityDialog: React.FC<ActivityDialogProps> = ({
       </DialogContent>
       <DialogActions sx={{ flexWrap: 'wrap', gap: 1, px: 3, pb: 2 }}>
         {newActivity.bookingUrl && (
-          <Button onClick={handleOpenBookingSite} startIcon={<OpenInNewIcon />}>
+          <Button onClick={handleOpenBookingSite} startIcon={<OpenInNew />}>
             {t('reserve_action')}
           </Button>
         )}

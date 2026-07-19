@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, IconButton } from '@mui/material';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { DeleteOutline } from '@mui/icons-material';
 import { Activity, ActivityType, Stage, TimelineActivity, TimelineActivityStatus } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { formatTime } from '../../utils/localeHelpers';
@@ -142,7 +142,7 @@ export const TimelineActivityRow: React.FC<TimelineActivityRowProps> = ({
           aria-label={t('delete')}
           onClick={handleDelete}
         >
-          <DeleteOutlineIcon fontSize="small" />
+          <DeleteOutline fontSize="small" />
         </IconButton>
       )}
     </Box>

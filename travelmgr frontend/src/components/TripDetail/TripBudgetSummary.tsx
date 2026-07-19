@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button
 } from '@mui/material'
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import { ReceiptLong } from '@mui/icons-material'
 import { Stage, Trip } from '../../types'
 import { useLanguage } from '../../contexts/LanguageContext'
 import {
@@ -34,7 +34,7 @@ const TripBudgetSummary: React.FC<Props> = ({ trip, stages, onViewDetail }) => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">{t('trip_budget_summary_title')}</Typography>
         {items.length > 0 && (
-          <Button size="small" startIcon={<ReceiptLongIcon />} onClick={onViewDetail}>
+          <Button size="small" startIcon={<ReceiptLong />} onClick={onViewDetail}>
             {t('trip_budget_view_detail')}
           </Button>
         )}
