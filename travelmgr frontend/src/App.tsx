@@ -6,8 +6,11 @@
  * - Password reset: reads `resetToken` from the URL once, then clears the query string.
  */
 import React, { useEffect, useState } from 'react';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import { appTheme } from './theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CountriesProvider } from './contexts/CountriesContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -22,17 +25,6 @@ import { logout } from './services/auth';
 import { Trip } from './types';
 
 type AuthView = 'login' | 'register' | 'forgot' | 'reset';
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
 
 const AppContent: React.FC = () => {
   const { user, setUser, isLoading } = useAuth();
@@ -58,7 +50,19 @@ const AppContent: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Box>
+    );
   }
 
   if (!user) {
@@ -124,8 +128,8 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ThemeProvider theme={appTheme}>
+      <CssBaseline enableColorScheme />
       <LanguageProvider>
         <AuthProvider>
           <CountriesProvider>
