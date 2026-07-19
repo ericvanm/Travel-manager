@@ -213,20 +213,19 @@ router.post('/sessions/:id/accept', async (req, res) => {
 
     await session.update({ status: 'applied' })
 
-const message = accommodationWarnings.covered
-        ? gapFill.created > 0
+const  messageIfTrue = gapFill.created > 0
           ? `Adaptations applied; ${gapFill.created} accommodation(s) added automatically`
           : 'Adaptations applied successfully'
-  : 'Adaptations applied with accommodation gaps';
+const message = accommodationWarnings.covered
+        ? messageIfTrue
+        : 'Adaptations applied with accommodation gaps';
 
 res.json({
   success: true,
   applied: { ...applied, accommodationAutoFilled: gapFill.created },
   accommodationWarnings,
   message
-    })
-
-  : 'Adaptations applied with accommodation gaps';
+})
 
 res.json({
   success: true,
