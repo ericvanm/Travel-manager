@@ -1,3 +1,13 @@
+/**
+ * AI adaptation of an existing trip (propose changes, user review, apply).
+ *
+ * Two entry points:
+ * - `POST /trips/:id/start` — user describes desired changes in natural language.
+ * - `POST /trips/:id/resolve-consistency` — builds the prompt from consistency issues.
+ *
+ * A JSON snapshot is frozen on the session so the LLM proposal matches what the user saw.
+ * On accept, changes are applied then missing hotel nights may be auto-filled.
+ */
 const router = require('express').Router()
 const {
   TripAdaptationSession,

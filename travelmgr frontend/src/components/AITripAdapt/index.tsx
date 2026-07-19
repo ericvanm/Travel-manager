@@ -1,3 +1,9 @@
+/**
+ * AI adaptation dialog for an existing trip (synthesis → proposal → accept).
+ *
+ * `preloadedSession` skips `startAdaptSession` when TripDetail already obtained a proposal
+ * (e.g. consistency auto-fix). Closing without accept calls reject on the server to discard drafts.
+ */
 import React, { useEffect, useState } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,

@@ -1,3 +1,9 @@
+/**
+ * Admin API: read-only trip overview (unified ownership) and AI interaction audit.
+ *
+ * All routes require login + admin role (JWT role from session, not a live DB role check).
+ * List endpoints omit full prompts; only `GET /ai-logs/:id` returns complete LLM payloads.
+ */
 const router = require('express').Router()
 const {
   User,

@@ -1,3 +1,10 @@
+/**
+ * AI trip planning sessions and materialization into Trip/Stage/Activity rows.
+ *
+ * Flow: draft form → validate/synthesis → confirm itinerary → optional revise → accept.
+ * The itinerary JSON stays in `trip_planning_sessions` until accept; only then is a real
+ * trip created and `trip_id` stored on the session (ownership link + admin audit trail).
+ */
 const router = require('express').Router()
 const { Op } = require('sequelize')
 const {
@@ -18,6 +25,11 @@ const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-help
 const { linkTripToUser } = require('../utils/trip-ownership')
 const { buildAccommodationDateTimes, resolveAccommodationTimezone } = require('../utils/hotel-datetime')
 
+/**
+ * Resolves a planning session scoped to the authenticated user when userId is known.
+ * @param {number|string} sessionId
+ * @param {number|null} userId
+ */
 const findSessionForUser = async (sessionId, userId) => {
   const where = { id: sessionId }
   if (userId) {
@@ -26,6 +38,10 @@ const findSessionForUser = async (sessionId, userId) => {
   return TripPlanningSession.findOne({ where })
 }
 
+/**
+ * Maps AI stage metadata to a Country row (code, name fuzzy match, FR fallback).
+ * Used when persisting generated stages so map/consistency features have a country id.
+ */
 const findCountryForStage = async (countryCode, stageName) => {
   if (countryCode) {
     const byCode = await Country.findOne({ where: { code: countryCode.toUpperCase() } })
@@ -43,6 +59,17 @@ const findCountryForStage = async (countryCode, stageName) => {
   return Country.findOne({ where: { code: 'FR' } }) || Country.findOne()
 }
 
+/**
+ * Persists a validated AI itinerary as relational data.
+ *
+ * Hotels are stored as Activity rows (type id 7), not legacy Accommodation rows.
+ * Appends a timestamp to the trip name if another trip already uses the same name globally.
+ *
+ * @param {object} itinerary - Parsed itinerary from ai-planning-service.
+ * @param {object} [formData] - Original planning form (departure location, etc.).
+ * @param {number|null} [userId] - Owner to link via trip_lists.
+ * @returns {Promise<import('../models/DBmodels').Trip>}
+ */
 const createTripFromItinerary = async (itinerary, formData = {}, userId = null) => {
   const { trip, stages: stageList } = itinerary
 

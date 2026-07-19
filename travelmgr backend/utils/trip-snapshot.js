@@ -1,8 +1,20 @@
+/**
+ * Read-only trip aggregate for consistency checks, AI adapt, and LLM context.
+ *
+ * Merges modern Activity rows with legacy `accommodations` table entries into one list
+ * per stage so downstream code does not branch on two storage models.
+ */
 const { Trip, Stage, Activity, Country, Accommodation } = require('../models/DBmodels')
 const { accommodationToActivity } = require('./trip-flatten')
 
 const { ACTIVITY_TYPE_LABELS } = require('./activity-types')
 
+/**
+ * Loads trip metadata, stages (with country), and all activities for a trip id.
+ *
+ * @param {number|string} tripId
+ * @returns {Promise<{ trip: object, stages: object[] }|null>} Null when trip not found.
+ */
 const loadTripSnapshot = async (tripId) => {
   const trip = await Trip.findByPk(tripId)
   if (!trip) return null
@@ -51,6 +63,14 @@ const loadTripSnapshot = async (tripId) => {
   }
 }
 
+/**
+ * Human-readable trip summary fed to the AI adapt flow before the user request.
+ *
+ * Highlights reserved items so the LLM (and UI) warn before changing booked activities.
+ *
+ * @param {{ trip: object, stages: object[] }} snapshot
+ * @param {string} [language] - Reserved for future localized synthesis strings.
+ */
 const buildTripSynthesis = (snapshot, language = 'fr') => {
   const { trip, stages } = snapshot
   const allActivities = stages.flatMap((s) => s.activities || [])

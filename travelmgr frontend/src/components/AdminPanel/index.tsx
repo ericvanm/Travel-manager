@@ -1,3 +1,9 @@
+/**
+ * Admin console: trips by user (backend unified ownership) and AI interaction audit log.
+ *
+ * List endpoints return log metadata only; full prompts/responses load when a row is opened.
+ * Admins do not use TripList — trip names link to read-only TripDetail.
+ */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   AppBar,

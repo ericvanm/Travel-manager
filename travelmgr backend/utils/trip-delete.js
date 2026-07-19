@@ -1,3 +1,12 @@
+/**
+ * Transactional trip deletion.
+ *
+ * Why not rely on DB CASCADE alone:
+ * - Some FKs (trip_lists, trip_adaptation_sessions, expenses) block `trips` deletion.
+ * - Without a transaction, deleting stages first could leave an empty trip row if destroy fails.
+ *
+ * Stage-linked travel rows (flights, lodging, car_rentals) cascade when stages are removed.
+ */
 const { Op } = require('sequelize')
 const { sequelize } = require('./db')
 const {
@@ -12,8 +21,11 @@ const {
 } = require('../models/DBmodels')
 
 /**
- * Deletes a trip and all dependent records inside a transaction.
+ * Deletes a trip and all blocking dependents in a single transaction.
+ *
+ * @param {number|string} tripId
  * @returns {Promise<{ trip: import('../models/DBmodels').Trip, stageCount: number, totalActivities: number } | null>}
+ *   Deletion stats, or null when the trip id does not exist.
  */
 const deleteTripById = async (tripId) => {
   return sequelize.transaction(async (transaction) => {
@@ -33,7 +45,6 @@ const deleteTripById = async (tripId) => {
       await Activity.destroy({ where: { stageId: { [Op.in]: stageIds } }, transaction })
       await Transport.destroy({ where: { stageId: { [Op.in]: stageIds } }, transaction })
       await Accommodation.destroy({ where: { stageId: { [Op.in]: stageIds } }, transaction })
-      // flights, lodging and car_rentals are removed via ON DELETE CASCADE on stages
       await Stage.destroy({ where: { tripId }, transaction })
     }
 

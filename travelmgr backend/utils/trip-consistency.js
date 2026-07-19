@@ -1,5 +1,9 @@
 /**
- * Trip consistency validation rules.
+ * Trip consistency business rules (accommodation nights, inter-stage transport, budget, timing).
+ *
+ * Operates on a normalized snapshot from trip-snapshot, not live Sequelize models, so the same
+ * rules power the UI banner, list indicators, and AI "resolve consistency" flow.
+ *
  * @see documents/trip-consistency-rules.md
  */
 
@@ -99,6 +103,14 @@ const findTransportBetweenStages = (fromStage, toStage, activities) => {
 
 const buildIssue = (code, severity, params = {}) => ({ code, severity, params })
 
+/**
+ * Validates a trip snapshot and returns the report shown in the UI (banner + list badges).
+ *
+ * Issues carry a `code`, `severity` (error/warning), and i18n-friendly `params`.
+ *
+ * @param {{ trip?: object, stages?: Array<{ activities?: object[] }> }} snapshot
+ * @returns {{ health: string, issues: object[], budgetStatus: object, errorCount: number, warningCount: number }}
+ */
 const validateTripConsistency = (snapshot) => {
   const trip = snapshot?.trip || {}
   const stages = [...(snapshot?.stages || [])].sort((a, b) =>

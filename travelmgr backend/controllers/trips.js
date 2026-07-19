@@ -1,3 +1,12 @@
+/**
+ * Trip HTTP routes: CRUD, consistency indicators, map data, and CSV import.
+ *
+ * Uses `optionalAuth` so reads work without login in dev; writes call {@link linkTripToUser}
+ * when a user id is present. Admins get an empty list on `GET /` because they use
+ * `GET /api/admin/trips` instead (see trip-ownership).
+ *
+ * Note: trip listing is not yet filtered by owner on this router.
+ */
 const router = require('express').Router()
 const { Op } = require('sequelize')
 const { Trip, Stage, Activity, Transport, Accommodation, Expense, Country, ActivityType } = require('../models/DBmodels')

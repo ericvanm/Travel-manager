@@ -1,3 +1,12 @@
+/**
+ * Authentication and user profile routes (`/api/auth`).
+ *
+ * Auth model:
+ * - PostgreSQL session cookie (cross-origin with `withCredentials` on the frontend).
+ * - JWT stored in `req.session.token`; middleware decodes it into `req.user`.
+ *
+ * Also handles first-time admin password setup and email password reset tokens.
+ */
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
 const jwt = require('jsonwebtoken')
@@ -9,6 +18,13 @@ const { sendPasswordResetEmail } = require('../utils/email-service')
 
 const hashResetToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex')
 
+/**
+ * Signs the user in: stores JWT in session and returns the public user payload for the UI.
+ *
+ * @param {import('express').Request} req
+ * @param {import('../models/DBmodels').User} user
+ * @returns {ReturnType<import('../utils/auth-helpers').buildUserPayload>}
+ */
 const signInUser = (req, user) => {
   const userForToken = {
     username: user.username,

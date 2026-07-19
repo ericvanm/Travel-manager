@@ -1,3 +1,10 @@
+/**
+ * Main trip editor: timeline or stage table, consistency banner, AI adapt entry points.
+ *
+ * - `readOnly`: admin inspection mode — hides create/edit/delete actions.
+ * - `resolvePreload` / `resolveMode`: opens AI adapt on the proposal step after
+ *   "fix consistency" without running the manual synthesis step again.
+ */
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
@@ -89,6 +96,10 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   const [resolveMode, setResolveMode] = useState(false);
   const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
 
+  /**
+   * Converts form fields from the stage timezone to UTC ISO strings for the API.
+   * Hotels use separate check-in/out date+time fields; other activities use one datetime input.
+   */
   const resolveFormUtcDateTimes = (
     form: ActivityFormState,
     timezone: string,

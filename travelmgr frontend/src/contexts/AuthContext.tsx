@@ -1,3 +1,9 @@
+/**
+ * Client-side auth state mirrored to localStorage for fast UI restore on refresh.
+ *
+ * The real session is the HTTP cookie (`withCredentials` on API calls). This context stores
+ * only the display profile (name, role, etc.) returned after login — not the JWT itself.
+ */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { User } from '../types';
 

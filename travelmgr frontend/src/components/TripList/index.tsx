@@ -1,3 +1,9 @@
+/**
+ * "My trips" hub: list, inline CRUD, and entry points for AI/import flows.
+ *
+ * Consistency summaries load in parallel with the trip list; a failure there only hides
+ * per-trip indicators — the list itself still renders.
+ */
 import React, { useState, useEffect } from 'react';
 import {
   Box, Button, Typography, Fab, AppBar, Toolbar, IconButton

@@ -1,3 +1,9 @@
+/**
+ * Legacy login router (Express session only, no JWT).
+ *
+ * Kept for unit tests in `tests/login.test.js`. The running app mounts
+ * `controllers/users` on `/api/auth` instead, which signs a JWT into the session.
+ */
 const bcrypt = require('bcryptjs')
 const loginRouter = require('express').Router()
 const { User } = require('../models/DBmodels')

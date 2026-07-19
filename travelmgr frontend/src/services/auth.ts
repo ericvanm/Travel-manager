@@ -1,3 +1,9 @@
+/**
+ * Auth API client.
+ *
+ * `withCredentials: true` is required so the session cookie works cross-origin
+ * (Vercel frontend → Render backend). All auth endpoints share this axios instance.
+ */
 import axios from 'axios';
 import { LoginCredentials, RegisterData, User } from '../types';
 
@@ -8,6 +14,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
+/** Thrown when the seeded admin account must set an initial password (HTTP 403). */
 export class PasswordSetupRequiredError extends Error {
   username: string;
 

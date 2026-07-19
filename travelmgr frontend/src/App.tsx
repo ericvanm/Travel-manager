@@ -1,3 +1,10 @@
+/**
+ * Application shell without React Router — navigation is driven by local React state.
+ *
+ * - Regular users: TripList ↔ TripDetail via `selectedTrip`.
+ * - Admins: AdminPanel only (TripDetail opens read-only for inspection).
+ * - Password reset: reads `resetToken` from the URL once, then clears the query string.
+ */
 import React, { useEffect, useState } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';

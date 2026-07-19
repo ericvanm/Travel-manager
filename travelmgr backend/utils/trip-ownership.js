@@ -1,6 +1,29 @@
+/**
+ * Trip ownership resolution for Travel Manager.
+ *
+ * Why this module exists:
+ * - Trips are not owned by a single `owner_user_id` column anymore.
+ * - Ownership is inferred from several tables that evolved with AI features.
+ *
+ * Sources of truth (combined with SQL UNION):
+ * 1. `trip_lists` — canonical link created when a user creates a trip or accepts AI planning.
+ * 2. `trip_planning_sessions` — fallback for trips linked after AI itinerary acceptance.
+ * 3. `trip_adaptation_sessions` — fallback for trips opened in the AI adapt flow.
+ *
+ * Consumers: admin panel (`GET /api/admin/trips`), future user-scoped trip listing.
+ * Note: `GET /api/trips` still returns all trips for non-admin users; filtering by owner
+ * is not enforced at that route yet.
+ */
 const { Op, QueryTypes } = require('sequelize')
 const { Trip, TripList } = require('../models/DBmodels')
 
+/**
+ * Normalizes IDs coming from query params, request bodies, or JWT payloads.
+ * Returns null instead of throwing so callers can treat "missing/invalid" uniformly.
+ *
+ * @param {unknown} value - Raw id (string, number, or array from query string).
+ * @returns {number|null} Positive integer id, or null when invalid.
+ */
 const parseUserId = (value) => {
   if (value === undefined || value === null || value === '') {
     return null
@@ -11,6 +34,16 @@ const parseUserId = (value) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
+/**
+ * Creates the explicit owner ↔ trip row in `trip_lists`.
+ *
+ * Called after manual trip creation and when AI planning is accepted, so later deletes
+ * and admin views can resolve ownership without scanning session tables.
+ *
+ * @param {number|string} tripId
+ * @param {number|string} userId
+ * @returns {Promise<import('../models/DBmodels').TripList|null>} Existing or new link; null if ids invalid.
+ */
 const linkTripToUser = async (tripId, userId) => {
   const numericTripId = parseUserId(tripId)
   const numericUserId = parseUserId(userId)
@@ -26,6 +59,15 @@ const linkTripToUser = async (tripId, userId) => {
   return link
 }
 
+/**
+ * Returns all trip ids a user can access according to ownership rules above.
+ *
+ * Uses raw SQL UNION rather than three Sequelize queries to deduplicate in the database
+ * and keep admin filtering consistent with historical AI sessions.
+ *
+ * @param {number|string} userId
+ * @returns {Promise<number[]>} Sorted trip ids (empty array when user id is invalid).
+ */
 const findTripIdsForUser = async (userId) => {
   const numericUserId = parseUserId(userId)
   if (!numericUserId) {
@@ -56,6 +98,13 @@ const findTripIdsForUser = async (userId) => {
     .filter((id) => Number.isFinite(id))
 }
 
+/**
+ * Maps each trip id to the list of users linked through any ownership source.
+ * Used by the admin panel to show who owns or interacted with a trip via AI flows.
+ *
+ * @param {Array<number|string>} tripIds
+ * @returns {Promise<Map<number, Array<{ id: number, username: string, name: string }>>>}
+ */
 const findUsersByTripIds = async (tripIds) => {
   const numericTripIds = [...new Set(tripIds.map((id) => Number(id)).filter(Number.isFinite))]
   if (numericTripIds.length === 0) {
@@ -98,6 +147,15 @@ const findUsersByTripIds = async (tripIds) => {
   return usersByTripId
 }
 
+/**
+ * Admin-facing trip list with optional filter by user.
+ *
+ * When `userId` is provided, only trips reachable via {@link findTripIdsForUser} are returned.
+ * Each trip is enriched with a `users` array for display in the admin UI.
+ *
+ * @param {number|string|null} [userId] - Optional filter; omit to list all trips.
+ * @returns {Promise<Array<Record<string, unknown>>>} Trip rows with `users` attached.
+ */
 const findTripsForAdmin = async (userId = null) => {
   const numericUserId = parseUserId(userId)
   const where = {}

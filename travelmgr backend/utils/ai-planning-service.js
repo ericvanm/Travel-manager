@@ -1,3 +1,11 @@
+/**
+ * AI trip planning service: form validation, LLM synthesis, itinerary generation.
+ *
+ * Post-LLM pipeline (deterministic, no model calls):
+ * geocoding → daily activity hours → transports/hotels normalization → booking URLs.
+ *
+ * When `USE_OPENAI=false` or the API fails, a fallback itinerary is built so CI and offline dev still work.
+ */
 const { geocodePlaces } = require('./geocoding')
 const { scheduleItinerary } = require('./itinerary-scheduler')
 const { suggestBookingUrl, normalizeItineraryBookingUrls } = require('./booking-urls')

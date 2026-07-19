@@ -1,3 +1,9 @@
+/**
+ * AI trip planning wizard (form → synthesis → itinerary review).
+ *
+ * Wizard state lives entirely inside this dialog. The backend trip is created only on
+ * final accept; the parent is notified via `onTripCreated` to refresh the trip list.
+ */
 import React, { useState, useEffect } from 'react'
 import {
   Dialog,
