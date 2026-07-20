@@ -156,31 +156,56 @@ jobs:
           if missing:
               raise SystemExit(f"Missing secrets: {', '.join(missing)}")
 
+          # Cloud Run reserves PORT (injected from --port). Never include it.
+          reserved = {"PORT", "K_SERVICE", "K_REVISION", "K_CONFIGURATION"}
+          data = {
+              "NODE_ENV": "production",
+              "DATABASE_URL": os.environ["GCP_DATABASE_URL"],
+              "SECRET": os.environ["GCP_SECRET"],
+              "CORS_ORIGINS": os.environ["GCP_CORS_ORIGINS"],
+              "USE_OPENAI": os.environ.get("USE_OPENAI") or "false",
+          }
+          overlap = reserved.intersection(data)
+          if overlap:
+              raise SystemExit(f"Refusing to set reserved Cloud Run env vars: {sorted(overlap)}")
+
           def yaml_scalar(value: str) -> str:
               escaped = value.replace("\\", "\\\\").replace('"', '\\"')
               return f'"{escaped}"'
 
-          # Do not set PORT: Cloud Run reserves it and injects the value from --port.
-          lines = [
-              "NODE_ENV: production",
-              f"DATABASE_URL: {yaml_scalar(os.environ['GCP_DATABASE_URL'])}",
-              f"SECRET: {yaml_scalar(os.environ['GCP_SECRET'])}",
-              f"CORS_ORIGINS: {yaml_scalar(os.environ['GCP_CORS_ORIGINS'])}",
-              f"USE_OPENAI: {yaml_scalar(os.environ.get('USE_OPENAI', 'false'))}",
-          ]
+          lines = [f"{key}: {yaml_scalar(value)}" for key, value in data.items()]
           path = Path(os.environ["GITHUB_WORKSPACE"]) / "cloudrun-env.yaml"
           path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print("Cloud Run env keys:", ", ".join(data.keys()))
           print(f"Wrote {path}")
           PY
+          # Fail fast if PORT somehow appears as a top-level key
+          if grep -E '^PORT:' "${{ github.workspace }}/cloudrun-env.yaml"; then
+            echo "cloudrun-env.yaml must not define PORT" >&2
+            exit 1
+          fi
 
       - name: Deploy Cloud Run API
         if: inputs.action == 'deploy'
         id: api
         run: |
           set -euo pipefail
-          gcloud run deploy "${{ steps.meta.outputs.cloud_run_service }}" \
-            --project "${{ steps.meta.outputs.project_id }}" \
-            --region "${{ steps.meta.outputs.region }}" \
+          PROJECT_ID="${{ steps.meta.outputs.project_id }}"
+          REGION="${{ steps.meta.outputs.region }}"
+          SERVICE="${{ steps.meta.outputs.cloud_run_service }}"
+
+          # If a previous attempt left PORT on the service, drop it first.
+          if gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            gcloud run services update "$SERVICE" \
+              --project "$PROJECT_ID" \
+              --region "$REGION" \
+              --remove-env-vars=PORT \
+              --quiet || true
+          fi
+
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
             --image "${{ steps.image.outputs.image }}" \
             --platform managed \
             --allow-unauthenticated \
@@ -193,9 +218,9 @@ jobs:
             --set-cloudsql-instances "${{ steps.meta.outputs.sql_connection }}" \
             --env-vars-file "${{ github.workspace }}/cloudrun-env.yaml" \
             --quiet
-          URL="$(gcloud run services describe "${{ steps.meta.outputs.cloud_run_service }}" \
-            --project "${{ steps.meta.outputs.project_id }}" \
-            --region "${{ steps.meta.outputs.region }}" \
+          URL="$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
             --format='value(status.url)')"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "API URL: $URL"
