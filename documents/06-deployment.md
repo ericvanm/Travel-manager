@@ -500,13 +500,37 @@ Repository **Settings → Secrets and variables → Actions**.
 
 ### Cloud SQL connection string (Cloud Run)
 
-Use the Unix socket path (Cloud SQL connector). Example:
+`GCP_DATABASE_URL` must be a **full Postgres URL**, not the Cloud SQL connection name alone.
 
-```
+**Correct** (Unix socket via Cloud SQL connector on Cloud Run):
+
+```text
 postgres://DB_USER:DB_PASSWORD@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE
 ```
 
-Store this as `GCP_DATABASE_URL`. The API disables client TLS when the URL contains `/cloudsql/` (connector path); Render / public-IP Postgres still uses SSL in production.
+Concrete example:
+
+```text
+postgres://travel_mgr:YOUR_PASSWORD@/travel_mgr?host=/cloudsql/travel-manager-502910:europe-west1:travel-mgr-db
+```
+
+| Part | Value |
+|------|--------|
+| `DB_USER` / `DB_PASSWORD` | Cloud SQL database user (SQL → Users) |
+| Database name | e.g. `travel_mgr` (after `@/`) |
+| `host=/cloudsql/...` | Instance **connection name** from SQL → instance overview (`PROJECT:REGION:INSTANCE`) |
+
+**Wrong** (causes `The dialect travel-manager-502910 is not supported`):
+
+```text
+travel-manager-502910:europe-west1:travel-mgr-db
+```
+
+That string is only the connection name for `--set-cloudsql-instances` / `GCP_SQL_CONNECTION_NAME`, **not** `DATABASE_URL`.
+
+Password tip: URL-encode special characters (`@`, `#`, `/`, `%`, etc.) in `DB_PASSWORD`.
+
+Store the full URL as GitHub secret `GCP_DATABASE_URL`. The API disables client TLS when the URL contains `/cloudsql/`; Render / public-IP Postgres still uses SSL in production.
 
 Cloud Run is deployed with `--set-cloudsql-instances=PROJECT:REGION:INSTANCE` and `--port=3001`. Do **not** set `PORT` yourself — it is a reserved name; Cloud Run injects it from `--port`.
 
@@ -678,6 +702,7 @@ Render and the GCP deploy smoke step use this path. Monitor logs for migration e
 | Docker build fails on Render | GID syntax | Use numeric `--gid 1001` (see Dockerfile) |
 | Cold start timeout | Free tier spin-down | Retry; upgrade plan or external ping |
 | GCP API cannot reach DB | SQL stopped or wrong socket URL | Run **start** / **deploy**; verify `/cloudsql/...` URL + `--set-cloudsql-instances` |
+| `The dialect travel-manager-… is not supported` | `GCP_DATABASE_URL` is only the connection name | Use full URL: `postgres://USER:PASS@/DB?host=/cloudsql/PROJECT:REGION:INSTANCE` |
 | Cloud Run deploy: reserved env `PORT` | `PORT` set in env vars file | Remove `PORT` from env; keep `--port=3001` (Cloud Run injects `PORT`) |
 | GCP login CORS error | Hosting origin missing | Set `GCP_CORS_ORIGINS` to exact `https://….web.app` (or custom domain) |
 | Unexpected GCP bill | Cloud SQL left RUNNABLE | Run **stop**; verify Scheduler 22:00 job |

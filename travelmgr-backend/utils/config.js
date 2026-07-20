@@ -14,6 +14,18 @@ const SECRET = process.env.SECRET
 const usesCloudSqlUnixSocket = typeof DB_URI === 'string' && DB_URI.includes('/cloudsql/')
 const DB_SSL = ENVIR === 'production' && !usesCloudSqlUnixSocket
 
+if (DB_URI && ENVIR === 'production') {
+  const looksLikePostgresUrl = /^postgres(ql)?:\/\//i.test(DB_URI)
+  // e.g. PROJECT:REGION:INSTANCE — Sequelize treats the project id as a "dialect"
+  const looksLikeCloudSqlConnectionName = /^[a-z0-9-]+:[a-z0-9-]+:[a-z0-9-]+$/i.test(DB_URI.trim())
+  if (!looksLikePostgresUrl) {
+    const hint = looksLikeCloudSqlConnectionName
+      ? 'GCP_DATABASE_URL must be a full Postgres URL, not only the Cloud SQL connection name. Example: postgres://USER:PASSWORD@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE'
+      : 'DATABASE_URL must start with postgres:// or postgresql://'
+    throw new Error(hint)
+  }
+}
+
 module.exports = {
   DB_URI: DB_URI,
   DB_LOG_CONTEXT: buildDatabaseLogContext(DB_URI, ENVIR),

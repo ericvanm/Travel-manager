@@ -75,6 +75,12 @@ $cors = if ($CorsOrigins) { $CorsOrigins } elseif ($env:GCP_CORS_ORIGINS) { $env
 
 if (-not $SkipBackend) {
     if (-not $dbUrl) { throw 'Database URL required (-DatabaseUrl or GCP_DATABASE_URL / DATABASE_URL).' }
+    if ($dbUrl -notmatch '^postgres(ql)?://') {
+        throw 'GCP_DATABASE_URL must start with postgres:// (full URL), not only PROJECT:REGION:INSTANCE. Example: postgres://USER:PASS@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE'
+    }
+    if ($dbUrl -notlike '*/cloudsql/*') {
+        throw 'GCP_DATABASE_URL should include ?host=/cloudsql/PROJECT:REGION:INSTANCE for Cloud Run.'
+    }
     if (-not $sessionSecret) { throw 'Session secret required (-Secret or GCP_SECRET / SECRET).' }
     if (-not $cors) { throw 'CORS origins required (-CorsOrigins or GCP_CORS_ORIGINS / CORS_ORIGINS).' }
 }

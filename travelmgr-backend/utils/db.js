@@ -9,6 +9,7 @@ const url = config.DB_URI
 logger.infoWithContext('connecting to database', config.DB_LOG_CONTEXT)
 
 const sequelize = new Sequelize(url, {
+  dialect: 'postgres',
   dialectOptions: config.DB_SSL ? {
     ssl: {
       require: true,

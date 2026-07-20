@@ -156,11 +156,23 @@ jobs:
           if missing:
               raise SystemExit(f"Missing secrets: {', '.join(missing)}")
 
+          db_url = os.environ["GCP_DATABASE_URL"].strip()
+          if not db_url.lower().startswith(("postgres://", "postgresql://")):
+              raise SystemExit(
+                  "GCP_DATABASE_URL must start with postgres:// or postgresql://. "
+                  "Do not use only the Cloud SQL connection name (PROJECT:REGION:INSTANCE). "
+                  "Example: postgres://USER:PASSWORD@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE"
+              )
+          if "/cloudsql/" not in db_url:
+              raise SystemExit(
+                  "GCP_DATABASE_URL for Cloud Run should include ?host=/cloudsql/PROJECT:REGION:INSTANCE"
+              )
+
           # Cloud Run reserves PORT (injected from --port). Never include it.
           reserved = {"PORT", "K_SERVICE", "K_REVISION", "K_CONFIGURATION"}
           data = {
               "NODE_ENV": "production",
-              "DATABASE_URL": os.environ["GCP_DATABASE_URL"],
+              "DATABASE_URL": db_url,
               "SECRET": os.environ["GCP_SECRET"],
               "CORS_ORIGINS": os.environ["GCP_CORS_ORIGINS"],
               "USE_OPENAI": os.environ.get("USE_OPENAI") or "false",
