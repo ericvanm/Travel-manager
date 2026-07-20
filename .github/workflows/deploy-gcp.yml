@@ -1,0 +1,271 @@
+# On-demand GCP deploy (second environment). Does not affect Vercel + Render.
+# Trigger manually: Actions → Deploy GCP → Run workflow → action=start|deploy|stop
+name: Deploy GCP
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'start (Cloud SQL up), deploy (start DB + API + Hosting), stop (FinOps)'
+        required: true
+        default: deploy
+        type: choice
+        options:
+          - start
+          - deploy
+          - stop
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  gcp:
+    name: GCP ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    env:
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GCP_SQL_INSTANCE: ${{ vars.GCP_SQL_INSTANCE }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      GCP_ARTIFACT_REPO: ${{ vars.GCP_ARTIFACT_REPO }}
+      GCP_IMAGE_NAME: ${{ vars.GCP_IMAGE_NAME }}
+      GCP_SQL_CONNECTION_NAME: ${{ vars.GCP_SQL_CONNECTION_NAME }}
+      GCP_USE_OPENAI: ${{ vars.GCP_USE_OPENAI }}
+    steps:
+      - name: Checkout
+        if: inputs.action == 'deploy'
+        uses: actions/checkout@v5
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resolve project settings
+        id: meta
+        run: |
+          set -euo pipefail
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          if [ -z "$PROJECT_ID" ]; then
+            echo "GCP_PROJECT_ID secret is required" >&2
+            exit 1
+          fi
+
+          REGION="${GCP_REGION:-europe-west1}"
+          SQL_INSTANCE="${GCP_SQL_INSTANCE:-travel-mgr-db}"
+          CLOUD_RUN_SERVICE="${GCP_CLOUD_RUN_SERVICE:-travel-manager-api}"
+          ARTIFACT_REPO="${GCP_ARTIFACT_REPO:-travel-manager}"
+          IMAGE_NAME="${GCP_IMAGE_NAME:-travel-manager-api}"
+          USE_OPENAI="${GCP_USE_OPENAI:-false}"
+          CONN="${GCP_SQL_CONNECTION_NAME:-}"
+          if [ -z "$CONN" ]; then
+            CONN="${PROJECT_ID}:${REGION}:${SQL_INSTANCE}"
+          fi
+
+          {
+            echo "project_id=$PROJECT_ID"
+            echo "region=$REGION"
+            echo "sql_instance=$SQL_INSTANCE"
+            echo "cloud_run_service=$CLOUD_RUN_SERVICE"
+            echo "artifact_repo=$ARTIFACT_REPO"
+            echo "image_name=$IMAGE_NAME"
+            echo "use_openai=$USE_OPENAI"
+            echo "sql_connection=$CONN"
+            echo "image_uri=${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPO}/${IMAGE_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Start Cloud SQL
+        if: inputs.action == 'start' || inputs.action == 'deploy'
+        run: |
+          set -euo pipefail
+          PROJECT_ID="${{ steps.meta.outputs.project_id }}"
+          SQL_INSTANCE="${{ steps.meta.outputs.sql_instance }}"
+          STATE="$(gcloud sql instances describe "$SQL_INSTANCE" \
+            --project "$PROJECT_ID" \
+            --format='value(state)')"
+          echo "Current Cloud SQL state: $STATE"
+          if [ "$STATE" != "RUNNABLE" ]; then
+            gcloud sql instances patch "$SQL_INSTANCE" \
+              --project "$PROJECT_ID" \
+              --activation-policy=ALWAYS \
+              --quiet
+          fi
+          for i in $(seq 1 40); do
+            STATE="$(gcloud sql instances describe "$SQL_INSTANCE" \
+              --project "$PROJECT_ID" \
+              --format='value(state)')"
+            echo "Waiting for RUNNABLE ($i): $STATE"
+            if [ "$STATE" = "RUNNABLE" ]; then
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for Cloud SQL" >&2
+          exit 1
+
+      - name: Ensure Cloud Run min instances is zero (start)
+        if: inputs.action == 'start'
+        continue-on-error: true
+        run: |
+          gcloud run services update "${{ steps.meta.outputs.cloud_run_service }}" \
+            --project "${{ steps.meta.outputs.project_id }}" \
+            --region "${{ steps.meta.outputs.region }}" \
+            --min-instances 0 \
+            --quiet
+
+      - name: Set up Docker Buildx
+        if: inputs.action == 'deploy'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure Artifact Registry auth
+        if: inputs.action == 'deploy'
+        run: gcloud auth configure-docker "${{ steps.meta.outputs.region }}-docker.pkg.dev" --quiet
+
+      - name: Build and push API image
+        if: inputs.action == 'deploy'
+        id: image
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_SHA::12}"
+          IMAGE="${{ steps.meta.outputs.image_uri }}:${TAG}"
+          LATEST="${{ steps.meta.outputs.image_uri }}:latest"
+          docker build -t "$IMAGE" -t "$LATEST" travelmgr-backend
+          docker push "$IMAGE"
+          docker push "$LATEST"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Write Cloud Run env file
+        if: inputs.action == 'deploy'
+        env:
+          GCP_DATABASE_URL: ${{ secrets.GCP_DATABASE_URL }}
+          GCP_SECRET: ${{ secrets.GCP_SECRET }}
+          GCP_CORS_ORIGINS: ${{ secrets.GCP_CORS_ORIGINS }}
+          USE_OPENAI: ${{ steps.meta.outputs.use_openai }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+
+          required = ["GCP_DATABASE_URL", "GCP_SECRET", "GCP_CORS_ORIGINS"]
+          missing = [k for k in required if not os.environ.get(k)]
+          if missing:
+              raise SystemExit(f"Missing secrets: {', '.join(missing)}")
+
+          def yaml_scalar(value: str) -> str:
+              escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+              return f'"{escaped}"'
+
+          lines = [
+              "NODE_ENV: production",
+              'PORT: "3001"',
+              f"DATABASE_URL: {yaml_scalar(os.environ['GCP_DATABASE_URL'])}",
+              f"SECRET: {yaml_scalar(os.environ['GCP_SECRET'])}",
+              f"CORS_ORIGINS: {yaml_scalar(os.environ['GCP_CORS_ORIGINS'])}",
+              f"USE_OPENAI: {yaml_scalar(os.environ.get('USE_OPENAI', 'false'))}",
+          ]
+          path = Path(os.environ["GITHUB_WORKSPACE"]) / "cloudrun-env.yaml"
+          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print(f"Wrote {path}")
+          PY
+
+      - name: Deploy Cloud Run API
+        if: inputs.action == 'deploy'
+        id: api
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${{ steps.meta.outputs.cloud_run_service }}" \
+            --project "${{ steps.meta.outputs.project_id }}" \
+            --region "${{ steps.meta.outputs.region }}" \
+            --image "${{ steps.image.outputs.image }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 3001 \
+            --min-instances 0 \
+            --max-instances 3 \
+            --cpu 1 \
+            --memory 512Mi \
+            --timeout 300 \
+            --set-cloudsql-instances "${{ steps.meta.outputs.sql_connection }}" \
+            --env-vars-file "${{ github.workspace }}/cloudrun-env.yaml" \
+            --quiet
+          URL="$(gcloud run services describe "${{ steps.meta.outputs.cloud_run_service }}" \
+            --project "${{ steps.meta.outputs.project_id }}" \
+            --region "${{ steps.meta.outputs.region }}" \
+            --format='value(status.url)')"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "API URL: $URL"
+
+      - name: Set up Node.js
+        if: inputs.action == 'deploy'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: travelmgr-frontend/package-lock.json
+
+      - name: Build frontend
+        if: inputs.action == 'deploy'
+        working-directory: travelmgr-frontend
+        env:
+          VITE_BACKEND_URL: ${{ steps.api.outputs.url }}/api
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Deploy Firebase Hosting
+        if: inputs.action == 'deploy'
+        run: |
+          set -euo pipefail
+          npm install -g firebase-tools
+          # Replace placeholder in .firebaserc if still set
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path(".firebaserc")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          project = """${{ steps.meta.outputs.project_id }}"""
+          data.setdefault("projects", {})["default"] = project
+          path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          PY
+          firebase deploy --only hosting --project "${{ steps.meta.outputs.project_id }}" --non-interactive
+
+      - name: Smoke test API health
+        if: inputs.action == 'deploy'
+        run: |
+          set -euo pipefail
+          URL="${{ steps.api.outputs.url }}/api/health"
+          echo "GET $URL"
+          for i in $(seq 1 12); do
+            if curl -fsS "$URL"; then
+              echo
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Health check failed" >&2
+          exit 1
+
+      - name: Stop Cloud Run min instances
+        if: inputs.action == 'stop'
+        continue-on-error: true
+        run: |
+          gcloud run services update "${{ steps.meta.outputs.cloud_run_service }}" \
+            --project "${{ steps.meta.outputs.project_id }}" \
+            --region "${{ steps.meta.outputs.region }}" \
+            --min-instances 0 \
+            --quiet
+
+      - name: Stop Cloud SQL
+        if: inputs.action == 'stop'
+        run: |
+          set -euo pipefail
+          gcloud sql instances patch "${{ steps.meta.outputs.sql_instance }}" \
+            --project "${{ steps.meta.outputs.project_id }}" \
+            --activation-policy=NEVER \
+            --quiet
+          echo "Cloud SQL stop requested (disk retained)."

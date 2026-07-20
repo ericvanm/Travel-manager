@@ -20,7 +20,7 @@ Central documentation for the Travel Manager monorepo. All documents are written
 | 02 | [Source code structure](02-source-code-structure.md) | Monorepo layout, backend and frontend modules |
 | 04 | [Testing strategy](04-testing-strategy.md) | Unit vs integration tests, CI, SonarCloud coverage |
 | 05 | [Developer guide](05-developer-guide.md) | Local setup, env vars, scripts, troubleshooting |
-| 06 | [Deployment](06-deployment.md) | Render, Vercel, Docker, environment variables |
+| 06 | [Deployment](06-deployment.md) | Render, Vercel, Docker, GCP on-demand (Firebase + Cloud Run + Cloud SQL) |
 | 07 | [API reference](07-api-reference.md) | REST endpoints, auth, request/response examples |
 | 08 | [AI integration](08-ai-integration.md) | AI workflows, OpenAI setup, prompt configuration, logging and fallbacks |
 
@@ -30,7 +30,7 @@ Central documentation for the Travel Manager monorepo. All documents are written
 |----------|-------------|
 | [CHANGELOG.md](CHANGELOG.md) | Notable project changes |
 | [decisions/](decisions/) | Architecture Decision Records (ADRs) |
-| [tools/README.md](../tools/README.md) | PowerShell scripts (DB reset, Docker rebuild) |
+| [tools/README.md](../tools/README.md) | PowerShell scripts (DB reset, Docker rebuild, GCP start/stop/deploy) |
 
 ## Planned documentation (future)
 

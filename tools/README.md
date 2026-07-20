@@ -7,6 +7,7 @@ Requirements:
 - Windows PowerShell 5.1+ or PowerShell 7+
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for Docker modes)
 - Optional: PostgreSQL client (`psql`) for `Local` mode without Docker
+- Optional (GCP scripts): [Google Cloud SDK](https://cloud.google.com/sdk) (`gcloud`), Docker, [Firebase CLI](https://firebase.google.com/docs/cli) (`firebase`)
 
 ## Scripts
 
@@ -14,6 +15,11 @@ Requirements:
 |--------|---------|
 | [`reset-database.ps1`](reset-database.ps1) | Drop and recreate the application database (empty DB + migrations on next backend start) |
 | [`rebuild-docker.ps1`](rebuild-docker.ps1) | Rebuild and restart Docker Compose stacks (dev or prod profile) |
+| [`gcp-start.ps1`](gcp-start.ps1) | Start on-demand Cloud SQL (`ALWAYS`) and wait until `RUNNABLE` |
+| [`gcp-stop.ps1`](gcp-stop.ps1) | Stop Cloud SQL (`NEVER`) + Cloud Run min-instances 0 (FinOps) |
+| [`gcp-deploy.ps1`](gcp-deploy.ps1) | Start DB if needed, deploy Cloud Run API + Firebase Hosting (mirrors CI) |
+| [`gcp-setup-autostop.ps1`](gcp-setup-autostop.ps1) | Create Cloud Run Job + Scheduler (22:00 Europe/Paris) to auto-stop SQL |
+| [`gcp-common.ps1`](gcp-common.ps1) | Shared helpers (dot-sourced; do not run directly) |
 
 ---
 
@@ -140,6 +146,48 @@ npm run dev
 
 ---
 
+## GCP on-demand scripts
+
+Mirror [`.github/workflows/deploy-gcp.yml`](../.github/workflows/deploy-gcp.yml). Full setup: [Deployment — GCP](../documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql).
+
+### Common environment variables
+
+| Variable | Default / notes |
+|----------|-----------------|
+| `GCP_PROJECT_ID` | Required (or `-ProjectId`) |
+| `GCP_REGION` | `europe-west1` |
+| `GCP_SQL_INSTANCE` | `travel-mgr-db` |
+| `GCP_CLOUD_RUN_SERVICE` | `travel-manager-api` |
+| `GCP_ARTIFACT_REPO` | `travel-manager` |
+| `GCP_SQL_CONNECTION_NAME` | `PROJECT:REGION:INSTANCE` |
+| `GCP_DATABASE_URL` | Cloud SQL Unix socket URL (deploy) |
+| `GCP_SECRET` | Session secret (deploy) |
+| `GCP_CORS_ORIGINS` | Exact Firebase Hosting origin(s) (deploy) |
+
+### Usage
+
+```powershell
+# Start Cloud SQL (wait until RUNNABLE)
+.\tools\gcp-start.ps1 -ProjectId YOUR_GCP_PROJECT_ID
+
+# Deploy API + Hosting (starts DB automatically if stopped)
+$env:GCP_PROJECT_ID = 'YOUR_GCP_PROJECT_ID'
+$env:GCP_DATABASE_URL = 'postgres://user:pass@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE'
+$env:GCP_SECRET = '...'
+$env:GCP_CORS_ORIGINS = 'https://YOUR_PROJECT.web.app'
+.\tools\gcp-deploy.ps1
+
+# Stop to save cost (disk retained)
+.\tools\gcp-stop.ps1 -ProjectId YOUR_GCP_PROJECT_ID
+
+# One-time: daily auto-stop at 22:00 Europe/Paris
+.\tools\gcp-setup-autostop.ps1 -ProjectId YOUR_GCP_PROJECT_ID
+```
+
+Prefer GitHub Actions (`Deploy GCP` workflow) when you do not want local Docker/Firebase tooling.
+
+---
+
 ## Troubleshooting
 
 | Issue | Suggestion |
@@ -149,6 +197,9 @@ npm run dev
 | `travel-mgr-db` not found | Start Docker Desktop; run `docker compose -f docker-compose.dev.yml up -d db` |
 | Migrations not applied | Ensure backend container/process restarts after reset |
 | Admin login fails | Migrations must complete; user `admin` is seeded by migration `20250806_17_admin_ai_logs.js` |
+| `gcloud` / `firebase` not found | Install Cloud SDK and Firebase CLI; run `gcloud auth login` / `firebase login` |
+| Cloud SQL never becomes `RUNNABLE` | Check quotas/billing; wait several minutes after start |
+| GCP deploy health check fails | Confirm SQL is up and `DATABASE_URL` uses `/cloudsql/...` socket form |
 
 ---
 
@@ -156,4 +207,5 @@ npm run dev
 
 - [Developer guide — Database setup](../documents/05-developer-guide.md#database-setup)
 - [Deployment — Docker](../documents/06-deployment.md#docker-optional)
+- [Deployment — GCP on-demand](../documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql)
 - [Docker Compose dev](../docker-compose.dev.yml)

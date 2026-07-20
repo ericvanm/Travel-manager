@@ -32,7 +32,7 @@ const expenseCategoriesRouter = require('./controllers/expenseCategories')
 const notificationTypesRouter = require('./controllers/notificationTypes')
 
 const { connectToDatabase } = require('./utils/db')
-const { SECRET, ENVIR, DB_URI } = require('./utils/config')
+const { SECRET, ENVIR, DB_URI, DB_SSL } = require('./utils/config')
 
 const isProduction = ENVIR === 'production'
 const isTest = ENVIR === 'test'
@@ -70,7 +70,7 @@ const databaseUrl = DB_URI || process.env.DATABASE_URL || 'postgres://postgres:p
 const sessionStore = isTest
   ? undefined
   : new pgSession({
-      ...(isProduction
+      ...(isProduction && DB_SSL
         ? {
             conObject: {
               connectionString: databaseUrl,

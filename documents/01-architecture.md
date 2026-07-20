@@ -27,7 +27,7 @@ Travel Manager is a full-stack trip-planning application. Users create **trips**
 | ORM / migrations | Sequelize 6, Umzug |
 | Auth | bcrypt password hashing, server-side sessions (PostgreSQL store in production) |
 | Quality | ESLint, Node.js test runner, Supertest, SonarCloud |
-| Hosting | Render (API + DB), Vercel (static frontend) |
+| Hosting | **Default:** Render (API + DB), Vercel (frontend). **On-demand:** Firebase Hosting + Cloud Run + Cloud SQL |
 
 ## Logical architecture
 
@@ -78,12 +78,14 @@ flowchart LR
   Vercel -.->|VITE_BACKEND_URL| Render
 ```
 
+Optional second environment (manual deploy only): Firebase Hosting + Cloud Run + Cloud SQL. See [06-deployment.md](06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql).
+
 | Component | Role |
 |-----------|------|
 | **Vercel** | Builds and serves the Vite SPA; SPA routing via `vercel.json` rewrites |
 | **Render Web Service** | Runs `npm start` from `travelmgr-backend/`; health check on `/api/health` |
 | **Render PostgreSQL** | Primary data store; `DATABASE_URL` injected via Blueprint |
-| **GitHub Actions** | Lint, test, coverage upload; SonarCloud analysis on `main` |
+| **GitHub Actions** | Lint, test, coverage upload; SonarCloud analysis on `main`; optional `deploy-gcp.yml` on `workflow_dispatch` |
 
 ## Main request flows
 
