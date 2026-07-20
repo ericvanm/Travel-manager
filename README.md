@@ -20,7 +20,8 @@ Full-stack web application for planning trips: stages, activities, calendar impo
 - **Backend:** Node.js, Express, Sequelize, PostgreSQL (`travelmgr-backend/`)
 - **Frontend:** React, TypeScript, Vite, Material UI (`travelmgr-frontend/`)
 - **CI / quality:** GitHub Actions, ESLint, SonarCloud
-- **Production:** Render (API + database), Vercel (frontend)
+- **Production (default):** Render (API + database), Vercel (frontend)
+- **On-demand alternate:** GCP — Firebase Hosting + Cloud Run + Cloud SQL (see [deployment](documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql))
 
 ## Local development (summary)
 

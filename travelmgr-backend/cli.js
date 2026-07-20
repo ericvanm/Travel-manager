@@ -3,11 +3,9 @@ const config = require('./utils/config')
 
 
 const url = config.DB_URI
-const sslToUse = config.ENVIR === 'production'
-
 
 const sequelize = new Sequelize(url, {
-  dialectOptions: sslToUse ? {
+  dialectOptions: config.DB_SSL ? {
     ssl: {
       require: true,
       rejectUnauthorized: false

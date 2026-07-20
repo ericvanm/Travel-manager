@@ -5,12 +5,11 @@ const logger = require('../utils/logger')
 const { Umzug, SequelizeStorage } = require('umzug')
 // eslint-disable-next-line no-undef
 const url = config.DB_URI
-const sslToUse = config.ENVIR === 'production' ? true : false
 
 logger.infoWithContext('connecting to database', config.DB_LOG_CONTEXT)
 
 const sequelize = new Sequelize(url, {
-  dialectOptions: sslToUse ? {
+  dialectOptions: config.DB_SSL ? {
     ssl: {
       require: true,
       rejectUnauthorized: false
