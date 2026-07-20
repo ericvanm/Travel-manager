@@ -21,7 +21,7 @@ Requirements:
 
 Removes **all** application data: users, trips, sessions, AI logs, planning sessions, etc.
 
-The database file/volume is kept; only the `travel_mgr` database is dropped and recreated. When the backend starts, [Umzug migrations](../travelmgr%20backend/utils/db.js) run again (schema, reference data, default `admin` user).
+The database file/volume is kept; only the `travel_mgr` database is dropped and recreated. When the backend starts, [Umzug migrations](../travelmgr-backend/utils/db.js) run again (schema, reference data, default `admin` user).
 
 ### Usage
 
@@ -32,7 +32,7 @@ The database file/volume is kept; only the `travel_mgr` database is dropped and 
 # Skip confirmation
 .\tools\reset-database.ps1 -Force
 
-# Local PostgreSQL (reads DATABASE_URL from travelmgr backend/.env)
+# Local PostgreSQL (reads DATABASE_URL from travelmgr-backend/.env)
 .\tools\reset-database.ps1 -Mode Local -Force
 
 # Also reset the test database (travel_mgr_test)
@@ -134,7 +134,7 @@ Then open http://localhost:5173, log in as `admin`, set the admin password.
 
 ```powershell
 .\tools\reset-database.ps1 -Mode Local -Force
-cd "travelmgr backend"
+cd "travelmgr-backend"
 npm run dev
 ```
 

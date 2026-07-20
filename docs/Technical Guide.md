@@ -233,12 +233,12 @@ ORDER BY a.startDateTime;
 ### Environment Setup
 ```bash
 # Backend
-cd "travelmgr backend"
+cd "travelmgr-backend"
 npm install
 npm run dev
 
 # Frontend
-cd "travelmgr frontend"
+cd "travelmgr-frontend"
 npm install
 npm run dev
 

@@ -14,7 +14,7 @@ All OpenAI calls use the Chat Completions API. Planning and adaptation request J
 
 ## Runtime configuration
 
-Configure the backend in `travelmgr backend/.env` for local development, or define the same variables in the deployment environment. Start from `travelmgr backend/.env.example`; never commit a real API key.
+Configure the backend in `travelmgr-backend/.env` for local development, or define the same variables in the deployment environment. Start from `travelmgr-backend/.env.example`; never commit a real API key.
 
 ```dotenv
 USE_OPENAI=true
@@ -97,7 +97,7 @@ Adaptation uses temperature `0.3`, a maximum of 6,000 tokens, and JSON response 
 
 ### Planning prompts
 
-The default configuration is `travelmgr backend/config/ai-planning-prompts.json`. It contains:
+The default configuration is `travelmgr-backend/config/ai-planning-prompts.json`. It contains:
 
 | Key | Role |
 |-----|------|
@@ -114,19 +114,19 @@ Unknown placeholders and null values render as empty strings. Keep JSON schemas 
 
 ### Adaptation prompts
 
-The default configuration is `travelmgr backend/config/ai-adapt-prompts.json`. Its main keys are `systemMessage`, `languageInstruction`, `proposeInstructions`, and `proposeJsonSchema`. `utils/ai-adapt-service.js` adds the compact trip snapshot and the user's request around these configured fragments.
+The default configuration is `travelmgr-backend/config/ai-adapt-prompts.json`. Its main keys are `systemMessage`, `languageInstruction`, `proposeInstructions`, and `proposeJsonSchema`. `utils/ai-adapt-service.js` adds the compact trip snapshot and the user's request around these configured fragments.
 
 The configured templates currently use `{{languageLabel}}`. The trip data and adaptation request are inserted by the service rather than declared as template variables.
 
 ### Activity inspiration sites
 
-`travelmgr backend/config/activity-inspiration-sites.json` defines the supported providers, defaults, and URL templates. The selected provider names are inserted into planning prompts. URL templates use `{{query}}`, which is URL-encoded by the application.
+`travelmgr-backend/config/activity-inspiration-sites.json` defines the supported providers, defaults, and URL templates. The selected provider names are inserted into planning prompts. URL templates use `{{query}}`, which is URL-encoded by the application.
 
 The model is not given browsing or retrieval tools: inspiration-site names are prompt hints only. Any generated venue, schedule, price, coordinate, or booking URL remains a suggestion and must be verified before booking.
 
 ### Document-import prompt
 
-The reservation extraction prompt is currently hard-coded in `travelmgr backend/utils/ai-service.js` inside `analyzeWithOpenAI()`. Edit that function to change its instructions or output schema. Unlike planning and adaptation, it has no JSON configuration file, model override, hot reload, or interaction logging.
+The reservation extraction prompt is currently hard-coded in `travelmgr-backend/utils/ai-service.js` inside `analyzeWithOpenAI()`. Edit that function to change its instructions or output schema. Unlike planning and adaptation, it has no JSON configuration file, model override, hot reload, or interaction logging.
 
 ## Safe prompt-editing procedure
 

@@ -34,8 +34,8 @@ Le regroupement des activités par jour utilise la **date calendaire locale** da
 
 ### Implémentation
 
-- Frontend : `travelmgr frontend/src/utils/localeHelpers.ts`, `dateTimeInputHelpers.ts`, `tripTimezoneHelpers.ts`
-- Backend : `travelmgr backend/utils/datetime-timezone.js`, `trip-timeline.js`
+- Frontend : `travelmgr-frontend/src/utils/localeHelpers.ts`, `dateTimeInputHelpers.ts`, `tripTimezoneHelpers.ts`
+- Backend : `travelmgr-backend/utils/datetime-timezone.js`, `trip-timeline.js`
 
 ---
 
@@ -131,7 +131,7 @@ Les éléments déjà marqués **réservés** ne sont pas modifiés sans confirm
 
 ## Fichiers d'implémentation
 
-- Backend : `travelmgr backend/utils/trip-consistency.js`
+- Backend : `travelmgr-backend/utils/trip-consistency.js`
 - API : `GET /api/trips/consistency/summary`, `GET /api/trips/:id/consistency`
 - Résolution IA : `POST /api/ai-adapt/trips/:tripId/resolve-consistency`
-- Types transport : `travelmgr backend/utils/activity-types.js` (Flight=6, Hotel=7, Car Rental=8, Train=9, Bus=10, Public Transport=11)
+- Types transport : `travelmgr-backend/utils/activity-types.js` (Flight=6, Hotel=7, Car Rental=8, Train=9, Bus=10, Public Transport=11)

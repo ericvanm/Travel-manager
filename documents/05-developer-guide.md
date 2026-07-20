@@ -17,16 +17,16 @@ Optional: Docker (see [06-deployment.md](06-deployment.md) for container workflo
 git clone <repository-url>
 cd Travel-manager
 
-cd "travelmgr backend"
+cd "travelmgr-backend"
 npm ci
 
-cd "../travelmgr frontend"
+cd "../travelmgr-frontend"
 npm ci
 ```
 
 ## Environment variables
 
-### Backend (`travelmgr backend/.env`)
+### Backend (`travelmgr-backend/.env`)
 
 Copy from `.env.example`:
 
@@ -60,7 +60,7 @@ OPENAI_MODEL=gpt-4o-mini
 
 > **ChatGPT subscription vs API:** A ChatGPT Plus/Pro account does not grant OpenAI API access. Generate an API key at [platform.openai.com](https://platform.openai.com) and set `USE_OPENAI=true`.
 
-### Frontend (`travelmgr frontend/.env`)
+### Frontend (`travelmgr-frontend/.env`)
 
 Create if needed (Vite reads `VITE_*` at build time):
 
@@ -86,7 +86,7 @@ User trip lists return all trips (same behaviour as before admin work). New trip
 3. Optional manual migration:
 
 ```bash
-cd "travelmgr backend"
+cd "travelmgr-backend"
 node run-migration.js
 ```
 
@@ -98,7 +98,7 @@ PowerShell scripts in [`tools/`](../tools/README.md):
 # Docker dev stack (default)
 .\tools\reset-database.ps1 -Force
 
-# Local Postgres (uses travelmgr backend/.env)
+# Local Postgres (uses travelmgr-backend/.env)
 .\tools\reset-database.ps1 -Mode Local -Force
 ```
 
@@ -109,7 +109,7 @@ This drops and recreates `travel_mgr`. Migrations run again on the next backend 
 ### Terminal 1 — API
 
 ```bash
-cd "travelmgr backend"
+cd "travelmgr-backend"
 npm run dev
 ```
 
@@ -119,7 +119,7 @@ Health: `GET http://localhost:3001/api/health`
 ### Terminal 2 — Frontend
 
 ```bash
-cd "travelmgr frontend"
+cd "travelmgr-frontend"
 npm run dev
 ```
 
@@ -242,7 +242,8 @@ flowchart LR
 ## IDE setup
 
 - ESLint extensions for both packages.
-- TypeScript workspace: open `travelmgr frontend` for best TS server performance.
+- Open [`Travel-manager.code-workspace`](../Travel-manager.code-workspace) in VS Code/Cursor for multi-root backend + frontend (best TypeScript and ESLint performance).
+- Alternatively, open `travelmgr-frontend` or `travelmgr-backend` alone when working on one package.
 - Recommended: format on save aligned with ESLint rules.
 
 ## Security reminders for developers

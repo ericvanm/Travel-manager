@@ -26,15 +26,15 @@ Alternatives considered:
 
 Use a **monorepo** with two top-level application folders:
 
-- `travelmgr backend/` — Express API, Sequelize, tests
-- `travelmgr frontend/` — React, Vite, TypeScript
+- `travelmgr-backend/` — Express API, Sequelize, tests
+- `travelmgr-frontend/` — React, Vite, TypeScript
 
 Shared configuration at repository root:
 
 - `render.yaml`, `.github/workflows/ci.yml`, `sonar-project.properties`
 - Documentation in `documents/`
 
-Folder names retain a space (historical); CI and deployment reference them explicitly via `working-directory` and `rootDir`.
+Folder names use kebab-case (`travelmgr-backend`, `travelmgr-frontend`) so paths work without quoting in shells, Docker, and CI.
 
 ## Consequences
 
@@ -43,10 +43,10 @@ Folder names retain a space (historical); CI and deployment reference them expli
 - One PR can update API contract and UI together.
 - Single SonarCloud project with combined quality view.
 - Blueprint and CI live beside the code they deploy.
+- Hyphenated folder names avoid space-quoting issues in scripts and tooling.
 
 ### Negative
 
-- Path names with spaces require quoting in shell commands.
 - No shared TypeScript types package — frontend `types.ts` must be updated manually when API shapes change.
 
 ### Follow-ups

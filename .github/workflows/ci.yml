@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: travelmgr backend
+        working-directory: travelmgr-backend
     env:
       CI_POSTGRES_USER: postgres
       CI_POSTGRES_PWD: postgres
@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: travelmgr backend/package-lock.json
+          cache-dependency-path: travelmgr-backend/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm run test:coverage
@@ -54,7 +54,7 @@ jobs:
         if: always()
         with:
           name: backend-coverage
-          path: travelmgr backend/coverage/lcov.info
+          path: travelmgr-backend/coverage/lcov.info
           if-no-files-found: ignore
 
   frontend:
@@ -62,14 +62,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: travelmgr frontend
+        working-directory: travelmgr-frontend
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: travelmgr frontend/package-lock.json
+          cache-dependency-path: travelmgr-frontend/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm run tsc
@@ -98,20 +98,20 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: backend-coverage
-          path: travelmgr backend/coverage
+          path: travelmgr-backend/coverage
 
       - name: Install backend dependencies
-        working-directory: travelmgr backend
+        working-directory: travelmgr-backend
         run: npm ci --ignore-scripts
 
       - name: Install frontend dependencies
-        working-directory: travelmgr frontend
+        working-directory: travelmgr-frontend
         run: npm ci --ignore-scripts
 
       - name: Generate ESLint reports for SonarCloud
         run: |
-          cd "$GITHUB_WORKSPACE/travelmgr backend" && npm run lint:report
-          cd "$GITHUB_WORKSPACE/travelmgr frontend" && npm run lint:report
+          cd "$GITHUB_WORKSPACE/travelmgr-backend" && npm run lint:report
+          cd "$GITHUB_WORKSPACE/travelmgr-frontend" && npm run lint:report
 
       - name: SonarCloud scan
         uses: SonarSource/sonarcloud-github-action@e44258b109568baa0df60ed515909fc6c72cba92 # v2.3.0

@@ -17,7 +17,7 @@
 
 .PARAMETER DatabaseUrl
   Override connection string (postgres://user:pass@host:port/dbname).
-  If omitted, Local mode reads travelmgr backend/.env (DATABASE_URL).
+  If omitted, Local mode reads travelmgr-backend/.env (DATABASE_URL).
 
 .PARAMETER Force
   Skip confirmation prompt.
@@ -287,12 +287,12 @@ switch ($Mode) {
     }
 
     'Local' {
-        $envFile = Join-Path $RepoRoot 'travelmgr backend\.env'
+        $envFile = Join-Path $RepoRoot 'travelmgr-backend\.env'
         if (-not $DatabaseUrl) {
             $DatabaseUrl = Read-DotEnvValue -EnvFile $envFile -Key 'DATABASE_URL'
         }
         if (-not $DatabaseUrl) {
-            throw "DATABASE_URL not set. Pass -DatabaseUrl or configure travelmgr backend/.env"
+            throw "DATABASE_URL not set. Pass -DatabaseUrl or configure travelmgr-backend/.env"
         }
 
         $parsed = Parse-PostgresUrl -Url $DatabaseUrl

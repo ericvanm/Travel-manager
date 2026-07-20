@@ -16,7 +16,7 @@ services:
   - type: web
     name: travel-manager-api
     runtime: node
-    rootDir: travelmgr backend
+    rootDir: travelmgr-backend
     plan: free
     buildCommand: npm ci --omit=dev
     startCommand: npm start

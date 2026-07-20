@@ -28,14 +28,14 @@ flowchart TB
 
 | Level | Location | Tooling | Scope |
 |-------|----------|---------|--------|
-| Unit | `travelmgr backend/tests/*.test.js` | Node.js built-in `node --test` | Helpers (`csv-import-helpers`, `ics-import-helpers`, `logger`, etc.) |
+| Unit | `travelmgr-backend/tests/*.test.js` | Node.js built-in `node --test` | Helpers (`csv-import-helpers`, `ics-import-helpers`, `logger`, etc.) |
 | Integration | Same folder | Supertest + real PostgreSQL | HTTP routes, auth, DB persistence |
-| Frontend | `travelmgr frontend/` | ESLint, `tsc`, Vite build | No runtime test suite yet |
+| Frontend | `travelmgr-frontend/` | ESLint, `tsc`, Vite build | No runtime test suite yet |
 | Static analysis | Whole repo | ESLint, SonarCloud | Security, smells, duplication |
 
 ## Backend test runner
 
-Scripts in `travelmgr backend/package.json`:
+Scripts in `travelmgr-backend/package.json`:
 
 ```bash
 npm test              # all tests in tests/
@@ -149,7 +149,7 @@ flowchart LR
 Key settings (`sonar-project.properties`):
 
 - Monorepo sources: backend + frontend
-- LCOV path: `travelmgr backend/coverage/lcov.info`
+- LCOV path: `travelmgr-backend/coverage/lcov.info`
 - Frontend and generated files excluded from coverage where appropriate
 - **`sonar.qualitygate.wait=true`** in CI — pipeline fails if gate fails
 
@@ -177,11 +177,11 @@ There is **no Vitest/Jest** suite yet. Recommended next step: component tests fo
 ## Local pre-push checklist
 
 ```bash
-cd "travelmgr backend"
+cd "travelmgr-backend"
 npm run lint
 npm run test:coverage
 
-cd "../travelmgr frontend"
+cd "../travelmgr-frontend"
 npm run lint
 npm run tsc
 npm run build

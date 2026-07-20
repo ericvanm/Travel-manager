@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "name": "Root",
+      "path": "."
+    },
+    {
+      "name": "Backend",
+      "path": "travelmgr-backend"
+    },
+    {
+      "name": "Frontend",
+      "path": "travelmgr-frontend"
+    }
+  ],
+  "settings": {
+    "sonarlint.connectedMode.project": {
+      "connectionId": "ericvanm",
+      "projectKey": "ericvanm_Travel-manager"
+    }
+  }
+}

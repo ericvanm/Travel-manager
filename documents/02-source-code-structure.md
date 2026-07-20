@@ -10,14 +10,14 @@ Travel-manager/
 ├── sonar-project.properties  # SonarCloud analysis config
 ├── .github/workflows/ci.yml  # CI: backend tests, frontend build, SonarCloud
 ├── tests/                    # Shared test fixtures (e.g. sample CSV)
-├── travelmgr backend/        # Node.js / Express API
-└── travelmgr frontend/       # React / Vite SPA
+├── travelmgr-backend/        # Node.js / Express API
+└── travelmgr-frontend/       # React / Vite SPA
 ```
 
-## Backend (`travelmgr backend/`)
+## Backend (`travelmgr-backend/`)
 
 ```
-travelmgr backend/
+travelmgr-backend/
 ├── index.js              # HTTP server entry (listen on PORT)
 ├── app.js                # Express app: middleware, routes, DB connect
 ├── cli.js                # CLI utilities (optional)
@@ -96,10 +96,10 @@ tests/
 └── list_helper.test.js
 ```
 
-## Frontend (`travelmgr frontend/`)
+## Frontend (`travelmgr-frontend/`)
 
 ```
-travelmgr frontend/
+travelmgr-frontend/
 ├── index.html
 ├── vite.config.ts
 ├── vercel.json
@@ -175,7 +175,7 @@ flowchart TB
 | `sonar-project.properties` | SonarCloud sources, exclusions, LCOV path |
 | `.github/workflows/ci.yml` | Backend job, frontend job, SonarCloud job |
 | `render.yaml` | Production backend + database |
-| `travelmgr frontend/vercel.json` | SPA build and rewrites |
+| `travelmgr-frontend/vercel.json` | SPA build and rewrites |
 
 ## Naming conventions
 
@@ -183,7 +183,7 @@ flowchart TB
 |---------|------------|
 | Backend files | `camelCase.js` or `kebab-case` for multi-word helpers |
 | React components | `PascalCase.tsx` |
-| Tests | `*.test.js` under `travelmgr backend/tests/` |
+| Tests | `*.test.js` under `travelmgr-backend/tests/` |
 | Migrations | `YYYYMMDD_NN_description.js` |
 | API routes | kebab-case path segments (`/api/activity-types`) |
 

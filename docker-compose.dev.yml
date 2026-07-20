@@ -19,7 +19,7 @@ services:
   backend:
     image: travel-mgr-back-dev
     build:
-      context: ./travelmgr backend
+      context: ./travelmgr-backend
       dockerfile: dev.Dockerfile
     # Root in dev: Windows bind mounts + npm cache (nodejs user has HOME=/nonexistent)
     user: "0:0"
@@ -41,7 +41,7 @@ services:
         fi
         exec npm run dev
     volumes:
-      - ./travelmgr backend:/usr/src/app
+      - ./travelmgr-backend:/usr/src/app
       - backend_node_modules:/usr/src/app/node_modules
     container_name: travel-mgr-back-dev
     depends_on:
@@ -53,13 +53,13 @@ services:
   app:
     image: travel-mgr-front-dev
     build:
-      context: ./travelmgr frontend
+      context: ./travelmgr-frontend
       dockerfile: ./dev.Dockerfile
     environment:
       # Appel direct du backend (évite CORS nginx + 502 masqué). Accès UI : http://localhost:8080 ou :5173
       VITE_BACKEND_URL: http://localhost:3001/api
     volumes:
-      - ./travelmgr frontend:/usr/src/app
+      - ./travelmgr-frontend:/usr/src/app
       - /usr/src/app/node_modules
     container_name: travel-mgr-front-dev
     depends_on:

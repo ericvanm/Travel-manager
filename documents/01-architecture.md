@@ -37,7 +37,7 @@ flowchart TB
     UI[React SPA]
   end
 
-  subgraph Backend["travelmgr backend"]
+  subgraph Backend["travelmgr-backend"]
     API[Express API]
     SESS[Session middleware]
     CTRL[Controllers]
@@ -81,7 +81,7 @@ flowchart LR
 | Component | Role |
 |-----------|------|
 | **Vercel** | Builds and serves the Vite SPA; SPA routing via `vercel.json` rewrites |
-| **Render Web Service** | Runs `npm start` from `travelmgr backend/`; health check on `/api/health` |
+| **Render Web Service** | Runs `npm start` from `travelmgr-backend/`; health check on `/api/health` |
 | **Render PostgreSQL** | Primary data store; `DATABASE_URL` injected via Blueprint |
 | **GitHub Actions** | Lint, test, coverage upload; SonarCloud analysis on `main` |
 

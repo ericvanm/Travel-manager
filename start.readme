@@ -1,2 +1,2 @@
-Set-Location \DEV\projects\Travel-manager
+Set-Location D:\DEV\projets\Travel-manager
 docker-compose -f docker-compose.dev.yml up --build

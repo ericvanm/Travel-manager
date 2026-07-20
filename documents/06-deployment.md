@@ -30,7 +30,7 @@ The repository includes [`render.yaml`](../render.yaml):
 
 - **Database:** `travel-mgr-db` (free plan)
 - **Web service:** `travel-manager-api`
-  - `rootDir`: `travelmgr backend`
+  - `rootDir`: `travelmgr-backend`
   - `buildCommand`: `npm ci --omit=dev`
   - `startCommand`: `npm start`
   - `healthCheckPath`: `/api/health`
@@ -60,7 +60,7 @@ https://your-app.vercel.app
 
 ### Docker (optional)
 
-Production image: `travelmgr backend/Dockerfile`
+Production image: `travelmgr-backend/Dockerfile`
 
 - Base: `node:20`
 - Non-root user `nodejs` (UID/GID 1001)
@@ -87,7 +87,7 @@ docker compose -f docker-compose.dev.yml up -d
 Build and run API only (without compose):
 
 ```bash
-cd "travelmgr backend"
+cd "travelmgr-backend"
 docker build -t travel-manager-api .
 docker run -p 3001:3001 \
   -e DATABASE_URL=postgres://... \
@@ -102,7 +102,7 @@ docker run -p 3001:3001 \
 
 ### Configuration
 
-[`travelmgr frontend/vercel.json`](../travelmgr%20frontend/vercel.json):
+[`travelmgr-frontend/vercel.json`](../travelmgr-frontend/vercel.json):
 
 - Build command and output directory for Vite
 - SPA rewrites so client-side routing works
@@ -110,7 +110,7 @@ docker run -p 3001:3001 \
 ### Setup
 
 1. Import repository in Vercel.
-2. Set **Root Directory** to `travelmgr frontend`.
+2. Set **Root Directory** to `travelmgr-frontend`.
 3. Configure environment variable:
 
 | Variable | Example |

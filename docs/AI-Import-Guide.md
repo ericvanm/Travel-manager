@@ -33,7 +33,7 @@ Le système d'import documentaire IA permet aux utilisateurs de charger des docu
 ### Backend
 
 ```bash
-cd "travelmgr backend"
+cd "travelmgr-backend"
 npm install multer pdf-parse tesseract.js
 ```
 

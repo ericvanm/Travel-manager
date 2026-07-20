@@ -17,7 +17,7 @@ services:
   backend:
     image: travel-mgr-back
     build:
-      context: ./travelmgr backend
+      context: ./travelmgr-backend
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgres://postgres:mypassword@db:5432/travel_mgr
@@ -32,7 +32,7 @@ services:
   app:
     image: travel-mgr-front
     build:
-      context: ./travelmgr frontend
+      context: ./travelmgr-frontend
       dockerfile: ./Dockerfile
     environment:
       VITE_BACKEND_URL: http://localhost:8080/api
