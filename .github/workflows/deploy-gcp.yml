@@ -161,12 +161,14 @@ jobs:
               raise SystemExit(
                   "GCP_DATABASE_URL must start with postgres:// or postgresql://. "
                   "Do not use only the Cloud SQL connection name (PROJECT:REGION:INSTANCE). "
-                  "Example: postgres://USER:PASSWORD@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE"
+                  "Example: postgres://USER:PASSWORD@127.0.0.1/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE"
               )
           if "/cloudsql/" not in db_url:
               raise SystemExit(
                   "GCP_DATABASE_URL for Cloud Run should include ?host=/cloudsql/PROJECT:REGION:INSTANCE"
               )
+          if "@/" in db_url:
+              db_url = db_url.replace("@/", "@127.0.0.1/", 1)
 
           # Cloud Run reserves PORT (injected from --port). Never include it.
           reserved = {"PORT", "K_SERVICE", "K_REVISION", "K_CONFIGURATION"}

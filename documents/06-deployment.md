@@ -505,13 +505,15 @@ Repository **Settings → Secrets and variables → Actions**.
 **Correct** (Unix socket via Cloud SQL connector on Cloud Run):
 
 ```text
-postgres://DB_USER:DB_PASSWORD@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE
+postgres://DB_USER:DB_PASSWORD@127.0.0.1/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANCE
 ```
+
+You can also use `@/` instead of `@127.0.0.1/`; the API normalizes that form at startup. Prefer `@127.0.0.1/` in GitHub secrets to avoid parser issues.
 
 Concrete example:
 
 ```text
-postgres://travel_mgr:YOUR_PASSWORD@/travel_mgr?host=/cloudsql/travel-manager-502910:europe-west1:travel-mgr-db
+postgres://travel_mgr:YOUR_PASSWORD@127.0.0.1/travel_mgr?host=/cloudsql/travel-manager-502910:europe-west1:travel-mgr-db
 ```
 
 | Part | Value |
@@ -702,7 +704,8 @@ Render and the GCP deploy smoke step use this path. Monitor logs for migration e
 | Docker build fails on Render | GID syntax | Use numeric `--gid 1001` (see Dockerfile) |
 | Cold start timeout | Free tier spin-down | Retry; upgrade plan or external ping |
 | GCP API cannot reach DB | SQL stopped or wrong socket URL | Run **start** / **deploy**; verify `/cloudsql/...` URL + `--set-cloudsql-instances` |
-| `The dialect travel-manager-… is not supported` | `GCP_DATABASE_URL` is only the connection name | Use full URL: `postgres://USER:PASS@/DB?host=/cloudsql/PROJECT:REGION:INSTANCE` |
+| `The dialect travel-manager-… is not supported` | `GCP_DATABASE_URL` is only the connection name | Use full URL: `postgres://USER:PASS@127.0.0.1/DB?host=/cloudsql/PROJECT:REGION:INSTANCE` |
+| `searchParams` / pg-connection-string crash on startup | Malformed URL (often `@/` or special chars in password) | Use `@127.0.0.1/`; URL-encode password; redeploy after fixing `GCP_DATABASE_URL` |
 | Cloud Run deploy: reserved env `PORT` | `PORT` set in env vars file | Remove `PORT` from env; keep `--port=3001` (Cloud Run injects `PORT`) |
 | GCP login CORS error | Hosting origin missing | Set `GCP_CORS_ORIGINS` to exact `https://….web.app` (or custom domain) |
 | Unexpected GCP bill | Cloud SQL left RUNNABLE | Run **stop**; verify Scheduler 22:00 job |
