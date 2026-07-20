@@ -508,19 +508,19 @@ postgres://DB_USER:DB_PASSWORD@/travel_mgr?host=/cloudsql/PROJECT:REGION:INSTANC
 
 Store this as `GCP_DATABASE_URL`. The API disables client TLS when the URL contains `/cloudsql/` (connector path); Render / public-IP Postgres still uses SSL in production.
 
-Cloud Run is deployed with `--set-cloudsql-instances=PROJECT:REGION:INSTANCE` and `--port=3001` (`PORT=3001`).
+Cloud Run is deployed with `--set-cloudsql-instances=PROJECT:REGION:INSTANCE` and `--port=3001`. Do **not** set `PORT` yourself — it is a reserved name; Cloud Run injects it from `--port`.
 
 ### Environment variables (Cloud Run)
 
 | Variable | Notes |
 |----------|-------|
 | `NODE_ENV` | `production` |
-| `PORT` | `3001` |
 | `DATABASE_URL` | Cloud SQL socket URL above |
 | `SECRET` | Strong unique secret |
 | `CORS_ORIGINS` | Exact Firebase URL(s), comma-separated if several |
 | `USE_OPENAI` | Default `false` |
 | `OPENAI_API_KEY` | Optional — set manually on the service if needed |
+| `PORT` | **Do not set** — reserved; provided by Cloud Run (`3001` via `--port`) |
 
 Frontend build injects `VITE_BACKEND_URL=https://SERVICE_URL/api` (Cloud Run URL discovered at deploy time).
 
@@ -678,6 +678,7 @@ Render and the GCP deploy smoke step use this path. Monitor logs for migration e
 | Docker build fails on Render | GID syntax | Use numeric `--gid 1001` (see Dockerfile) |
 | Cold start timeout | Free tier spin-down | Retry; upgrade plan or external ping |
 | GCP API cannot reach DB | SQL stopped or wrong socket URL | Run **start** / **deploy**; verify `/cloudsql/...` URL + `--set-cloudsql-instances` |
+| Cloud Run deploy: reserved env `PORT` | `PORT` set in env vars file | Remove `PORT` from env; keep `--port=3001` (Cloud Run injects `PORT`) |
 | GCP login CORS error | Hosting origin missing | Set `GCP_CORS_ORIGINS` to exact `https://….web.app` (or custom domain) |
 | Unexpected GCP bill | Cloud SQL left RUNNABLE | Run **stop**; verify Scheduler 22:00 job |
 

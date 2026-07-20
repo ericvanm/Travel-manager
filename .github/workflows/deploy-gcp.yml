@@ -160,9 +160,9 @@ jobs:
               escaped = value.replace("\\", "\\\\").replace('"', '\\"')
               return f'"{escaped}"'
 
+          # Do not set PORT: Cloud Run reserves it and injects the value from --port.
           lines = [
               "NODE_ENV: production",
-              'PORT: "3001"',
               f"DATABASE_URL: {yaml_scalar(os.environ['GCP_DATABASE_URL'])}",
               f"SECRET: {yaml_scalar(os.environ['GCP_SECRET'])}",
               f"CORS_ORIGINS: {yaml_scalar(os.environ['GCP_CORS_ORIGINS'])}",

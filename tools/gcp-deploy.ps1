@@ -113,9 +113,9 @@ if (-not $SkipBackend) {
         $escaped = $Value.Replace('\', '\\').Replace('"', '\"')
         return '"' + $escaped + '"'
     }
+    # Do not set PORT: Cloud Run reserves it and injects the value from --port.
     @(
         'NODE_ENV: production'
-        'PORT: "3001"'
         ("DATABASE_URL: {0}" -f (Format-YamlScalar $dbUrl))
         ("SECRET: {0}" -f (Format-YamlScalar $sessionSecret))
         ("CORS_ORIGINS: {0}" -f (Format-YamlScalar $cors))
