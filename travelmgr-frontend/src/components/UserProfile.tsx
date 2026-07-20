@@ -80,7 +80,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
         const errorData = await response.json();
         setError(t(errorData.error) || t('profile_save_error'));
       }
-    } catch (error) {
+    } catch {
       setError(t('profile_save_error'));
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
         const errorData = await response.json();
         setError(t(errorData.error) || t('profile_save_error'));
       }
-    } catch (error) {
+    } catch {
       setError(t('profile_save_error'));
     } finally {
       setLoading(false);
