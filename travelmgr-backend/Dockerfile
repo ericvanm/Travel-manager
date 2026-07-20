@@ -16,6 +16,7 @@ COPY controllers ./controllers
 COPY models ./models
 COPY migrations ./migrations
 COPY utils ./utils
+COPY config ./config
 
 RUN chown -R nodejs:nodejs /usr/src/app
 

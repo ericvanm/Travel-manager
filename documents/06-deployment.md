@@ -82,6 +82,7 @@ Production image: `travelmgr-backend/Dockerfile`
 - Base: `node:20`
 - Non-root user `nodejs` (UID/GID 1001)
 - `npm ci --omit=dev --ignore-scripts`
+- Includes `config/` JSON (AI prompts, activity inspiration sites)
 - Exposes port 3001
 
 Development image: `dev.Dockerfile` (includes dev dependencies).
@@ -534,6 +535,28 @@ Password tip: URL-encode special characters (`@`, `#`, `/`, `%`, etc.) in `DB_PA
 
 Store the full URL as GitHub secret `GCP_DATABASE_URL`. The API disables client TLS when the URL contains `/cloudsql/`; Render / public-IP Postgres still uses SSL in production.
 
+#### Create the application database (required once)
+
+Cloud SQL ships with a default `postgres` database only. Travel Manager expects **`travel_mgr`** (same as Render/local).
+
+**Console**
+
+1. [Cloud SQL](https://console.cloud.google.com/sql/instances) → open instance `travel-mgr-db` (or yours).
+2. **Databases** → **Create database**.
+3. Name: `travel_mgr` → **Create**.
+
+**`gcloud`**
+
+```bash
+gcloud sql databases create travel_mgr \
+  --instance=travel-mgr-db \
+  --project=travel-manager-502910
+```
+
+Ensure the path segment in `GCP_DATABASE_URL` matches this name (e.g. `…@127.0.0.1/travel_mgr?host=…`).
+
+On the next API start, Umzug migrations run automatically (schema + default `admin` user).
+
 Cloud Run is deployed with `--set-cloudsql-instances=PROJECT:REGION:INSTANCE` and `--port=3001`. Do **not** set `PORT` yourself — it is a reserved name; Cloud Run injects it from `--port`.
 
 ### Environment variables (Cloud Run)
@@ -702,10 +725,12 @@ Render and the GCP deploy smoke step use this path. Monitor logs for migration e
 | Login works locally, not prod | CORS or cookies | Set `CORS_ORIGINS`; HTTPS only |
 | Frontend calls wrong API | Stale build env | Rebuild Vercel / Firebase with correct `VITE_BACKEND_URL` |
 | Docker build fails on Render | GID syntax | Use numeric `--gid 1001` (see Dockerfile) |
+| `ENOENT … config/activity-inspiration-sites.json` | Old API image missing `config/` | Rebuild and redeploy API (Dockerfile copies `config/`) |
 | Cold start timeout | Free tier spin-down | Retry; upgrade plan or external ping |
 | GCP API cannot reach DB | SQL stopped or wrong socket URL | Run **start** / **deploy**; verify `/cloudsql/...` URL + `--set-cloudsql-instances` |
 | `The dialect travel-manager-… is not supported` | `GCP_DATABASE_URL` is only the connection name | Use full URL: `postgres://USER:PASS@127.0.0.1/DB?host=/cloudsql/PROJECT:REGION:INSTANCE` |
 | `searchParams` / pg-connection-string crash on startup | Malformed URL (often `@/` or special chars in password) | Use `@127.0.0.1/`; URL-encode password; redeploy after fixing `GCP_DATABASE_URL` |
+| `database "travel_mgr" does not exist` | DB not created on Cloud SQL (only default `postgres` exists) | Create database `travel_mgr` on the instance (see below); name must match `GCP_DATABASE_URL` |
 | Cloud Run deploy: reserved env `PORT` | `PORT` set in env vars file | Remove `PORT` from env; keep `--port=3001` (Cloud Run injects `PORT`) |
 | GCP login CORS error | Hosting origin missing | Set `GCP_CORS_ORIGINS` to exact `https://….web.app` (or custom domain) |
 | Unexpected GCP bill | Cloud SQL left RUNNABLE | Run **stop**; verify Scheduler 22:00 job |
