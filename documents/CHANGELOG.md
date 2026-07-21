@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI pipeline: backend lint/test/coverage, frontend lint/tsc/build, SonarCloud with Quality Gate wait.
 - Secure logging utilities (`logger.js`, `log-sanitizer.js`) and `DB_LOG_CONTEXT` for safe database connection logs.
 - CSV import helpers and ICS import helpers with dedicated unit tests.
+- Root `LICENSE` (ISC) and `SECURITY.md` for public repository readiness.
 
 ### Changed
 
@@ -26,12 +27,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Dockerfiles: non-root `nodejs` user (UID/GID 1001); fixed Render build (`--gid 1001`).
 - SonarCloud and ESLint fixes across backend and frontend (optional chaining, `Number.parseInt`, React context memoization).
 - Frontend translation key `auth_credential_label` (security-friendly naming).
+- Replaced obsolete `docs/Technical Guide.md` content with pointers to maintained documentation under `documents/`.
+- Removed legacy Patientor Docker scripts from frontend `package.json`.
+- Cleaned legacy JWT/session debug code in `tokenExtractor` middleware.
+- Removed legacy blog demo code (`controllers/unused/`, `list_helper`, obsolete `cli.js` and `logout.js` router).
+- Dropped unused npm dependencies (`mongoose`, `morgan`, frontend `express`).
+- Aligned CI Node.js version with production Docker images (**20** LTS).
+- SonarCloud CI: migrate from deprecated `sonarcloud-github-action` (Java 17) to `sonarqube-scan-action` v8 (Java 21 scanner runtime).
+- CI frontend build uses placeholder `VITE_BACKEND_URL=http://localhost:3001/api` (no hardcoded Render URL).
+- Anonymized GCP examples in docs/tests (placeholders instead of a real project id).
+- Removed MongoDB-specific error handling from Express middleware.
 
 ### Security
 
 - Disabled Express `x-powered-by` header.
 - Session cookies: `httpOnly`, `secure` + `sameSite: none` in production.
-- Reduced user-controlled data in logs; strict logger API.
+- Reduced user-controlled data in logs; strict logger API; removed session dump from request middleware.
 - Docker production image runs as non-root user.
 
 ### Fixed

@@ -157,8 +157,7 @@ See [decisions/](decisions/) for formal ADRs.
 |------|------|
 | Render free tier | Cold starts, resource limits |
 | OpenAI | Optional; pattern fallback when disabled or unavailable |
-| Frontend tests | Lint + TypeScript + build only; no Vitest suite yet |
-| Legacy code | `controllers/unused/`, blog helpers retained but not mounted in `app.js` |
+| Frontend tests | Lint + TypeScript + build only; no Vitest suite yet (see [04-testing-strategy.md](04-testing-strategy.md)) |
 
 ## Extension points
 

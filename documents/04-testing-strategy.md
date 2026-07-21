@@ -94,7 +94,7 @@ The `backend` job in `.github/workflows/ci.yml`:
 | `log-sanitizer.test.js` | Unit | URL redaction |
 | `logger.test.js` | Unit | Logger API |
 | `middleware.test.js` | Unit | Token extractor |
-| `list_helper.test.js` | Unit | Legacy helper |
+| `database-url.test.js` | Unit | Cloud SQL URL normalization |
 
 Shared fixtures (e.g. sample CSV) may live in repository root `tests/` and are referenced from backend tests.
 

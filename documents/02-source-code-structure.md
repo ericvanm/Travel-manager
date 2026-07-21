@@ -20,7 +20,6 @@ Travel-manager/
 travelmgr-backend/
 ├── index.js              # HTTP server entry (listen on PORT)
 ├── app.js                # Express app: middleware, routes, DB connect
-├── cli.js                # CLI utilities (optional)
 ├── run-migration.js      # Standalone migration runner
 ├── Dockerfile            # Production container (non-root user)
 ├── dev.Dockerfile        # Development container
@@ -55,7 +54,7 @@ Mounted in `app.js`:
 | `ai-import.js` | `/api/ai-import` | Document upload + AI/pattern analysis |
 | `ai-planning.js` | `/api/ai-planning` | AI trip planning wizard (form → synthesis → itinerary → create trip) |
 
-**Legacy (not mounted):** `controllers/unused/` (blogs, authors, etc.), standalone `login.js` (superseded by `users.js`).
+Standalone `login.js` exists for historical tests only; production auth is in `users.js` (`/api/auth`).
 
 ### Utils
 
@@ -71,7 +70,7 @@ Mounted in `app.js`:
 | `activity-update-helpers.js` | Hotel date sync, grouped activity updates |
 | `ai-service.js` | Pattern-based and optional OpenAI reservation parsing |
 | `ai-planning-service.js` | Form validation, synthesis, itinerary generation (OpenAI + fallback) |
-| `list_helper.js` | Legacy blog statistics (course demo code) |
+| `database-url.js` | Postgres URL normalization (Cloud SQL socket paths) |
 
 ### Tests
 
@@ -92,8 +91,7 @@ tests/
 ├── activity-update-helpers.test.js
 ├── log-sanitizer.test.js
 ├── logger.test.js
-├── middleware.test.js
-└── list_helper.test.js
+└── middleware.test.js
 ```
 
 ## Frontend (`travelmgr-frontend/`)
@@ -189,6 +187,5 @@ flowchart TB
 
 ## Code to avoid in new features
 
-- Do not mount or extend `controllers/unused/` without explicit cleanup plan.
 - Prefer `utils/logger.js` over raw `console.log` for application logs.
 - Add tests alongside new helpers (`tests/<module>.test.js`) or integration tests for new routes.

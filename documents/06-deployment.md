@@ -514,7 +514,7 @@ You can also use `@/` instead of `@127.0.0.1/`; the API normalizes that form at 
 Concrete example:
 
 ```text
-postgres://travel_mgr:YOUR_PASSWORD@127.0.0.1/travel_mgr?host=/cloudsql/travel-manager-502910:europe-west1:travel-mgr-db
+postgres://travel_mgr:YOUR_PASSWORD@127.0.0.1/travel_mgr?host=/cloudsql/YOUR_GCP_PROJECT_ID:europe-west1:travel-mgr-db
 ```
 
 | Part | Value |
@@ -523,10 +523,10 @@ postgres://travel_mgr:YOUR_PASSWORD@127.0.0.1/travel_mgr?host=/cloudsql/travel-m
 | Database name | e.g. `travel_mgr` (after `@/`) |
 | `host=/cloudsql/...` | Instance **connection name** from SQL → instance overview (`PROJECT:REGION:INSTANCE`) |
 
-**Wrong** (causes `The dialect travel-manager-502910 is not supported`):
+**Wrong** (causes `The dialect my-gcp-project is not supported`):
 
 ```text
-travel-manager-502910:europe-west1:travel-mgr-db
+my-gcp-project:europe-west1:travel-mgr-db
 ```
 
 That string is only the connection name for `--set-cloudsql-instances` / `GCP_SQL_CONNECTION_NAME`, **not** `DATABASE_URL`.
@@ -550,7 +550,7 @@ Cloud SQL ships with a default `postgres` database only. Travel Manager expects 
 ```bash
 gcloud sql databases create travel_mgr \
   --instance=travel-mgr-db \
-  --project=travel-manager-502910
+  --project=YOUR_GCP_PROJECT_ID
 ```
 
 Ensure the path segment in `GCP_DATABASE_URL` matches this name (e.g. `…@127.0.0.1/travel_mgr?host=…`).
