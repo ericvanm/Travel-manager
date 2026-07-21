@@ -4,7 +4,7 @@ module.exports = {
     es2021: true,
   },
   extends: ['eslint:recommended'],
-  ignorePatterns: ['migrations/', 'controllers/unused/'],
+  ignorePatterns: ['migrations/'],
   rules: {
     'no-console': 'off',
   },

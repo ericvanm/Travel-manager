@@ -13,7 +13,6 @@ coverage
 tests
 eslint-report.json
 .scannerwork
-controllers/unused
 *.md
 docker-compose*
 Dockerfile

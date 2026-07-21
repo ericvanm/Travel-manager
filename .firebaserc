@@ -1,5 +1,5 @@
 {
   "projects": {
-    "default": "travel-manager-502910"
+    "default": "YOUR_GCP_PROJECT_ID"
   }
 }

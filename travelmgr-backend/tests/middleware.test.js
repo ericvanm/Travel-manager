@@ -41,12 +41,13 @@ describe('middleware', () => {
     assert.deepStrictEqual(response.body, { error: 'unknown endpoint' })
   })
 
-  test('errorHandler handles CastError', () => {
-    const response = createResponse()
-    let forwarded = false
-    middleware.errorHandler({ name: 'CastError' }, {}, response, () => { forwarded = true })
-    assert.strictEqual(response.statusCode, 400)
-    assert.strictEqual(forwarded, false)
+  test('errorHandler forwards CastError', () => {
+    const error = { name: 'CastError' }
+    let forwardedError = null
+    middleware.errorHandler(error, {}, createResponse(), (nextError) => {
+      forwardedError = nextError
+    })
+    assert.strictEqual(forwardedError, error)
   })
 
   test('errorHandler handles SequelizeValidationError', () => {
@@ -84,17 +85,10 @@ describe('middleware', () => {
     assert.strictEqual(called, true)
   })
 
-  test('errorHandler handles ValidationError and duplicate key errors', () => {
-    const validationResponse = createResponse()
-    middleware.errorHandler({ name: 'ValidationError', message: 'invalid payload' }, {}, validationResponse, () => {})
-    assert.strictEqual(validationResponse.statusCode, 400)
-
-    const duplicateResponse = createResponse()
-    middleware.errorHandler({
-      name: 'MongoServerError',
-      message: 'E11000 duplicate key error collection'
-    }, {}, duplicateResponse, () => {})
-    assert.strictEqual(duplicateResponse.statusCode, 400)
-    assert.strictEqual(duplicateResponse.body.error, 'expected `username` to be unique')
+  test('errorHandler handles ValidationError', () => {
+    const response = createResponse()
+    middleware.errorHandler({ name: 'ValidationError', message: 'invalid payload' }, {}, response, () => {})
+    assert.strictEqual(response.statusCode, 400)
+    assert.strictEqual(response.body.error, 'invalid payload')
   })
 })

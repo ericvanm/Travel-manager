@@ -15,8 +15,6 @@
     "tsc": "tsc",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:report": "eslint . --format json --output-file eslint-report.json",
-    "build-dev:image": "docker build -f ./dev.Dockerfile -t patientor-front-dev .",
-    "run-dev:image": "docker run -p 5173:5173 -v \"D:\\DEV\\fullstack_open\\fullstack_open_part9\\Patientor frontend\":/usr/src/app/ -v /usr/src/app/node_modules patientor-front-dev",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -29,7 +27,6 @@
     "@mui/x-date-pickers": "^8.4.0",
     "axios": "^1.16.0",
     "dayjs": "^1.11.13",
-    "express": "^5.1.0",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -10,6 +10,7 @@ Central documentation for the Travel Manager monorepo. All documents are written
 | Architect / tech lead | [01-architecture.md](01-architecture.md) → [decisions/](decisions/) |
 | QA / CI maintainer | [04-testing-strategy.md](04-testing-strategy.md) |
 | DevOps / deployment | [06-deployment.md](06-deployment.md) |
+| Security / responsible disclosure | [../SECURITY.md](../SECURITY.md) |
 | API consumer | [07-api-reference.md](07-api-reference.md) |
 
 ## Document map

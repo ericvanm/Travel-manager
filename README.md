@@ -14,12 +14,13 @@ Full-stack web application for planning trips: stages, activities, calendar impo
 | Deployment | [`documents/06-deployment.md`](documents/06-deployment.md) |
 | API reference | [`documents/07-api-reference.md`](documents/07-api-reference.md) |
 | Changelog | [`documents/CHANGELOG.md`](documents/CHANGELOG.md) |
+| Security | [`SECURITY.md`](SECURITY.md) |
 
 ## Stack
 
 - **Backend:** Node.js, Express, Sequelize, PostgreSQL (`travelmgr-backend/`)
 - **Frontend:** React, TypeScript, Vite, Material UI (`travelmgr-frontend/`)
-- **CI / quality:** GitHub Actions, ESLint, SonarCloud
+- **CI / quality:** GitHub Actions, ESLint, SonarCloud (Node **20** LTS, aligned with production Docker images)
 - **Production (default):** Render (API + database), Vercel (frontend)
 - **On-demand alternate:** GCP — Firebase Hosting + Cloud Run + Cloud SQL (see [deployment](documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql))
 
@@ -62,6 +63,10 @@ npm run test:coverage
 
 Requires a running PostgreSQL instance and `TEST_DATABASE_URL` (see `.env.example`).
 
+## Default admin account
+
+After migrations on an **empty** database, user **`admin`** exists with **no password** until you set one at first login (`must_set_password`). Do this immediately on any shared or internet-facing deployment. Details: [SECURITY.md](SECURITY.md).
+
 ## License
 
-ISC (see package manifests).
+ISC — see [LICENSE](LICENSE).

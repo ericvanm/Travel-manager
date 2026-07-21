@@ -9,8 +9,8 @@ test('normalizeDatabaseUrl rewrites empty host for Cloud SQL socket URLs', () =>
 })
 
 test('assertDatabaseUrlParseable accepts normalized Cloud SQL URL', () => {
-  const input = 'postgres://user:secret@/travel_mgr?host=/cloudsql/travel-manager-502910:europe-west1:travel-mgr-db'
+  const input = 'postgres://user:secret@/travel_mgr?host=/cloudsql/my-gcp-project:europe-west1:travel-mgr-db'
   const out = assertDatabaseUrlParseable(input)
   assert.ok(out.includes('@127.0.0.1/travel_mgr'))
-  assert.ok(out.includes('/cloudsql/travel-manager-502910'))
+  assert.ok(out.includes('/cloudsql/my-gcp-project'))
 })
