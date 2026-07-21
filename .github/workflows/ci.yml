@@ -114,7 +114,8 @@ jobs:
           cd "$GITHUB_WORKSPACE/travelmgr-frontend" && npm run lint:report
 
       - name: SonarCloud scan
-        uses: SonarSource/sonarcloud-github-action@e44258b109568baa0df60ed515909fc6c72cba92 # v2.3.0
+        # sonarcloud-github-action (Docker/Java 17) is deprecated on SonarCloud since Jul 2026; use CLI + JRE auto-provisioning (Java 21+).
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

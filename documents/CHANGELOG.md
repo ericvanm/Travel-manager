@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed legacy blog demo code (`controllers/unused/`, `list_helper`, obsolete `cli.js` and `logout.js` router).
 - Dropped unused npm dependencies (`mongoose`, `morgan`, frontend `express`).
 - Aligned CI Node.js version with production Docker images (**20** LTS).
+- SonarCloud CI: migrate from deprecated `sonarcloud-github-action` (Java 17) to `sonarqube-scan-action` v8 (Java 21 scanner runtime).
 - CI frontend build uses placeholder `VITE_BACKEND_URL=http://localhost:3001/api` (no hardcoded Render URL).
 - Anonymized GCP examples in docs/tests (placeholders instead of a real project id).
 - Removed MongoDB-specific error handling from Express middleware.
