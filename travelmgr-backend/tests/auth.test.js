@@ -2,7 +2,7 @@ const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const supertest = require('supertest')
 const { connectToDatabase } = require('../utils/db')
-const { resetDatabase } = require('./setup')
+const { resetDatabase, TEST_PASSWORD } = require('./setup')
 
 let app
 let api
@@ -18,10 +18,11 @@ beforeEach(async () => {
 })
 
 describe('GET /api/health', () => {
-  test('returns ok', async () => {
+  test('returns ok with database status', async () => {
     const response = await api.get('/api/health')
     assert.strictEqual(response.status, 200)
-    assert.deepStrictEqual(response.body, { status: 'ok' })
+    assert.strictEqual(response.body.status, 'ok')
+    assert.strictEqual(response.body.database, 'connected')
   })
 })
 
@@ -29,7 +30,7 @@ describe('POST /api/auth/register', () => {
   test('creates a user', async () => {
     const response = await api
       .post('/api/auth/register')
-      .send({ username: 'newuser', password: 'secret', name: 'New User' })
+      .send({ username: 'newuser', password: TEST_PASSWORD, name: 'New User' })
 
     assert.strictEqual(response.status, 201)
     assert.strictEqual(response.body.username, 'newuser')
@@ -37,11 +38,11 @@ describe('POST /api/auth/register', () => {
   })
 
   test('rejects duplicate username', async () => {
-    await api.post('/api/auth/register').send({ username: 'dup', password: 'secret', name: 'User One' })
+    await api.post('/api/auth/register').send({ username: 'dup', password: TEST_PASSWORD, name: 'User One' })
 
     const response = await api
       .post('/api/auth/register')
-      .send({ username: 'dup', password: 'secret', name: 'User Two' })
+      .send({ username: 'dup', password: TEST_PASSWORD, name: 'User Two' })
 
     assert.strictEqual(response.status, 400)
     assert.strictEqual(response.body.error, 'Username already exists')
@@ -53,19 +54,20 @@ describe('POST /api/auth/register', () => {
       .send({ username: 'user', password: 'ab', name: 'User' })
 
     assert.strictEqual(response.status, 400)
-    assert.match(response.body.error, /at least 3 characters/)
+    assert.strictEqual(response.body.error, 'password_too_short')
+    assert.strictEqual(response.body.minLength, 8)
   })
 })
 
 describe('POST /api/auth/login', () => {
   beforeEach(async () => {
-    await api.post('/api/auth/register').send({ username: 'loginuser', password: 'secret', name: 'Login User' })
+    await api.post('/api/auth/register').send({ username: 'loginuser', password: TEST_PASSWORD, name: 'Login User' })
   })
 
   test('succeeds with valid credentials', async () => {
     const response = await api
       .post('/api/auth/login')
-      .send({ username: 'loginuser', password: 'secret' })
+      .send({ username: 'loginuser', password: TEST_PASSWORD })
 
     assert.strictEqual(response.status, 200)
     assert.strictEqual(response.body.username, 'loginuser')
@@ -90,8 +92,8 @@ describe('GET /api/auth/verify', () => {
   test('returns user when session is valid', async () => {
     const agent = supertest.agent(app)
 
-    await agent.post('/api/auth/register').send({ username: 'verifyuser', password: 'secret', name: 'Verify User' })
-    await agent.post('/api/auth/login').send({ username: 'verifyuser', password: 'secret' })
+    await agent.post('/api/auth/register').send({ username: 'verifyuser', password: TEST_PASSWORD, name: 'Verify User' })
+    await agent.post('/api/auth/login').send({ username: 'verifyuser', password: TEST_PASSWORD })
 
     const response = await agent.get('/api/auth/verify')
     assert.strictEqual(response.status, 200)
@@ -103,8 +105,8 @@ describe('POST /api/auth/logout', () => {
   test('destroys session', async () => {
     const agent = supertest.agent(app)
 
-    await agent.post('/api/auth/register').send({ username: 'logoutuser', password: 'secret', name: 'Logout User' })
-    await agent.post('/api/auth/login').send({ username: 'logoutuser', password: 'secret' })
+    await agent.post('/api/auth/register').send({ username: 'logoutuser', password: TEST_PASSWORD, name: 'Logout User' })
+    await agent.post('/api/auth/login').send({ username: 'logoutuser', password: TEST_PASSWORD })
 
     const logoutResponse = await agent.post('/api/auth/logout')
     assert.strictEqual(logoutResponse.status, 200)
@@ -124,7 +126,7 @@ describe('POST /api/auth/forgot-password', () => {
   test('stores reset token for registered user with email', async () => {
     await api.post('/api/auth/register').send({
       username: 'resetuser',
-      password: 'secret',
+      password: TEST_PASSWORD,
       name: 'Reset User',
       email: 'resetuser@example.com'
     })
@@ -146,7 +148,7 @@ describe('POST /api/auth/reset-password', () => {
 
     await api.post('/api/auth/register').send({
       username: 'tokenuser',
-      password: 'oldsecret',
+      password: 'oldsecret8',
       name: 'Token User',
       email: 'tokenuser@example.com'
     })

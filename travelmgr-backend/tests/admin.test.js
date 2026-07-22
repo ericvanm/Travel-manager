@@ -6,7 +6,8 @@ const {
   resetDatabase,
   createTrip,
   createTripForUser,
-  createAuthenticatedAgent
+  createAuthenticatedAgent,
+  TEST_PASSWORD
 } = require('./setup')
 
 let app
@@ -41,7 +42,7 @@ describe('GET /api/admin/trips', () => {
       name: 'Admin Login'
     })
     await User.update({ role: 'admin' }, { where: { username: 'adminlogin' } })
-    await adminAgent.post('/api/auth/login').send({ username: 'adminlogin', password: 'secret' })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminlogin', password: TEST_PASSWORD })
 
     const filtered = await adminAgent.get('/api/admin/trips').query({ userId: owner.id })
     assert.strictEqual(filtered.status, 200)
@@ -59,7 +60,7 @@ describe('GET /api/admin/users and ai-logs', () => {
     const { user } = await createAuthenticatedAgent(app, { username: 'loggeduser' })
     const { agent: adminAgent } = await createAuthenticatedAgent(app, { username: 'adminlogs' })
     await User.update({ role: 'admin' }, { where: { username: 'adminlogs' } })
-    await adminAgent.post('/api/auth/login').send({ username: 'adminlogs', password: 'secret' })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminlogs', password: TEST_PASSWORD })
 
     const { logAiInteraction } = require('../utils/ai-interaction-logger')
     const log = await logAiInteraction({
@@ -90,13 +91,14 @@ describe('GET /api/admin/users and ai-logs', () => {
 })
 
 describe('GET /api/trips regression', () => {
-  test('returns all trips for authenticated users', async () => {
-    const { agent } = await createAuthenticatedAgent(app, { username: 'viewer' })
-    await createTrip({ name: 'Trip A' })
-    await createTrip({ name: 'Trip B' })
+  test('returns only trips owned by the authenticated user', async () => {
+    const { agent, user } = await createAuthenticatedAgent(app, { username: 'viewer' })
+    await createTripForUser(user.id, { name: 'Owned Trip' })
+    await createTrip({ name: 'Other Trip' })
 
     const response = await agent.get('/api/trips')
     assert.strictEqual(response.status, 200)
-    assert.strictEqual(response.body.length, 2)
+    assert.strictEqual(response.body.length, 1)
+    assert.strictEqual(response.body[0].name, 'Owned Trip')
   })
 })
