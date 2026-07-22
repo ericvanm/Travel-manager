@@ -21,6 +21,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    ignore:
+      # @typescript-eslint v8 supports TypeScript <6.1 only (no TS 6/7 yet).
+      - dependency-name: "typescript"
+        versions: [">=6"]
     groups:
       minor-and-patch:
         patterns:
