@@ -11,6 +11,16 @@ const {
 } = require('../utils/activity-update-helpers')
 const logger = require('../utils/logger')
 const { sanitizeBookingUrl } = require('../utils/booking-urls')
+const { requireAuth } = require('../utils/auth-helpers')
+const {
+  requireTripAccessParam,
+  requireStageAccessParam,
+  requireActivityAccessParam,
+  ensureTripAccess,
+  resolveTripIdFromStage
+} = require('../utils/trip-access')
+
+router.use(requireAuth)
 
 const normalizeIncomingBookingUrl = (data) => {
   if (!data?.bookingUrl) return data
@@ -24,7 +34,7 @@ const normalizeIncomingBookingUrl = (data) => {
 }
 
 // GET all activities for a stage
-router.get('/stage/:stageId', async (req, res) => {
+router.get('/stage/:stageId', requireStageAccessParam('stageId'), async (req, res) => {
   try {
     const activities = await Activity.findAll({
       where: { stageId: req.params.stageId },
@@ -38,7 +48,7 @@ router.get('/stage/:stageId', async (req, res) => {
 })
 
 // POST reserve activity (mark as reserved with optional booking URL)
-router.post('/:id/reserve', async (req, res) => {
+router.post('/:id/reserve', requireActivityAccessParam('id'), async (req, res) => {
   try {
     const activity = await Activity.findByPk(req.params.id)
     if (!activity) {
@@ -68,8 +78,136 @@ router.post('/:id/reserve', async (req, res) => {
   }
 })
 
+// GET analyze duplicates for a trip
+router.get('/analyze-duplicates/:tripId', requireTripAccessParam('tripId'), async (req, res) => {
+  try {
+    const tripId = Number.parseInt(req.params.tripId, 10)
+
+    const stages = await Stage.findAll({
+      where: { tripId },
+      order: [['startDate', 'ASC']]
+    })
+
+    if (stages.length === 0) {
+      return res.json({ duplicates: [], count: 0 })
+    }
+
+    const stageIds = stages.map(s => s.id)
+    const activities = await Activity.findAll({
+      where: { stageId: { [Op.in]: stageIds } },
+      include: [{ model: ActivityType }]
+    })
+
+    const processedActivities = new Map()
+    const duplicates = []
+
+    for (const activity of activities) {
+      const key = `${activity.name || 'unnamed'}-${activity.activityTypeId}-${activity.startDateTime || 'no-start'}-${activity.endDateTime || 'no-end'}-${activity.address || ''}-${activity.confirmationNumber || ''}`
+
+      if (processedActivities.has(key)) {
+        duplicates.push({
+          id: activity.id,
+          name: activity.name,
+          type: activity.ActivityType?.label || 'N/A',
+          stage: stages.find(s => s.id === activity.stageId)?.name || 'N/A',
+          startDateTime: activity.startDateTime,
+          endDateTime: activity.endDateTime
+        })
+      } else {
+        processedActivities.set(key, activity)
+      }
+    }
+
+    res.json({ duplicates, count: duplicates.length })
+  } catch (error) {
+    console.error('Error analyzing duplicates:', error)
+    res.status(500).json({ error: 'Failed to analyze duplicates' })
+  }
+})
+
+router.post('/structure-trip/:tripId', requireTripAccessParam('tripId'), async (req, res) => {
+  try {
+    const tripId = Number.parseInt(req.params.tripId, 10)
+    const stages = await Stage.findAll({
+      where: { tripId },
+      order: [['startDate', 'ASC']]
+    })
+
+    if (stages.length === 0) {
+      return res.json({ message: '0 activities structured across multiple stages' })
+    }
+
+    const stageIds = stages.map(s => s.id)
+    const allActivities = await Activity.findAll({
+      where: { stageId: { [Op.in]: stageIds } }
+    })
+    let structuredCount = 0
+    let duplicatesRemoved = 0
+
+    const processedActivities = new Map()
+    const duplicatesToRemove = []
+
+    for (const activity of allActivities) {
+      const key = `${activity.name || 'unnamed'}-${activity.activityTypeId}-${activity.startDateTime || 'no-start'}-${activity.endDateTime || 'no-end'}-${activity.address || ''}-${activity.confirmationNumber || ''}`
+
+      if (processedActivities.has(key)) {
+        duplicatesToRemove.push(activity.id)
+      } else {
+        processedActivities.set(key, activity)
+      }
+    }
+
+    if (duplicatesToRemove.length > 0) {
+      await Activity.destroy({
+        where: { id: { [Op.in]: duplicatesToRemove } }
+      })
+      duplicatesRemoved = duplicatesToRemove.length
+      logger.infoWithCounts('Removed duplicate activities', duplicatesRemoved)
+    }
+
+    const duplicateSuffix = duplicatesRemoved > 0 ? `, ${duplicatesRemoved} duplicates removed` : ''
+    const message = `${structuredCount} activities structured across multiple stages${duplicateSuffix}`
+    res.json({ message })
+  } catch (error) {
+    console.error('Error structuring trip:', error)
+    res.status(500).json({ error: 'Failed to structure trip', details: error.message })
+  }
+})
+
+router.get('/timeline/:tripId', requireTripAccessParam('tripId'), async (req, res) => {
+  try {
+    const tripId = Number.parseInt(req.params.tripId, 10)
+
+    const stages = await Stage.findAll({
+      where: { tripId },
+      include: [{ model: Country, as: 'Country' }],
+      order: [['startDate', 'ASC']]
+    })
+
+    if (stages.length === 0) {
+      return res.json([])
+    }
+
+    const stageIds = stages.map(s => s.id)
+    const activities = await Activity.findAll({
+      where: { stageId: { [Op.in]: stageIds } },
+      include: [{ model: ActivityType }]
+    })
+
+    const timeline = buildTripTimeline(
+      stages.map((s) => s.toJSON()),
+      activities.map((a) => a.toJSON())
+    )
+
+    res.json(timeline)
+  } catch (error) {
+    console.error('Error fetching timeline:', error)
+    res.status(500).json({ error: 'Failed to fetch timeline' })
+  }
+})
+
 // GET single activity
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireActivityAccessParam('id'), async (req, res) => {
   try {
     const activity = await Activity.findByPk(req.params.id, {
       include: [{ model: ActivityType }]
@@ -126,6 +264,14 @@ const checkContinuousActivity = async (stageId, startDateTime, endDateTime) => {
 // POST new activity
 router.post('/', async (req, res) => {
   try {
+    const tripId = await resolveTripIdFromStage(req.body?.stageId)
+    if (!tripId) {
+      return res.status(404).json({ error: 'Stage not found' })
+    }
+    if (!await ensureTripAccess(req, res, tripId)) {
+      return
+    }
+
     logger.info('Creating activity')
     
     let activityData = normalizeIncomingBookingUrl({ ...req.body })
@@ -175,7 +321,7 @@ router.post('/', async (req, res) => {
 })
 
 // PUT update activity
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireActivityAccessParam('id'), async (req, res) => {
   try {
     const activity = await Activity.findByPk(req.params.id, {
       include: [{ model: ActivityType }]
@@ -205,7 +351,7 @@ router.put('/:id', async (req, res) => {
 })
 
 // DELETE activity
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireActivityAccessParam('id'), async (req, res) => {
   try {
     const activity = await Activity.findByPk(req.params.id)
     if (!activity) {
@@ -225,144 +371,6 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting activity:', error)
     res.status(500).json({ error: 'Failed to delete activity' })
-  }
-})
-
-// GET analyze duplicates for a trip
-router.get('/analyze-duplicates/:tripId', async (req, res) => {
-  try {
-    const tripId = Number.parseInt(req.params.tripId, 10)
-    
-    // Get all stages for the trip
-    const stages = await Stage.findAll({
-      where: { tripId },
-      order: [['startDate', 'ASC']]
-    })
-    
-    if (stages.length === 0) {
-      return res.json({ duplicates: [], count: 0 })
-    }
-    
-    // Get all activities for these stages
-    const stageIds = stages.map(s => s.id)
-    const activities = await Activity.findAll({
-      where: { stageId: { [Op.in]: stageIds } },
-      include: [{ model: ActivityType }]
-    })
-    
-    // Identify duplicates
-    const processedActivities = new Map()
-    const duplicates = []
-    
-    for (const activity of activities) {
-      // Key without stageId to detect true duplicates across stages
-      const key = `${activity.name || 'unnamed'}-${activity.activityTypeId}-${activity.startDateTime || 'no-start'}-${activity.endDateTime || 'no-end'}-${activity.address || ''}-${activity.confirmationNumber || ''}`
-      
-      if (processedActivities.has(key)) {
-        duplicates.push({
-          id: activity.id,
-          name: activity.name,
-          type: activity.ActivityType?.label || 'N/A',
-          stage: stages.find(s => s.id === activity.stageId)?.name || 'N/A',
-          startDateTime: activity.startDateTime,
-          endDateTime: activity.endDateTime
-        })
-      } else {
-        processedActivities.set(key, activity)
-      }
-    }
-    
-    res.json({ duplicates, count: duplicates.length })
-  } catch (error) {
-    console.error('Error analyzing duplicates:', error)
-    res.status(500).json({ error: 'Failed to analyze duplicates' })
-  }
-})
-
-// POST structure trip - apply continuous activities
-router.post('/structure-trip/:tripId', async (req, res) => {
-  try {
-    const tripId = Number.parseInt(req.params.tripId, 10)
-    // Get all stages for the trip
-    const stages = await Stage.findAll({
-      where: { tripId },
-      order: [['startDate', 'ASC']]
-    })
-    
-    if (stages.length === 0) {
-      return res.json({ message: '0 activities structured across multiple stages' })
-    }
-    
-    // Get all activities for these stages
-    const stageIds = stages.map(s => s.id)
-    const allActivities = await Activity.findAll({
-      where: { stageId: { [Op.in]: stageIds } }
-    })
-    let structuredCount = 0
-    let duplicatesRemoved = 0
-
-    const processedActivities = new Map()
-    const duplicatesToRemove = []
-
-    for (const activity of allActivities) {
-      const key = `${activity.name || 'unnamed'}-${activity.activityTypeId}-${activity.startDateTime || 'no-start'}-${activity.endDateTime || 'no-end'}-${activity.address || ''}-${activity.confirmationNumber || ''}`
-
-      if (processedActivities.has(key)) {
-        duplicatesToRemove.push(activity.id)
-      } else {
-        processedActivities.set(key, activity)
-      }
-    }
-
-    if (duplicatesToRemove.length > 0) {
-      await Activity.destroy({
-        where: { id: { [Op.in]: duplicatesToRemove } }
-      })
-      duplicatesRemoved = duplicatesToRemove.length
-      logger.infoWithCounts('Removed duplicate activities', duplicatesRemoved)
-    }
-    
-    const duplicateSuffix = duplicatesRemoved > 0 ? `, ${duplicatesRemoved} duplicates removed` : ''
-    const message = `${structuredCount} activities structured across multiple stages${duplicateSuffix}`
-    res.json({ message })
-  } catch (error) {
-    console.error('Error structuring trip:', error)
-    res.status(500).json({ error: 'Failed to structure trip', details: error.message })
-  }
-})
-
-// GET trip timeline - activities organized by date
-router.get('/timeline/:tripId', async (req, res) => {
-  try {
-    const tripId = Number.parseInt(req.params.tripId, 10)
-    
-    // Get all stages for the trip
-    const stages = await Stage.findAll({
-      where: { tripId },
-      include: [{ model: Country, as: 'Country' }],
-      order: [['startDate', 'ASC']]
-    })
-    
-    if (stages.length === 0) {
-      return res.json([])
-    }
-    
-    // Get all activities for these stages
-    const stageIds = stages.map(s => s.id)
-    const activities = await Activity.findAll({
-      where: { stageId: { [Op.in]: stageIds } },
-      include: [{ model: ActivityType }]
-    })
-    
-    const timeline = buildTripTimeline(
-      stages.map((s) => s.toJSON()),
-      activities.map((a) => a.toJSON())
-    )
-
-    res.json(timeline)
-  } catch (error) {
-    console.error('Error fetching timeline:', error)
-    res.status(500).json({ error: 'Failed to fetch timeline' })
   }
 })
 

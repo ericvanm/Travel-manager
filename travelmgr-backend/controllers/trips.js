@@ -1,18 +1,16 @@
 /**
  * Trip HTTP routes: CRUD, consistency indicators, map data, and CSV import.
  *
- * Uses `optionalAuth` so reads work without login in dev; writes call {@link linkTripToUser}
- * when a user id is present. Admins get an empty list on `GET /` because they use
- * `GET /api/admin/trips` instead (see trip-ownership).
- *
- * Note: trip listing is not yet filtered by owner on this router.
+ * Requires authentication; trip listing and mutations are scoped to the authenticated owner.
+ * Admins get an empty list on `GET /` because they use `GET /api/admin/trips` instead.
  */
 const router = require('express').Router()
 const { Op } = require('sequelize')
 const { Trip, Stage, Activity, Transport, Accommodation, Expense, Country, ActivityType } = require('../models/DBmodels')
 const { buildTripMapData } = require('../utils/trip-map-service')
-const { getUserLanguage, optionalAuth, getUserId } = require('../utils/auth-helpers')
-const { linkTripToUser } = require('../utils/trip-ownership')
+const { getUserLanguage, requireAuth, getUserId } = require('../utils/auth-helpers')
+const { linkTripToUser, findTripIdsForUser } = require('../utils/trip-ownership')
+const { requireTripAccessParam } = require('../utils/trip-access')
 const {
   parseCSVLine,
   parseCSVDate,
@@ -28,17 +26,26 @@ const { loadTripSnapshot } = require('../utils/trip-snapshot')
 const { validateTripConsistency, toSummary } = require('../utils/trip-consistency')
 const { deleteTripById } = require('../utils/trip-delete')
 
-router.use(optionalAuth)
+router.use(requireAuth)
 
 const isAdminRequest = (req) => req.user?.role === 'admin'
 
-// GET consistency summary for all trips (list indicators)
+const ownedTripWhere = async (req) => {
+  if (isAdminRequest(req)) {
+    return null
+  }
+  const tripIds = await findTripIdsForUser(getUserId(req))
+  return tripIds.length > 0 ? { id: { [Op.in]: tripIds } } : { id: -1 }
+}
+
+// GET consistency summary for owned trips (list indicators)
 router.get('/consistency/summary', async (req, res) => {
   try {
     if (isAdminRequest(req)) {
       return res.json([])
     }
-    const trips = await Trip.findAll({ order: [['updatedAt', 'DESC']] })
+    const where = await ownedTripWhere(req)
+    const trips = await Trip.findAll({ where, order: [['updatedAt', 'DESC']] })
     const summaries = []
     for (const trip of trips) {
       try {
@@ -60,13 +67,14 @@ router.get('/consistency/summary', async (req, res) => {
   }
 })
 
-// GET all trips with details
+// GET trips owned by the authenticated user
 router.get('/', async (req, res) => {
   try {
     if (isAdminRequest(req)) {
       return res.json([])
     }
-    const trips = await Trip.findAll()
+    const where = await ownedTripWhere(req)
+    const trips = await Trip.findAll({ where })
     res.json(trips)
   } catch (error) {
     console.error('Error fetching trips:', error)
@@ -75,7 +83,7 @@ router.get('/', async (req, res) => {
 })
 
 // GET trip consistency report
-router.get('/:id/consistency', async (req, res) => {
+router.get('/:id/consistency', requireTripAccessParam('id'), async (req, res) => {
   try {
     const trip = await Trip.findByPk(req.params.id)
     if (!trip) return res.status(404).json({ error: 'Trip not found' })
@@ -91,7 +99,7 @@ router.get('/:id/consistency', async (req, res) => {
 })
 
 // GET trip map data (geographic view)
-router.get('/:id/map-data', async (req, res) => {
+router.get('/:id/map-data', requireTripAccessParam('id'), async (req, res) => {
   try {
     const trip = await Trip.findByPk(req.params.id)
     if (!trip) {
@@ -119,7 +127,7 @@ router.get('/:id/map-data', async (req, res) => {
 })
 
 // GET single trip
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireTripAccessParam('id'), async (req, res) => {
   try {
     const trip = await Trip.findByPk(req.params.id)
     if (trip) {
@@ -146,9 +154,7 @@ router.post('/', async (req, res) => {
 
     const trip = await Trip.create(req.body)
     const userId = getUserId(req)
-    if (userId) {
-      await linkTripToUser(trip.id, userId)
-    }
+    await linkTripToUser(trip.id, userId)
     res.json(trip)
   } catch (error) {
     console.error('Error creating trip:', error)
@@ -157,7 +163,7 @@ router.post('/', async (req, res) => {
 })
 
 // PUT update trip
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireTripAccessParam('id'), async (req, res) => {
   try {
     const trip = await Trip.findByPk(req.params.id)
     if (!trip) {
@@ -185,7 +191,7 @@ router.put('/:id', async (req, res) => {
 })
 
 // DELETE trip
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireTripAccessParam('id'), async (req, res) => {
   try {
     const result = await deleteTripById(req.params.id)
     if (!result) {
@@ -279,7 +285,7 @@ const importStagesToDatabase = async (models, tripId, finalStages, fallbackCount
 }
 
 // POST import CSV
-router.post('/:id/import-csv', async (req, res) => {
+router.post('/:id/import-csv', requireTripAccessParam('id'), async (req, res) => {
   try {
     const { csvContent } = req.body
     const tripId = req.params.id

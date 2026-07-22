@@ -1,8 +1,18 @@
 const router = require('express').Router()
 const { Stage, Country, Activity, Transport, Accommodation, ActivityType } = require('../models/DBmodels')
+const { requireAuth } = require('../utils/auth-helpers')
+const {
+  requireTripAccessParam,
+  requireStageAccessParam,
+  requireTripAccessFromBody,
+  ensureTripAccess,
+  resolveTripIdFromStage
+} = require('../utils/trip-access')
+
+router.use(requireAuth)
 
 // GET all stages for a trip
-router.get('/trip/:tripId', async (req, res) => {
+router.get('/trip/:tripId', requireTripAccessParam('tripId'), async (req, res) => {
   try {
     const stages = await Stage.findAll({
       where: { tripId: req.params.tripId },
@@ -28,7 +38,7 @@ router.get('/trip/:tripId', async (req, res) => {
 })
 
 // GET single stage
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireStageAccessParam('id'), async (req, res) => {
   try {
     const stage = await Stage.findByPk(req.params.id, {
       include: [
@@ -56,7 +66,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // POST new stage
-router.post('/', async (req, res) => {
+router.post('/', requireTripAccessFromBody('tripId'), async (req, res) => {
   try {
     const stage = await Stage.create(req.body)
     res.json(stage)
@@ -67,7 +77,7 @@ router.post('/', async (req, res) => {
 })
 
 // PUT update stage
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireStageAccessParam('id'), async (req, res) => {
   try {
     const stage = await Stage.findByPk(req.params.id)
     if (stage) {
@@ -83,7 +93,7 @@ router.put('/:id', async (req, res) => {
 })
 
 // DELETE stage
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireStageAccessParam('id'), async (req, res) => {
   try {
     const stage = await Stage.findByPk(req.params.id)
     if (!stage) {
@@ -113,11 +123,19 @@ router.delete('/:id', async (req, res) => {
 router.post('/merge', async (req, res) => {
   try {
     const { stageIds, newName } = req.body
-    
+
     if (!stageIds || stageIds.length < 2) {
       return res.status(400).json({ error: 'Au moins 2 étapes sont requises pour la fusion' })
     }
-    
+
+    const tripId = await resolveTripIdFromStage(stageIds[0])
+    if (!tripId) {
+      return res.status(404).json({ error: 'Une ou plusieurs étapes introuvables' })
+    }
+    if (!await ensureTripAccess(req, res, tripId)) {
+      return
+    }
+
     if (!newName?.trim()) {
       return res.status(400).json({ error: 'Le nom de la nouvelle étape est requis' })
     }
@@ -133,14 +151,17 @@ router.post('/merge', async (req, res) => {
     }
 
     // Verify all stages belong to the same trip
-    const tripId = stages[0].tripId
-    if (!stages.every(stage => stage.tripId === tripId)) {
+    const mergedTripId = stages[0].tripId
+    if (mergedTripId !== tripId) {
+      return res.status(400).json({ error: 'Toutes les étapes doivent appartenir au même voyage' })
+    }
+    if (!stages.every(stage => stage.tripId === mergedTripId)) {
       return res.status(400).json({ error: 'Toutes les étapes doivent appartenir au même voyage' })
     }
 
     // Verify stages are consecutive by date
     const allTripStages = await Stage.findAll({
-      where: { tripId },
+      where: { tripId: mergedTripId },
       order: [['startDate', 'ASC NULLS LAST']]
     })
     
