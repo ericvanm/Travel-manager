@@ -21,26 +21,26 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "connect-pg-simple": "^10.0.0",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.18.2",
-    "express-session": "^1.18.2",
-    "jsonwebtoken": "^9.0.2",
+    "express-session": "^1.19.0",
+    "jsonwebtoken": "^9.0.3",
     "lodash": "^4.18.1",
     "multer": "^2.2.0",
-    "nodemailer": "^9.0.1",
+    "nodemailer": "^9.0.3",
     "openai": "^4.77.0",
-    "pg": "^8.16.3",
-    "sequelize": "^6.37.7",
+    "pg": "^8.22.0",
+    "sequelize": "^6.37.8",
     "tesseract.js": "^5.1.0",
-    "umzug": "^3.8.2",
+    "umzug": "^3.8.3",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^1.6.2",
     "cross-env": "^7.0.3",
     "eslint": "^8.56.0",
-    "nodemon": "^3.0.3",
+    "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
   }
 }
