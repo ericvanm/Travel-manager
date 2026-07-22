@@ -35,6 +35,8 @@ If you deploy Travel Manager yourself:
 - `.env` files are gitignored. Never commit `DATABASE_URL`, `SECRET`, API keys, or GCP/Render tokens.
 - Before publishing the repository, run a secret scan on history (e.g. [gitleaks](https://github.com/gitleaks/gitleaks), [trufflehog](https://github.com/trufflesecurity/trufflehog)).
 
+  * Gitleaks run (22/07/2026) - no leaks found
+
 ## Default admin account
 
 Migrations seed user `admin` with **no password** until first login forces a password change (`must_set_password`). Treat fresh databases as **compromised until the admin password is set**, especially on internet-exposed deployments.
