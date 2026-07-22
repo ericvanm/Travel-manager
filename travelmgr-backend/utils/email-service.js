@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer')
+const logger = require('./logger')
 
 const SMTP_HOST = process.env.SMTP_HOST
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587)
@@ -31,10 +32,11 @@ const sendMail = async ({ to, subject, text, html }) => {
   const transport = getTransporter()
 
   if (!transport) {
-    console.info('[email-service] SMTP not configured — message logged instead of sent:')
-    console.info(`  To: ${to}`)
-    console.info(`  Subject: ${subject}`)
-    console.info(`  Body: ${text}`)
+    logger.info('[email-service] SMTP not configured — email not sent', {
+      to,
+      subject,
+      bodyRedacted: true
+    })
     return { delivered: false, logged: true }
   }
 
