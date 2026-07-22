@@ -11,6 +11,18 @@ const rawDbUri = process.env.NODE_ENV === 'test'
 const ENVIR = process.env.NODE_ENV
 const SECRET = process.env.SECRET
 
+const parseBooleanEnv = (value, defaultValue) => {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue
+  }
+  return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase())
+}
+
+const ALLOW_REGISTRATION = parseBooleanEnv(
+  process.env.ALLOW_REGISTRATION,
+  ENVIR !== 'production'
+)
+
 let DB_URI = rawDbUri
 if (DB_URI && ENVIR === 'production') {
   const looksLikePostgresUrl = /^postgres(ql)?:\/\//i.test(DB_URI)
@@ -36,5 +48,6 @@ module.exports = {
   DB_SSL,
   PORT,
   ENVIR,
-  SECRET
+  SECRET,
+  ALLOW_REGISTRATION
 }
