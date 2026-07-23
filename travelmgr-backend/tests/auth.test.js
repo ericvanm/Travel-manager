@@ -23,6 +23,7 @@ describe('GET /api/health', () => {
     assert.strictEqual(response.status, 200)
     assert.strictEqual(response.body.status, 'ok')
     assert.strictEqual(response.body.database, 'connected')
+    assert.strictEqual(typeof response.body.features?.ai, 'boolean')
   })
 })
 

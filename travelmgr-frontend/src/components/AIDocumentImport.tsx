@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { Activity } from '../types'
+import { useFeatures } from '../contexts/FeaturesContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 interface AIAnalysisResult {
   extractedText: string
@@ -44,6 +46,8 @@ const getActionKey = (action: ActionPlan) => {
 }
 
 export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) => {
+  const { aiEnabled } = useFeatures()
+  const { t } = useLanguage()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null)
   const [selectedActionKeys, setSelectedActionKeys] = useState<string[]>([])
@@ -51,7 +55,7 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (file: File) => {
-    if (!file) return
+    if (!file || !aiEnabled) return
 
     setIsAnalyzing(true)
     setAnalysisResult(null)
@@ -145,6 +149,7 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
   }
 
   const openFilePicker = () => {
+    if (!aiEnabled) return
     fileInputRef.current?.click()
   }
 
@@ -162,23 +167,29 @@ export const AIDocumentImport: React.FC<Props> = ({ tripId, onImportComplete }) 
       {/* Zone de dépôt */}
       <div
         role="button"
-        tabIndex={0}
+        tabIndex={aiEnabled ? 0 : -1}
+        aria-disabled={!aiEnabled}
         className="drop-zone"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
+        onDrop={aiEnabled ? handleDrop : undefined}
+        onDragOver={aiEnabled ? handleDragOver : undefined}
         onClick={openFilePicker}
-        onKeyDown={handleDropZoneKeyDown}
+        onKeyDown={aiEnabled ? handleDropZoneKeyDown : undefined}
         style={{
           border: '2px dashed #ccc',
           borderRadius: '8px',
           padding: '40px',
           textAlign: 'center',
-          cursor: 'pointer',
-          marginBottom: '20px'
+          cursor: aiEnabled ? 'pointer' : 'not-allowed',
+          marginBottom: '20px',
+          opacity: aiEnabled ? 1 : 0.5,
+          backgroundColor: aiEnabled ? undefined : '#f5f5f5',
         }}
+        title={!aiEnabled ? t('ai_features_disabled') : undefined}
       >
         {isAnalyzing ? (
           <div>🔄 Analyse en cours...</div>
+        ) : !aiEnabled ? (
+          <div>{t('ai_features_disabled')}</div>
         ) : (
           <div>
             📄 Glissez un fichier ici ou cliquez pour sélectionner

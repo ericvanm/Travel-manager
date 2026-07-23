@@ -6,13 +6,14 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton
+  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton, Tooltip
 } from '@mui/material';
 import { Add, Logout } from '@mui/icons-material';
 import { Trip } from '../../types';
 import { getTrips, createTrip, updateTrip, deleteTrip } from '../../services/trips';
 import { logout } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeatures } from '../../contexts/FeaturesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import TripDialog from './TripDialog';
 import TripTable from './TripTable';
@@ -50,6 +51,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [consistencySummaries, setConsistencySummaries] = useState<TripConsistencySummary[]>([]);
   const [profileDialog, setProfileDialog] = useState(false);
   const { user, setUser } = useAuth();
+  const { aiEnabled } = useFeatures();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -281,16 +283,22 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
             <ImportMenu
               onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
               onCSVImport={() => document.getElementById('new-csv-file-input')?.click()}
-              onAIImport={() => setAiImportDialog(true)}
-              onAIPlanning={() => setAiPlanningDialog(true)}
+              onAIImport={() => aiEnabled && setAiImportDialog(true)}
+              onAIPlanning={() => aiEnabled && setAiPlanningDialog(true)}
+              aiEnabled={aiEnabled}
             />
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setAiPlanningDialog(true)}
-            >
-              {t('plan_trip_ai')}
-            </Button>
+            <Tooltip title={!aiEnabled ? t('ai_features_disabled') : ''}>
+              <span>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  disabled={!aiEnabled}
+                  onClick={() => aiEnabled && setAiPlanningDialog(true)}
+                >
+                  {t('plan_trip_ai')}
+                </Button>
+              </span>
+            </Tooltip>
             <Button
               variant="contained"
               startIcon={<Add />}
@@ -310,6 +318,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           onImportCsv={handleImportCsvClick}
           onDelete={handleDeleteTrip}
           onAdaptAi={handleAdaptAi}
+          aiEnabled={aiEnabled}
         />
 
         <Fab

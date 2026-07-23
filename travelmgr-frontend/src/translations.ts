@@ -55,6 +55,8 @@ export const translations = {
     'import_csv_file': 'Import CSV File',
     'import_document_ai': '🤖 Import Document AI',
     'plan_trip_ai': '🤖 Plan Trip with AI',
+    'ai_features_disabled': 'AI features are disabled on this server',
+    'ai_disabled': 'AI features are disabled on this server',
 
     // AI Trip Planning
     'ai_planning_title': 'Plan a Trip with AI',
@@ -325,6 +327,7 @@ export const translations = {
     'trip_save_error': 'An error occurred while saving the trip.',
     'trip_load_error': 'Unable to load this trip.',
     'trip_not_found': 'This trip was not found or you do not have access to it.',
+    'trip_access_denied': 'You do not have permission to view this trip.',
     'session_expired': 'Your session has expired. Please sign in again.',
     'back': 'Back',
     'import_failed': 'Import failed',
@@ -444,6 +447,8 @@ export const translations = {
     'import_csv_file': 'Importer fichier CSV',
     'import_document_ai': '🤖 Importer Document IA',
     'plan_trip_ai': '🤖 Planifier un voyage avec IA',
+    'ai_features_disabled': 'Les fonctionnalités IA sont désactivées sur ce serveur',
+    'ai_disabled': 'Les fonctionnalités IA sont désactivées sur ce serveur',
 
     // AI Trip Planning
     'ai_planning_title': 'Planifier un voyage avec l\'IA',
@@ -714,6 +719,7 @@ export const translations = {
     'trip_save_error': 'Une erreur est survenue lors de la sauvegarde du voyage.',
     'trip_load_error': 'Impossible de charger ce voyage.',
     'trip_not_found': 'Ce voyage est introuvable ou vous n\'y avez pas accès.',
+    'trip_access_denied': 'Vous n\'avez pas la permission de consulter ce voyage.',
     'session_expired': 'Votre session a expiré. Veuillez vous reconnecter.',
     'back': 'Retour',
     'import_failed': 'L\'importation a échoué',
@@ -833,6 +839,8 @@ export const translations = {
     'import_csv_file': 'Importar archivo CSV',
     'import_document_ai': '🤖 Importar Documento IA',
     'plan_trip_ai': '🤖 Planificar viaje con IA',
+    'ai_features_disabled': 'Las funciones de IA están desactivadas en este servidor',
+    'ai_disabled': 'Las funciones de IA están desactivadas en este servidor',
 
     // AI Trip Planning
     'ai_planning_title': 'Planificar un viaje con IA',
@@ -1103,6 +1111,7 @@ export const translations = {
     'trip_save_error': 'Se produjo un error al guardar el viaje.',
     'trip_load_error': 'No se pudo cargar este viaje.',
     'trip_not_found': 'Este viaje no existe o no tiene acceso a él.',
+    'trip_access_denied': 'No tiene permiso para ver este viaje.',
     'session_expired': 'Su sesión ha expirado. Inicie sesión de nuevo.',
     'back': 'Volver',
     'import_failed': 'La importación falló',
@@ -1222,6 +1231,8 @@ export const translations = {
     'import_csv_file': 'CSV-bestand importeren',
     'import_document_ai': '🤖 Document AI importeren',
     'plan_trip_ai': '🤖 Reis plannen met AI',
+    'ai_features_disabled': 'AI-functies zijn uitgeschakeld op deze server',
+    'ai_disabled': 'AI-functies zijn uitgeschakeld op deze server',
 
     // AI Trip Planning
     'ai_planning_title': 'Reis plannen met AI',
@@ -1492,6 +1503,7 @@ export const translations = {
     'trip_save_error': 'Er is een fout opgetreden bij het opslaan van de reis.',
     'trip_load_error': 'Deze reis kon niet worden geladen.',
     'trip_not_found': 'Deze reis bestaat niet of u heeft geen toegang.',
+    'trip_access_denied': 'U heeft geen toestemming om deze reis te bekijken.',
     'session_expired': 'Uw sessie is verlopen. Meld u opnieuw aan.',
     'back': 'Terug',
     'import_failed': 'Import mislukt',

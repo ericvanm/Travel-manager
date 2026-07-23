@@ -17,6 +17,7 @@ import { getTrip, getActivityTypes, getStagesByTrip, createStage, createActivity
 import { ACTIVITY_TYPE, isGroundTransportActivityType, isPrivateCarActivityType } from '../../utils/activityTypes';
 import { useCountries } from '../../contexts/CountriesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useFeatures } from '../../contexts/FeaturesContext';
 import StageDialog from './StageDialog';
 import ActivityTypeDialog from './ActivityTypeDialog';
 import ActivityDialog from './ActivityDialog';
@@ -53,6 +54,7 @@ interface TripDetailProps {
 
 const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'timeline', readOnly = false }) => {
   const { t, language } = useLanguage();
+  const { aiEnabled } = useFeatures();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
@@ -293,6 +295,10 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           setLoadError('session_expired');
+          return;
+        }
+        if (error.response?.status === 403) {
+          setLoadError('trip_access_denied');
           return;
         }
         if (error.response?.status === 404) {
@@ -743,6 +749,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           )}
           <TripActionsToolbar
             color="inherit"
+            aiEnabled={aiEnabled}
             onExport={handleExportTrip}
             onMap={() => setMapDialogOpen(true)}
             showMap
@@ -770,6 +777,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
           loading={consistencyLoading}
           onResolve={readOnly ? undefined : handleResolveConsistency}
           resolving={resolvingConsistency}
+          aiEnabled={aiEnabled}
         />
 
         <Typography variant="body1" paragraph>

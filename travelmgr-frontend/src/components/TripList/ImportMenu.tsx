@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Menu, MenuItem } from '@mui/material';
+import { Button, Menu, MenuItem, Tooltip } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -8,9 +8,16 @@ interface ImportMenuProps {
   onCSVImport: () => void;
   onAIImport: () => void;
   onAIPlanning: () => void;
+  aiEnabled?: boolean;
 }
 
-const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAIImport, onAIPlanning }) => {
+const ImportMenu: React.FC<ImportMenuProps> = ({
+  onICSImport,
+  onCSVImport,
+  onAIImport,
+  onAIPlanning,
+  aiEnabled = true,
+}) => {
   const { t } = useLanguage();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -63,12 +70,20 @@ const ImportMenu: React.FC<ImportMenuProps> = ({ onICSImport, onCSVImport, onAII
         <MenuItem onClick={handleCSVImport}>
           {t('import_csv_file')}
         </MenuItem>
-        <MenuItem onClick={handleAIImport}>
-          {t('import_document_ai')}
-        </MenuItem>
-        <MenuItem onClick={handleAIPlanning}>
-          {t('plan_trip_ai')}
-        </MenuItem>
+        <Tooltip title={!aiEnabled ? t('ai_features_disabled') : ''} placement="left">
+          <span>
+            <MenuItem disabled={!aiEnabled} onClick={aiEnabled ? handleAIImport : undefined}>
+              {t('import_document_ai')}
+            </MenuItem>
+          </span>
+        </Tooltip>
+        <Tooltip title={!aiEnabled ? t('ai_features_disabled') : ''} placement="left">
+          <span>
+            <MenuItem disabled={!aiEnabled} onClick={aiEnabled ? handleAIPlanning : undefined}>
+              {t('plan_trip_ai')}
+            </MenuItem>
+          </span>
+        </Tooltip>
       </Menu>
     </>
   );

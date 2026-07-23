@@ -33,6 +33,7 @@ const notificationTypesRouter = require('./controllers/notificationTypes')
 
 const { connectToDatabase } = require('./utils/db')
 const { SECRET, ENVIR, DB_URI, DB_SSL } = require('./utils/config')
+const { isOpenAIEnabled } = require('./utils/ai-config')
 
 const isProduction = ENVIR === 'production'
 const isTest = ENVIR === 'test'
@@ -102,9 +103,17 @@ app.get('/api/health', async (_req, res) => {
   try {
     const { sequelize } = require('./utils/db')
     await sequelize.authenticate()
-    res.json({ status: 'ok', database: 'connected' })
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      features: { ai: isOpenAIEnabled() }
+    })
   } catch {
-    res.status(503).json({ status: 'degraded', database: 'disconnected' })
+    res.status(503).json({
+      status: 'degraded',
+      database: 'disconnected',
+      features: { ai: isOpenAIEnabled() }
+    })
   }
 })
 
