@@ -6,9 +6,10 @@
  *   "fix consistency" without running the manual synthesis step again.
  */
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Box, Typography, AppBar, Toolbar, IconButton, Paper, Button,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Fab, Checkbox, Alert
 } from '@mui/material';
 import { ArrowBack, Add, MergeType, AccountTree } from '@mui/icons-material';
 import { Trip, Stage, Activity, ActivityFormState, ActivityInput, Country, ActivityType, TimelineDay, emptyActivityForm } from '../../types';
@@ -95,6 +96,7 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
   } | null>(null);
   const [resolveMode, setResolveMode] = useState(false);
   const [selectedActivityIds, setSelectedActivityIds] = useState<number[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   /**
    * Converts form fields from the stage timezone to UTC ISO strings for the API.
@@ -285,8 +287,20 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
     try {
       const data = await getTrip(tripId);
       setTrip(data);
+      setLoadError(null);
     } catch (error) {
       console.error('Failed to load trip:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          setLoadError('session_expired');
+          return;
+        }
+        if (error.response?.status === 404) {
+          setLoadError('trip_not_found');
+          return;
+        }
+      }
+      setLoadError('trip_load_error');
     }
   };
 
@@ -690,8 +704,17 @@ const TripDetail: React.FC<TripDetailProps> = ({ tripId, onBack, viewMode = 'tim
 
 
 
+  if (loadError) {
+    return (
+      <Box sx={{ p: 3, maxWidth: 480, mx: 'auto', mt: 8 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>{t(loadError)}</Alert>
+        <Button variant="contained" onClick={onBack}>{t('back')}</Button>
+      </Box>
+    );
+  }
+
   if (!trip) {
-    return <Typography>{t('loading')}</Typography>;
+    return <Typography sx={{ p: 3 }}>{t('loading')}</Typography>;
   }
 
   return (

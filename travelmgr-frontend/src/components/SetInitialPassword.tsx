@@ -5,6 +5,7 @@ import {
 import { setupInitialPassword } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { translateApiError } from '../utils/localeHelpers';
 
 interface SetInitialPasswordProps {
   username: string;
@@ -40,8 +41,9 @@ const SetInitialPassword: React.FC<SetInitialPasswordProps> = ({ username, onCan
       if (user.language) {
         setLanguage(user.language);
       }
-    } catch {
-      setError(t('password_setup_failed'));
+    } catch (err: unknown) {
+      const errorCode = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
+      setError(translateApiError(t, errorCode, 'password_setup_failed'));
     } finally {
       setLoading(false);
     }

@@ -14,6 +14,22 @@ const api = axios.create({
   withCredentials: true,
 });
 
+const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/verify'];
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      axios.isAxiosError(error)
+      && error.response?.status === 401
+      && !AUTH_ROUTES.some((route) => error.config?.url?.includes(route))
+    ) {
+      window.dispatchEvent(new CustomEvent('auth:session-expired'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 /** Thrown when the seeded admin account must set an initial password (HTTP 403). */
 export class PasswordSetupRequiredError extends Error {
   username: string;
@@ -64,6 +80,15 @@ export const requestPasswordReset = async (email: string): Promise<void> => {
 export const resetPassword = async (token: string, newPassword: string): Promise<User> => {
   const response = await api.post('/auth/reset-password', { token, newPassword });
   return response.data;
+};
+
+export const verifySession = async (): Promise<User | null> => {
+  try {
+    const response = await api.get('/auth/verify');
+    return response.data;
+  } catch {
+    return null;
+  }
 };
 
 export default api;

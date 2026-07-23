@@ -21,7 +21,7 @@ const {
   getActivityTypeId,
   normalizeFormData
 } = require('../utils/ai-planning-service')
-const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
+const { requireAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
 const { linkTripToUser } = require('../utils/trip-ownership')
 const { buildAccommodationDateTimes, resolveAccommodationTimezone } = require('../utils/hotel-datetime')
 
@@ -198,7 +198,7 @@ const createTripFromItinerary = async (itinerary, formData = {}, userId = null) 
   return createdTrip
 }
 
-router.use(optionalAuth)
+router.use(requireAuth)
 
 router.get('/inspiration-sites', (req, res) => {
   try {

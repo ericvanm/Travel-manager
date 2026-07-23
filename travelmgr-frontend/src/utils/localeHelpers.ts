@@ -70,3 +70,26 @@ export const formatCurrencyAmount = (amount: number, currency: string, language:
     return `${amount} ${currency}`
   }
 }
+
+/** Maps legacy API error messages to translation keys. */
+const API_ERROR_KEYS: Record<string, string> = {
+  'Username already exists': 'username_exists',
+  'Invalid username or password': 'invalid_credentials',
+  'Registration failed': 'registration_failed',
+}
+
+type TranslateFn = (key: string, params?: Record<string, unknown>) => string
+
+/** Resolves an API error code or message through i18n, with a translated fallback. */
+export const translateApiError = (
+  t: TranslateFn,
+  error: string | undefined,
+  fallbackKey: string
+): string => {
+  if (!error) {
+    return t(fallbackKey)
+  }
+  const translationKey = API_ERROR_KEYS[error] ?? error
+  const message = t(translationKey)
+  return message !== translationKey ? message : t(fallbackKey)
+}

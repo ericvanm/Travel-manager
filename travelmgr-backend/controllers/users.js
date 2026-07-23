@@ -136,7 +136,7 @@ router.post('/register', async (req, res) => {
       mustSetPassword: false
     })
 
-    res.status(201).json(buildUserPayload(user))
+    res.status(201).json(signInUser(req, user))
   } catch (error) {
     console.error('Registration error:', error)
     res.status(500).json({ error: 'Registration failed' })

@@ -5,6 +5,7 @@ import {
 import { resetPassword } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { translateApiError } from '../utils/localeHelpers';
 
 interface ResetPasswordProps {
   token: string;
@@ -36,8 +37,9 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ token, onBackToLogin }) =
     try {
       const user = await resetPassword(token, newPassword);
       setUser(user);
-    } catch {
-      setError(t('reset_token_invalid'));
+    } catch (err: unknown) {
+      const errorCode = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
+      setError(translateApiError(t, errorCode, 'reset_token_invalid'));
     } finally {
       setLoading(false);
     }
