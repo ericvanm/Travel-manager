@@ -98,8 +98,14 @@ app.use(session({
 app.use(middleware.requestLogger)
 app.use(middleware.tokenExtractor)
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' })
+app.get('/api/health', async (_req, res) => {
+  try {
+    const { sequelize } = require('./utils/db')
+    await sequelize.authenticate()
+    res.json({ status: 'ok', database: 'connected' })
+  } catch {
+    res.status(503).json({ status: 'degraded', database: 'disconnected' })
+  }
 })
 
 app.use('/api/auth', usersRouter)

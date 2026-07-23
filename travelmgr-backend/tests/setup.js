@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+require('dotenv').config()
 const { sequelize } = require('../utils/db')
 const { User, Trip, TripList, Stage, Activity, Country } = require('../models/DBmodels')
 
@@ -30,7 +31,19 @@ const getDefaultCountryId = async () => {
   return country.id
 }
 
-const createUser = async ({ username = 'testuser', password = 'secret', name = 'Test User', disabled = false } = {}) => {
+const resolveTestPassword = () => {
+  const fromEnv = process.env.TEST_USER_PASSWORD
+  if (fromEnv) {
+    return fromEnv
+  }
+  throw new Error(
+    'TEST_USER_PASSWORD is required for integration tests. Set it in .env or CI (see travelmgr-backend/.env.example).'
+  )
+}
+
+const TEST_PASSWORD = resolveTestPassword()
+
+const createUser = async ({ username = 'testuser', password = TEST_PASSWORD, name = 'Test User', disabled = false } = {}) => {
   const passwordHash = await bcrypt.hash(password, 10)
   return User.create({ username, passwordHash, name, disabled })
 }
@@ -51,7 +64,7 @@ const createTripForUser = async (userId, { name = 'Test Trip', description = 'A 
   return trip
 }
 
-const createAuthenticatedAgent = async (app, { username = 'testuser', password = 'secret', name = 'Test User' } = {}) => {
+const createAuthenticatedAgent = async (app, { username = 'testuser', password = TEST_PASSWORD, name = 'Test User' } = {}) => {
   const supertest = require('supertest')
   const agent = supertest.agent(app)
   await agent.post('/api/auth/register').send({ username, password, name })
@@ -90,4 +103,5 @@ module.exports = {
   createAuthenticatedAgent,
   createStage,
   createActivity,
+  TEST_PASSWORD
 }

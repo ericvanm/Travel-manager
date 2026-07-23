@@ -1,5 +1,7 @@
 # Travel Manager
 
+[![CI](https://github.com/ericvanm/Travel-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/ericvanm/Travel-manager/actions/workflows/ci.yml)
+
 Full-stack web application for planning trips: stages, activities, calendar imports (ICS/CSV), optional AI document import, and **AI-assisted trip planning** from user preferences.
 
 ## Quick links
@@ -15,6 +17,7 @@ Full-stack web application for planning trips: stages, activities, calendar impo
 | API reference | [`documents/07-api-reference.md`](documents/07-api-reference.md) |
 | Changelog | [`documents/CHANGELOG.md`](documents/CHANGELOG.md) |
 | Security | [`SECURITY.md`](SECURITY.md) |
+| Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
 ## Stack
 

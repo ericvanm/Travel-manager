@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supportedLanguages } from '../translations';
+import { translateApiError } from '../utils/localeHelpers';
 
 interface UserProfileProps {
   open: boolean;
@@ -78,7 +79,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
         setSuccess(t('profile_updated'));
       } else {
         const errorData = await response.json();
-        setError(t(errorData.error) || t('profile_save_error'));
+        setError(translateApiError(t, errorData.error, 'profile_save_error'));
       }
     } catch {
       setError(t('profile_save_error'));
@@ -121,7 +122,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
         setSuccess(t('password_changed'));
       } else {
         const errorData = await response.json();
-        setError(t(errorData.error) || t('profile_save_error'));
+        setError(translateApiError(t, errorData.error, 'profile_save_error'));
       }
     } catch {
       setError(t('profile_save_error'));
