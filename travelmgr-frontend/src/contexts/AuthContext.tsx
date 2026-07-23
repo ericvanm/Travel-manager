@@ -1,8 +1,8 @@
 /**
- * Client-side auth state mirrored to localStorage for fast UI restore on refresh.
+ * Client-side auth state backed by the session cookie.
  *
- * The real session is the HTTP cookie (`withCredentials` on API calls). On startup we
- * validate the cookie via `/auth/verify` instead of trusting localStorage alone.
+ * On startup we validate the cookie via `/auth/verify` — user profile is not persisted
+ * in browser storage (Sonar: avoid tainted data in localStorage).
  */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { verifySession } from '../services/auth';
@@ -32,18 +32,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const clearUser = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('user');
-  }, []);
-
   const handleSetUser = useCallback((nextUser: User | null) => {
     setUser(nextUser);
-    if (nextUser) {
-      localStorage.setItem('user', JSON.stringify(nextUser));
-    } else {
-      localStorage.removeItem('user');
-    }
   }, []);
 
   useEffect(() => {
@@ -52,18 +42,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const bootstrap = async () => {
       const verifiedUser = await verifySession();
       if (!active) return;
-      if (verifiedUser) {
-        handleSetUser(verifiedUser);
-      } else {
-        clearUser();
-      }
+      handleSetUser(verifiedUser);
       setIsLoading(false);
     };
 
     bootstrap();
 
     const onSessionExpired = () => {
-      clearUser();
+      handleSetUser(null);
     };
     window.addEventListener('auth:session-expired', onSessionExpired);
 
@@ -71,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       active = false;
       window.removeEventListener('auth:session-expired', onSessionExpired);
     };
-  }, [clearUser, handleSetUser]);
+  }, [handleSetUser]);
 
   const value = useMemo(
     () => ({ user, setUser: handleSetUser, isLoading }),

@@ -45,7 +45,7 @@ describe('POST /api/auth/register', () => {
       .send({ username: 'dup', password: TEST_PASSWORD, name: 'User Two' })
 
     assert.strictEqual(response.status, 400)
-    assert.strictEqual(response.body.error, 'Username already exists')
+    assert.strictEqual(response.body.error, 'username_exists')
   })
 
   test('rejects short password', async () => {
@@ -79,7 +79,7 @@ describe('POST /api/auth/login', () => {
       .send({ username: 'loginuser', password: 'wrong' })
 
     assert.strictEqual(response.status, 401)
-    assert.strictEqual(response.body.error, 'Invalid username or password')
+    assert.strictEqual(response.body.error, 'invalid_credentials')
   })
 })
 

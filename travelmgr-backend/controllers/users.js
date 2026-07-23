@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ where: { username } })
 
     if (!user || user.disabled) {
-      return res.status(401).json({ error: 'Invalid username or password' })
+      return res.status(401).json({ error: 'invalid_credentials' })
     }
 
     if (user.mustSetPassword && !user.passwordHash) {
@@ -69,7 +69,7 @@ router.post('/login', async (req, res) => {
 
     const passwordCorrect = await bcrypt.compare(password || '', user.passwordHash || '')
     if (!passwordCorrect) {
-      return res.status(401).json({ error: 'Invalid username or password' })
+      return res.status(401).json({ error: 'invalid_credentials' })
     }
 
     res.json(signInUser(req, user))
@@ -117,7 +117,7 @@ router.post('/register', async (req, res) => {
 
     const existingUser = await User.findOne({ where: { username } })
     if (existingUser) {
-      return res.status(400).json({ error: 'Username already exists' })
+      return res.status(400).json({ error: 'username_exists' })
     }
 
     const normalizedEmail = email ? String(email).trim().toLowerCase() : null
@@ -139,7 +139,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json(signInUser(req, user))
   } catch (error) {
     console.error('Registration error:', error)
-    res.status(500).json({ error: 'Registration failed' })
+    res.status(500).json({ error: 'registration_failed' })
   }
 })
 
