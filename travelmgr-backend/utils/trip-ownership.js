@@ -11,7 +11,7 @@
  * 3. `trip_adaptation_sessions` — fallback for trips opened in the AI adapt flow.
  *
  * Consumers: admin panel (`GET /api/admin/trips`), user trip routes via `trip-access.js`.
- * User-facing trip/stage/activity routes filter by ownership through `findTripIdsForUser`.
+ * Admins may read any trip via GET (read-only inspection from AdminPanel); mutations stay on /api/admin/*.
  */
 const { Op, QueryTypes } = require('sequelize')
 const { Trip, TripList } = require('../models/DBmodels')

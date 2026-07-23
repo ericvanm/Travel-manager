@@ -71,6 +71,15 @@ describe('AI planning API', () => {
     assert.strictEqual(accepted.status, 200)
     assert.ok(accepted.body.trip?.id)
 
+    const { AiInteractionLog } = require('../models/DBmodels')
+    const logs = await AiInteractionLog.findAll({
+      where: { sessionType: 'planning', sessionId }
+    })
+    assert.ok(logs.length >= 3, `expected planning AI logs, got ${logs.length}`)
+    assert.ok(logs.some((log) => log.operation === 'synthesis'))
+    assert.ok(logs.some((log) => log.operation === 'itinerary' || log.operation === 'revise'))
+    assert.ok(logs.some((log) => log.operation === 'accept' && log.tripId === accepted.body.trip.id))
+
     const session = await TripPlanningSession.findByPk(sessionId)
     assert.strictEqual(session.status, 'accepted')
     assert.strictEqual(session.userId, user.id)

@@ -12,7 +12,8 @@ const {
   Trip,
   Stage,
   Activity,
-  Country
+  Country,
+  AiInteractionLog
 } = require('../models/DBmodels')
 const {
   validateFormData,
@@ -23,6 +24,7 @@ const {
 } = require('../utils/ai-planning-service')
 const { requireAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
 const { linkTripToUser } = require('../utils/trip-ownership')
+const { logAiInteraction } = require('../utils/ai-interaction-logger')
 const { buildAccommodationDateTimes, resolveAccommodationTimezone } = require('../utils/hotel-datetime')
 
 /**
@@ -427,6 +429,22 @@ router.post('/sessions/:id/accept', async (req, res) => {
     await session.update({
       status: 'accepted',
       tripId: createdTrip.id
+    })
+
+    const ownerId = session.userId || getUserId(req)
+    await AiInteractionLog.update(
+      { tripId: createdTrip.id },
+      { where: { sessionType: 'planning', sessionId: session.id } }
+    )
+    await logAiInteraction({
+      userId: ownerId,
+      feature: 'planning',
+      operation: 'accept',
+      sessionType: 'planning',
+      sessionId: session.id,
+      tripId: createdTrip.id,
+      parsedResponse: { tripId: createdTrip.id, name: createdTrip.name },
+      status: 'success'
     })
 
     res.json({

@@ -52,7 +52,13 @@ router.get('/ai-logs', async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 50, 200)
     const offset = Number(req.query.offset) || 0
 
-    if (req.query.userId) where.userId = Number(req.query.userId)
+    if (req.query.userId !== undefined && req.query.userId !== null && req.query.userId !== '') {
+      const filterUserId = parseUserId(req.query.userId)
+      if (!filterUserId) {
+        return res.status(400).json({ error: 'Invalid userId' })
+      }
+      where.userId = filterUserId
+    }
     if (req.query.feature) where.feature = String(req.query.feature)
     if (req.query.operation) where.operation = String(req.query.operation)
     if (req.query.sessionId) where.sessionId = Number(req.query.sessionId)

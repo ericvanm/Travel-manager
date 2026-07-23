@@ -102,3 +102,23 @@ describe('GET /api/trips regression', () => {
     assert.strictEqual(response.body[0].name, 'Owned Trip')
   })
 })
+
+describe('admin read-only trip inspection', () => {
+  test('admin can read trip data via user routes but not mutate', async () => {
+    const { user } = await createAuthenticatedAgent(app, { username: 'tripowner' })
+    const trip = await createTripForUser(user.id, { name: 'Admin Inspect Trip' })
+    const { agent: adminAgent } = await createAuthenticatedAgent(app, { username: 'adminread' })
+    await User.update({ role: 'admin' }, { where: { username: 'adminread' } })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminread', password: TEST_PASSWORD })
+
+    const getTrip = await adminAgent.get(`/api/trips/${trip.id}`)
+    assert.strictEqual(getTrip.status, 200)
+    assert.strictEqual(getTrip.body.name, 'Admin Inspect Trip')
+
+    const stages = await adminAgent.get(`/api/stages/trip/${trip.id}`)
+    assert.strictEqual(stages.status, 200)
+
+    const mutate = await adminAgent.put(`/api/trips/${trip.id}`).send({ name: 'Hacked Name' })
+    assert.strictEqual(mutate.status, 403)
+  })
+})
