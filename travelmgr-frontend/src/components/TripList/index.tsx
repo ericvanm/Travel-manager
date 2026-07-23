@@ -158,7 +158,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
     try {
       const text = await file.text();
-      console.log(`[CSV Import] Sending to trip ${selectedTrip.id}, file size: ${text.length} chars`);
       const response = await fetch(`${backendUrl}/trips/${selectedTrip.id}/import-csv`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +167,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('[CSV Import] Success:', result);
         alert(`CSV imported successfully: ${result.importedStages} stages, ${result.importedActivities} activities`);
       } else {
         const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
@@ -212,9 +210,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     let trip: Trip | null = null;
     try {
       trip = await createTrip({ name: tripName, description: '' });
-      console.log(`[Import] Created trip id=${trip.id}, name="${tripName}"`);
       const content = await importFile.text();
-      console.log(`[Import] File content length: ${content.length} chars, type: ${importType}`);
 
       if (importType === 'ICS') {
         const response = await fetch(`${backendUrl}/import`, {
@@ -225,7 +221,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         });
         if (response.ok) {
           const result = await response.json();
-          console.log('[Import] ICS success:', result);
           await loadTrips();
           setImportDialog(false);
           setImportFile(null);
@@ -237,7 +232,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           setImportDetails(details);
         }
       } else {
-        console.log(`[Import] Sending CSV to trip ${trip.id}`);
         const response = await fetch(`${backendUrl}/trips/${trip.id}/import-csv`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -246,7 +240,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         });
         if (response.ok) {
           const result = await response.json();
-          console.log('[Import] CSV success:', result);
           await loadTrips();
           setImportDialog(false);
           setImportFile(null);
