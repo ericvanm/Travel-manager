@@ -220,7 +220,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           body: JSON.stringify({ icsContent: content, userId: user?.id, tripId: trip.id, tripName })
         });
         if (response.ok) {
-          const result = await response.json();
+          await response.json();
           await loadTrips();
           setImportDialog(false);
           setImportFile(null);
@@ -239,7 +239,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           body: JSON.stringify({ csvContent: content })
         });
         if (response.ok) {
-          const result = await response.json();
+          await response.json();
           await loadTrips();
           setImportDialog(false);
           setImportFile(null);
