@@ -30,7 +30,7 @@ export const FeaturesProvider: React.FC<FeaturesProviderProps> = ({ children }) 
         const features = await fetchAppFeatures()
         setAiEnabled(features.aiEnabled)
       } catch (error) {
-        console.error('Failed to load app features:', error)
+        console.error('Failed to load app features from /api/health (AI actions stay disabled):', error)
         setAiEnabled(false)
       } finally {
         setIsLoading(false)
@@ -38,6 +38,8 @@ export const FeaturesProvider: React.FC<FeaturesProviderProps> = ({ children }) 
     }
 
     load()
+    window.addEventListener('focus', load)
+    return () => window.removeEventListener('focus', load)
   }, [])
 
   const value = useMemo(() => ({ aiEnabled, isLoading }), [aiEnabled, isLoading])
