@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  Alert, Box, Button, Collapse, List, ListItem, ListItemText, Typography, CircularProgress
+  Alert, Box, Button, Collapse, List, ListItem, ListItemText, Typography, CircularProgress, Tooltip
 } from '@mui/material'
 import { AutoFixHigh, ExpandLess, ExpandMore } from '@mui/icons-material'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -15,6 +15,7 @@ interface Props {
   loading?: boolean
   onResolve?: () => void
   resolving?: boolean
+  aiEnabled?: boolean
 }
 
 const issueTranslationKey = (code: string) => `consistency_${code}`
@@ -38,7 +39,8 @@ export const TripConsistencyBanner: React.FC<Props> = ({
   report,
   loading,
   onResolve,
-  resolving
+  resolving,
+  aiEnabled = true,
 }) => {
   const { t } = useLanguage()
   const [expanded, setExpanded] = useState(true)
@@ -74,16 +76,20 @@ export const TripConsistencyBanner: React.FC<Props> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
           <TripConsistencyIndicator summary={summaryForIndicator} compact={false} />
           {onResolve && (
-            <Button
-              size="small"
-              variant="contained"
-              color="secondary"
-              startIcon={resolving ? <CircularProgress size={16} color="inherit" /> : <AutoFixHigh />}
-              disabled={!canResolve || resolving}
-              onClick={onResolve}
-            >
-              {t('trip_consistency_resolve')}
-            </Button>
+            <Tooltip title={!aiEnabled ? t('ai_features_disabled') : ''}>
+              <span>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="secondary"
+                  startIcon={resolving ? <CircularProgress size={16} color="inherit" /> : <AutoFixHigh />}
+                  disabled={!canResolve || resolving || !aiEnabled}
+                  onClick={aiEnabled ? onResolve : undefined}
+                >
+                  {t('trip_consistency_resolve')}
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Box>
       }

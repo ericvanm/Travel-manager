@@ -19,10 +19,13 @@ services:
     build:
       context: ./travelmgr-backend
       dockerfile: Dockerfile
+    env_file:
+      - ./travelmgr-backend/.env
     environment:
       DATABASE_URL: postgres://postgres:mypassword@db:5432/travel_mgr
       SECRET: prod-secret-key
       PORT: 3001
+      CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
     container_name: travel-mgr-back
     depends_on:
       db:

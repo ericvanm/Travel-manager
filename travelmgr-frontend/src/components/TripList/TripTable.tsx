@@ -15,6 +15,7 @@ interface TripTableProps {
   onImportCsv: (trip: Trip) => void;
   onDelete: (tripId: number) => void;
   onAdaptAi: (trip: Trip) => void;
+  aiEnabled?: boolean;
 }
 
 const TripTable: React.FC<TripTableProps> = ({
@@ -26,6 +27,7 @@ const TripTable: React.FC<TripTableProps> = ({
   onImportCsv,
   onDelete,
   onAdaptAi,
+  aiEnabled = true,
 }) => {
   const { t } = useLanguage();
 
@@ -77,6 +79,7 @@ const TripTable: React.FC<TripTableProps> = ({
                     onExport={() => onExport(trip)}
                     onImportCsv={() => onImportCsv(trip)}
                     onAdaptAi={() => onAdaptAi(trip)}
+                    aiEnabled={aiEnabled}
                     onDelete={() => {
                       if (window.confirm(t('delete_trip_confirm', { name: trip.name }))) onDelete(trip.id);
                     }}

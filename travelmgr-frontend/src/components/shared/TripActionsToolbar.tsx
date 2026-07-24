@@ -14,6 +14,7 @@ interface Props {
   onMap?: () => void
   showMap?: boolean
   color?: 'default' | 'inherit'
+  aiEnabled?: boolean
 }
 
 const TripActionsToolbar: React.FC<Props> = ({
@@ -25,6 +26,7 @@ const TripActionsToolbar: React.FC<Props> = ({
   onMap,
   showMap = false,
   color = 'default',
+  aiEnabled = true,
 }) => {
   const { t } = useLanguage()
   const iconColor = color === 'inherit' ? 'inherit' : undefined
@@ -53,10 +55,18 @@ const TripActionsToolbar: React.FC<Props> = ({
         </Tooltip>
       )}
       {onAdaptAi && (
-        <Tooltip title={t('ai_adapt_trip_title')}>
-          <IconButton size="small" color={color === 'inherit' ? 'inherit' : 'secondary'} aria-label={t('ai_adapt_trip_title')} onClick={onAdaptAi}>
-            <AutoAwesome fontSize="small" />
-          </IconButton>
+        <Tooltip title={!aiEnabled ? t('ai_features_disabled') : t('ai_adapt_trip_title')}>
+          <span>
+            <IconButton
+              size="small"
+              color={color === 'inherit' ? 'inherit' : 'secondary'}
+              aria-label={t('ai_adapt_trip_title')}
+              onClick={aiEnabled ? onAdaptAi : undefined}
+              disabled={!aiEnabled}
+            >
+              <AutoAwesome fontSize="small" />
+            </IconButton>
+          </span>
         </Tooltip>
       )}
       {showMap && onMap && (

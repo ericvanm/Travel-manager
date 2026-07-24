@@ -33,11 +33,19 @@ const notificationTypesRouter = require('./controllers/notificationTypes')
 
 const { connectToDatabase } = require('./utils/db')
 const { SECRET, ENVIR, DB_URI, DB_SSL } = require('./utils/config')
+const { isOpenAIEnabled } = require('./utils/ai-config')
 
 const isProduction = ENVIR === 'production'
 const isTest = ENVIR === 'test'
 
-const defaultOrigins = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000']
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:8080',
+  'http://127.0.0.1:3000'
+]
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
   : defaultOrigins
@@ -102,9 +110,17 @@ app.get('/api/health', async (_req, res) => {
   try {
     const { sequelize } = require('./utils/db')
     await sequelize.authenticate()
-    res.json({ status: 'ok', database: 'connected' })
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      features: { ai: isOpenAIEnabled() }
+    })
   } catch {
-    res.status(503).json({ status: 'degraded', database: 'disconnected' })
+    res.status(503).json({
+      status: 'degraded',
+      database: 'disconnected',
+      features: { ai: isOpenAIEnabled() }
+    })
   }
 })
 

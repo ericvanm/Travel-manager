@@ -526,10 +526,22 @@ const generateSynthesis = async (formData, language = 'fr', logContext = null) =
   }
 
   const validation = validateFormData(formData)
-  return {
+  const result = {
     ...buildSynthesisText(validation.formData, validation.warnings),
     source: 'fallback'
   }
+
+  if (logContext) {
+    await logAiInteraction({
+      ...logContext,
+      operation: 'synthesis',
+      requestPayload: { formData: validation.formData, source: 'fallback' },
+      parsedResponse: result,
+      status: 'fallback'
+    })
+  }
+
+  return result
 }
 
 const enrichItineraryImages = (itinerary) => {
@@ -809,6 +821,24 @@ const generateItinerary = async (formData, revisionFeedback, previousItinerary, 
   }
   if (itinerary.returnTransport && !itinerary.returnTransport.bookingUrl) {
     itinerary.returnTransport.bookingUrl = suggestBookingUrl('transport', itinerary.returnTransport, formData)
+  }
+
+  if (logContext && itinerary.source !== 'openai') {
+    await logAiInteraction({
+      ...logContext,
+      operation: revisionFeedback ? 'revise' : 'itinerary',
+      requestPayload: {
+        formData,
+        revisionFeedback: revisionFeedback || null,
+        source: itinerary.source || 'fallback'
+      },
+      parsedResponse: {
+        title: itinerary.title,
+        source: itinerary.source,
+        stageCount: itinerary.stages?.length ?? 0
+      },
+      status: itinerary.source === 'fallback' ? 'fallback' : 'success'
+    })
   }
 
   return itinerary

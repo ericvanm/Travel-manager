@@ -14,6 +14,7 @@ const {
   Trip
 } = require('../models/DBmodels')
 const { optionalAuth, getUserId, getUserLanguage } = require('../utils/auth-helpers')
+const { requireAiEnabled } = require('../utils/ai-config')
 const { loadTripSnapshot, buildTripSynthesis } = require('../utils/trip-snapshot')
 const {
   proposeAdaptations,
@@ -35,6 +36,7 @@ const findSession = async (sessionId, userId) => {
 }
 
 router.use(optionalAuth)
+router.use(requireAiEnabled)
 
 router.post('/trips/:tripId/resolve-consistency', async (req, res) => {
   try {

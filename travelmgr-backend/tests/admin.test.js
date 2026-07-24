@@ -1,7 +1,7 @@
 const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const { connectToDatabase } = require('../utils/db')
-const { User, TripPlanningSession } = require('../models/DBmodels')
+const { User, TripPlanningSession, AiInteractionLog } = require('../models/DBmodels')
 const {
   resetDatabase,
   createTrip,
@@ -87,6 +87,39 @@ describe('GET /api/admin/users and ai-logs', () => {
 
     const badUserId = await adminAgent.get('/api/admin/trips').query({ userId: 'abc' })
     assert.strictEqual(badUserId.status, 400)
+
+    const badLogsUserId = await adminAgent.get('/api/admin/ai-logs').query({ userId: 'abc' })
+    assert.strictEqual(badLogsUserId.status, 400)
+
+    const filteredLogs = await adminAgent.get('/api/admin/ai-logs').query({
+      userId: user.id,
+      feature: 'planning',
+      operation: 'synthesis',
+      status: 'success',
+      limit: 5,
+      offset: 0
+    })
+    assert.strictEqual(filteredLogs.status, 200)
+    assert.ok(filteredLogs.body.logs.some((entry) => entry.id === log.id))
+
+    await AiInteractionLog.update(
+      { requestPayload: '{"source":"test"}', parsedResponse: 'not-json' },
+      { where: { id: log.id } }
+    )
+    const parsedDetail = await adminAgent.get(`/api/admin/ai-logs/${log.id}`)
+    assert.strictEqual(parsedDetail.status, 200)
+    const parsedBody = JSON.parse(parsedDetail.text)
+    assert.deepStrictEqual(parsedBody.requestPayload, { source: 'test' })
+    assert.deepStrictEqual(parsedBody.parsedResponse, { raw: 'not-json' })
+
+    await AiInteractionLog.update(
+      { requestPayload: 'plain-text', parsedResponse: null },
+      { where: { id: log.id } }
+    )
+    const rawDetail = await adminAgent.get(`/api/admin/ai-logs/${log.id}`)
+    const rawBody = JSON.parse(rawDetail.text)
+    assert.deepStrictEqual(rawBody.requestPayload, { raw: 'plain-text' })
+    assert.strictEqual(rawBody.parsedResponse, null)
   })
 })
 
@@ -100,5 +133,25 @@ describe('GET /api/trips regression', () => {
     assert.strictEqual(response.status, 200)
     assert.strictEqual(response.body.length, 1)
     assert.strictEqual(response.body[0].name, 'Owned Trip')
+  })
+})
+
+describe('admin read-only trip inspection', () => {
+  test('admin can read trip data via user routes but not mutate', async () => {
+    const { user } = await createAuthenticatedAgent(app, { username: 'tripowner' })
+    const trip = await createTripForUser(user.id, { name: 'Admin Inspect Trip' })
+    const { agent: adminAgent } = await createAuthenticatedAgent(app, { username: 'adminread' })
+    await User.update({ role: 'admin' }, { where: { username: 'adminread' } })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminread', password: TEST_PASSWORD })
+
+    const getTrip = await adminAgent.get(`/api/trips/${trip.id}`)
+    assert.strictEqual(getTrip.status, 200)
+    assert.strictEqual(getTrip.body.name, 'Admin Inspect Trip')
+
+    const stages = await adminAgent.get(`/api/stages/trip/${trip.id}`)
+    assert.strictEqual(stages.status, 200)
+
+    const mutate = await adminAgent.put(`/api/trips/${trip.id}`).send({ name: 'Hacked Name' })
+    assert.strictEqual(mutate.status, 403)
   })
 })

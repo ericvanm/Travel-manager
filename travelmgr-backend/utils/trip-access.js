@@ -1,7 +1,7 @@
 /**
  * Trip access control: enforce authenticated, owner-scoped access to trips and nested resources.
  */
-const { Stage, Activity } = require('../models/DBmodels')
+const { Stage, Activity, Trip } = require('../models/DBmodels')
 const { getUserId } = require('./auth-helpers')
 const { findTripIdsForUser } = require('./trip-ownership')
 
@@ -34,21 +34,37 @@ const resolveTripIdFromActivity = async (activityId) => {
 
 /**
  * Returns false and sends the HTTP response when access is denied.
- * Uses 404 for missing ownership to avoid leaking trip existence.
+ * Uses 404 for missing ownership to avoid leaking trip existence to other users.
+ * Admins may read any trip via GET (read-only inspection from AdminPanel).
  */
 const ensureTripAccess = async (req, res, tripId) => {
-  if (req.user?.role === 'admin') {
-    res.status(403).json({ error: 'Admin cannot access trip data via this route' })
-    return false
-  }
-
   const userId = getUserId(req)
   if (!userId) {
     res.status(401).json({ error: 'Access denied' })
     return false
   }
 
-  if (!await userCanAccessTrip(userId, tripId)) {
+  const numericTripId = parseTripId(tripId)
+  if (!numericTripId) {
+    res.status(400).json({ error: 'Invalid trip id' })
+    return false
+  }
+
+  if (req.user?.role === 'admin') {
+    const readOnly = req.method === 'GET' || req.method === 'HEAD'
+    if (!readOnly) {
+      res.status(403).json({ error: 'Admin cannot modify trip data via this route' })
+      return false
+    }
+    const trip = await Trip.findByPk(numericTripId, { attributes: ['id'] })
+    if (!trip) {
+      res.status(404).json({ error: 'Trip not found' })
+      return false
+    }
+    return true
+  }
+
+  if (!await userCanAccessTrip(userId, numericTripId)) {
     res.status(404).json({ error: 'Trip not found' })
     return false
   }

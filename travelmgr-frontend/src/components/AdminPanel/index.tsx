@@ -258,7 +258,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
                         <Chip
                           size="small"
                           label={log.status}
-                          color={log.status === 'success' ? 'success' : 'error'}
+                          color={
+                            log.status === 'success'
+                              ? 'success'
+                              : log.status === 'fallback'
+                                ? 'warning'
+                                : 'error'
+                          }
                         />
                       </TableCell>
                       <TableCell align="right">
