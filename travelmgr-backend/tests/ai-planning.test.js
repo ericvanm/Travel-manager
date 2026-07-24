@@ -80,6 +80,21 @@ describe('AI planning API', () => {
     assert.ok(logs.some((log) => log.operation === 'itinerary' || log.operation === 'revise'))
     assert.ok(logs.some((log) => log.operation === 'accept' && log.tripId === accepted.body.trip.id))
 
+    const { generateSynthesis, generateItinerary } = require('../utils/ai-planning-service')
+    const logContext = {
+      userId: user.id,
+      feature: 'planning',
+      sessionType: 'planning',
+      sessionId: 88001
+    }
+    await generateSynthesis(validForm, 'fr', logContext)
+    await generateItinerary(validForm, 'more beach time', null, 'fr', logContext)
+    const serviceLogs = await AiInteractionLog.findAll({
+      where: { userId: user.id, sessionId: 88001 }
+    })
+    assert.ok(serviceLogs.some((log) => log.operation === 'synthesis' && log.status === 'fallback'))
+    assert.ok(serviceLogs.some((log) => log.operation === 'revise' && log.status === 'fallback'))
+
     const session = await TripPlanningSession.findByPk(sessionId)
     assert.strictEqual(session.status, 'accepted')
     assert.strictEqual(session.userId, user.id)

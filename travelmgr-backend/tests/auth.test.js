@@ -25,6 +25,30 @@ describe('GET /api/health', () => {
     assert.strictEqual(response.body.database, 'connected')
     assert.strictEqual(typeof response.body.features?.ai, 'boolean')
   })
+
+  test('reports features.ai true when OpenAI env is configured', async () => {
+    const savedKey = process.env.OPENAI_API_KEY
+    const savedUse = process.env.USE_OPENAI
+    process.env.OPENAI_API_KEY = 'sk-test-health'
+    process.env.USE_OPENAI = 'true'
+
+    const response = await api.get('/api/health')
+    assert.strictEqual(response.status, 200)
+    assert.strictEqual(response.body.features.ai, true)
+
+    if (savedKey === undefined) delete process.env.OPENAI_API_KEY
+    else process.env.OPENAI_API_KEY = savedKey
+    if (savedUse === undefined) delete process.env.USE_OPENAI
+    else process.env.USE_OPENAI = savedUse
+  })
+
+  test('allows configured local dev origins via CORS', async () => {
+    const response = await api
+      .get('/api/health')
+      .set('Origin', 'http://127.0.0.1:5173')
+    assert.strictEqual(response.status, 200)
+    assert.strictEqual(response.headers['access-control-allow-origin'], 'http://127.0.0.1:5173')
+  })
 })
 
 describe('POST /api/auth/register', () => {
