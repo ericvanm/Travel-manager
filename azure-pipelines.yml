@@ -1,4 +1,4 @@
-# Travel Manager — Azure Pipelines (P0 bootstrap)
+﻿# Travel Manager — Azure Pipelines (P0 bootstrap)
 # Purpose: validate GitHub → Azure DevOps linkage before full CI/CD (P2+).
 #
 # After P0, this file will grow into multi-stage CI (lint/test/Sonar) + CD (Dev/Staging/Prod).
@@ -31,10 +31,10 @@ stages:
           - checkout: self
             fetchDepth: 1
 
-          - task: NodeTool@0
+          - task: UseNode@1
             displayName: Use Node $(NODE_VERSION)
             inputs:
-              versionSpec: $(NODE_VERSION)
+              version: $(NODE_VERSION)
 
           - bash: |
               set -euo pipefail
