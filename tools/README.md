@@ -8,6 +8,7 @@ Requirements:
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for Docker modes)
 - Optional: PostgreSQL client (`psql`) for `Local` mode without Docker
 - Optional (GCP scripts): [Google Cloud SDK](https://cloud.google.com/sdk) (`gcloud`), Docker, [Firebase CLI](https://firebase.google.com/docs/cli) (`firebase`)
+- Optional (Azure P0): [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (`az`) — see [azure/P0-CHECKLIST.md](azure/P0-CHECKLIST.md)
 
 ## Scripts
 
@@ -20,6 +21,8 @@ Requirements:
 | [`gcp-deploy.ps1`](gcp-deploy.ps1) | Start DB if needed, deploy Cloud Run API + Firebase Hosting (mirrors CI) |
 | [`gcp-setup-autostop.ps1`](gcp-setup-autostop.ps1) | Create Cloud Run Job + Scheduler (22:00 Europe/Paris) to auto-stop SQL |
 | [`gcp-common.ps1`](gcp-common.ps1) | Shared helpers (dot-sourced; do not run directly) |
+| [`azure/setup-p0.ps1`](azure/setup-p0.ps1) | P0: Azure RGs, DevOps project, Sonar variable group |
+| [`azure/P0-CHECKLIST.md`](azure/P0-CHECKLIST.md) | P0 manual checklist (pipeline, OIDC, Sonar secrets) |
 
 ---
 
@@ -67,7 +70,7 @@ The database file/volume is kept; only the `travel_mgr` database is dropped and 
 2. PostgreSQL terminates active sessions on the target database.
 3. Database is dropped and recreated empty.
 4. Docker stack is started again (unless `-NoRestart`).
-5. Backend runs migrations on connect — including the default admin account (`admin`, password must be set on first login).
+5. Backend runs migrations on connect â€” including the default admin account (`admin`, password must be set on first login).
 
 ### Connection defaults (Docker)
 
@@ -87,7 +90,7 @@ Rebuilds Docker images and restarts the stack. Replaces the former root script `
 ### Usage
 
 ```powershell
-# Dev stack (default): down → build → up -d
+# Dev stack (default): down â†’ build â†’ up -d
 .\tools\rebuild-docker.ps1
 
 # Production-like stack (docker-compose.yml)
@@ -104,7 +107,7 @@ Rebuilds Docker images and restarts the stack. Replaces the former root script `
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `-Profile` | `Dev` | `Dev` → `docker-compose.dev.yml`, `Prod` → `docker-compose.yml` |
+| `-Profile` | `Dev` | `Dev` â†’ `docker-compose.dev.yml`, `Prod` â†’ `docker-compose.yml` |
 | `-NoCache` | off | `docker compose build --no-cache` |
 | `-ResetDatabase` | off | Call `reset-database.ps1` before rebuild |
 | `-Force` | off | Skip DB reset confirmation when `-ResetDatabase` is set |
@@ -148,7 +151,7 @@ npm run dev
 
 ## GCP on-demand scripts
 
-Mirror [`.github/workflows/deploy-gcp.yml`](../.github/workflows/deploy-gcp.yml). Full setup: [Deployment — GCP](../documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql).
+Mirror [`.github/workflows/deploy-gcp.yml`](../.github/workflows/deploy-gcp.yml). Full setup: [Deployment â€” GCP](../documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql).
 
 ### Common environment variables
 
@@ -205,7 +208,7 @@ Prefer GitHub Actions (`Deploy GCP` workflow) when you do not want local Docker/
 
 ## See also
 
-- [Developer guide — Database setup](../documents/05-developer-guide.md#database-setup)
-- [Deployment — Docker](../documents/06-deployment.md#docker-optional)
-- [Deployment — GCP on-demand](../documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql)
+- [Developer guide â€” Database setup](../documents/05-developer-guide.md#database-setup)
+- [Deployment â€” Docker](../documents/06-deployment.md#docker-optional)
+- [Deployment â€” GCP on-demand](../documents/06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql)
 - [Docker Compose dev](../docker-compose.dev.yml)

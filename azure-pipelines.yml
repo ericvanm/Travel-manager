@@ -1,0 +1,48 @@
+﻿# Travel Manager — Azure Pipelines (P0 bootstrap)
+# Purpose: validate GitHub → Azure DevOps linkage before full CI/CD (P2+).
+#
+# After P0, this file will grow into multi-stage CI (lint/test/Sonar) + CD (Dev/Staging/Prod).
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  NODE_VERSION: "20"
+
+stages:
+  - stage: Bootstrap
+    displayName: P0 — Bootstrap
+    jobs:
+      - job: Smoke
+        displayName: Validate checkout & agent
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: NodeTool@0
+            displayName: Use Node $(NODE_VERSION)
+            inputs:
+              versionSpec: $(NODE_VERSION)
+
+          - bash: |
+              set -euo pipefail
+              echo "Azure Pipelines ↔ GitHub linkage OK"
+              echo "Source branch : $(Build.SourceBranch)"
+              echo "Commit        : $(Build.SourceVersion)"
+              echo "Build reason  : $(Build.Reason)"
+              echo "Repo name     : $(Build.Repository.Name)"
+              node --version
+              npm --version
+            displayName: Smoke check
