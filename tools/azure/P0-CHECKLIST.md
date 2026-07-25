@@ -1,4 +1,4 @@
-﻿# P0 — Azure DevOps prerequisites checklist
+# P0 — Azure DevOps prerequisites checklist
 
 Phase **P0** validates that Azure DevOps can build this GitHub repository before infra (P1) and full CI (P2).
 
@@ -6,7 +6,7 @@ Phase **P0** validates that Azure DevOps can build this GitHub repository before
 
 | Item | Choice |
 |------|--------|
-| Approach | B + D (Azure hosting + multi-env) |
+| Approach | Azure hosting + multi-env |
 | Scope | CI + CD |
 | Source | GitHub (`ericvanm/Travel-manager`) |
 | Hosting | Migrate to Azure |
@@ -128,3 +128,5 @@ Used starting in **P2** (full CI). Creating the group in P0 avoids blocking late
 | `az` not found after winget | PATH not refreshed | Open a **new** terminal |
 | Variable group create fails | Missing ADO permissions | Need Project Administrator (or Variable Groups manage) |
 | OIDC connection fails | Insufficient Azure AD rights | Need Application Administrator / Owner on subscription |
+
+​
