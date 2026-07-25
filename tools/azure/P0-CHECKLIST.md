@@ -59,7 +59,7 @@ Optional parameters:
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
 | `-ProjectName` | `Travel-manager` | ADO project name |
-| `-Location` | `westeurope` | Azure region for RGs |
+| `-Location` | `francecentral` | Azure region for RGs and P1 resources (use another region if subscription is region-blocked) |
 | `-SubscriptionId` | current `az` account | Force subscription |
 | `-SkipResourceGroups` | off | Skip RG creation |
 | `-SkipVariableGroup` | off | Skip Sonar variable group |

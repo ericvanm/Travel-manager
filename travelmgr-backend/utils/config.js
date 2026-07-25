@@ -4,7 +4,7 @@ require('dotenv').config()
 const { buildDatabaseLogContext } = require('./log-sanitizer')
 const { normalizeDatabaseUrl, assertDatabaseUrlParseable } = require('./database-url')
 
-const PORT = process.env.PORT
+const PORT = Number(process.env.PORT) || 3001
 const rawDbUri = process.env.NODE_ENV === 'test'
   ? process.env.TEST_DATABASE_URL
   : process.env.DATABASE_URL
