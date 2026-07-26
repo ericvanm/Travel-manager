@@ -25,6 +25,7 @@ Requirements:
 | [`azure/P0-CHECKLIST.md`](azure/P0-CHECKLIST.md) | P0 manual checklist (pipeline, OIDC, Sonar secrets) |
 | [`azure/deploy-infra-p1.ps1`](azure/deploy-infra-p1.ps1) | P1: deploy Dev Azure stack (Bicep + ACR build + Container App) |
 | [`azure/P1-CHECKLIST.md`](azure/P1-CHECKLIST.md) | P1 checklist and verification |
+| [`azure/P2-CHECKLIST.md`](azure/P2-CHECKLIST.md) | P2 Azure Pipelines CI (SonarCloud service connection) |
 
 ---
 

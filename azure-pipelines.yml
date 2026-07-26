@@ -1,7 +1,6 @@
-﻿# Travel Manager — Azure Pipelines (P0 bootstrap)
-# Purpose: validate GitHub → Azure DevOps linkage before full CI/CD (P2+).
-#
-# After P0, this file will grow into multi-stage CI (lint/test/Sonar) + CD (Dev/Staging/Prod).
+﻿# Travel Manager — Azure Pipelines
+# P2: CI parity with .github/workflows/ci.yml (backend, frontend, SonarCloud)
+# P3+: CD stages (Dev / Staging / Prod) will be added later.
 
 trigger:
   branches:
@@ -15,18 +14,43 @@ pr:
       - main
       - master
 
-pool:
-  vmImage: ubuntu-latest
-
 variables:
-  NODE_VERSION: "20"
+  - group: travelmgr-sonar
+  - name: NODE_VERSION
+    value: "20"
+  # SonarCloud service connection (Project settings → Service connections → SonarCloud)
+  - name: SONAR_SERVICE_CONNECTION
+    value: SonarCloud
+  - name: CI_POSTGRES_USER
+    value: postgres
+  - name: CI_POSTGRES_PWD
+    value: postgres
+  - name: CI_POSTGRES_DB
+    value: travel_mgr_test
 
 stages:
-  - stage: Bootstrap
-    displayName: P0 — Bootstrap
+  - stage: CI
+    displayName: CI — lint, test, SonarCloud
     jobs:
-      - job: Smoke
-        displayName: Validate checkout & agent
+      - job: Backend
+        displayName: Backend lint & test
+        pool:
+          vmImage: ubuntu-latest
+        services:
+          postgres:
+            image: postgres:15
+            env:
+              POSTGRES_USER: $(CI_POSTGRES_USER)
+              POSTGRES_PASSWORD: $(CI_POSTGRES_PWD)
+              POSTGRES_DB: $(CI_POSTGRES_DB)
+            ports:
+              - 5432:5432
+        variables:
+          NODE_ENV: test
+          SECRET: ci-test-secret
+          TEST_USER_PASSWORD: ci-test-user-password
+          TEST_DATABASE_URL: postgres://postgres:postgres@postgres:5432/travel_mgr_test
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432/travel_mgr_test
         steps:
           - checkout: self
             fetchDepth: 1
@@ -38,11 +62,116 @@ stages:
 
           - bash: |
               set -euo pipefail
-              echo "Azure Pipelines ↔ GitHub linkage OK"
-              echo "Source branch : $(Build.SourceBranch)"
-              echo "Commit        : $(Build.SourceVersion)"
-              echo "Build reason  : $(Build.Reason)"
-              echo "Repo name     : $(Build.Repository.Name)"
-              node --version
-              npm --version
-            displayName: Smoke check
+              echo "Waiting for PostgreSQL..."
+              for i in $(seq 1 30); do
+                if (echo > /dev/tcp/postgres/5432) >/dev/null 2>&1; then
+                  echo "PostgreSQL is ready"
+                  exit 0
+                fi
+                sleep 2
+              done
+              echo "PostgreSQL did not become ready in time" >&2
+              exit 1
+            displayName: Wait for PostgreSQL
+
+          - bash: |
+              set -euo pipefail
+              cd travelmgr-backend
+              npm ci --ignore-scripts
+              npm run lint
+              npm run test:coverage
+            displayName: npm ci, lint, test:coverage
+            env:
+              NODE_ENV: $(NODE_ENV)
+              SECRET: $(SECRET)
+              TEST_USER_PASSWORD: $(TEST_USER_PASSWORD)
+              TEST_DATABASE_URL: $(TEST_DATABASE_URL)
+              DATABASE_URL: $(DATABASE_URL)
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish backend coverage
+            condition: always()
+            inputs:
+              targetPath: travelmgr-backend/coverage
+              artifact: backend-coverage
+              publishLocation: pipeline
+
+      - job: Frontend
+        displayName: Frontend lint, typecheck & build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: UseNode@1
+            displayName: Use Node $(NODE_VERSION)
+            inputs:
+              version: $(NODE_VERSION)
+
+          - bash: |
+              set -euo pipefail
+              cd travelmgr-frontend
+              npm ci --ignore-scripts
+              npm run lint
+              npm run test
+              npm run tsc
+              npm run build
+            displayName: npm ci, lint, tsc, build
+            env:
+              VITE_BACKEND_URL: http://localhost:3001/api
+
+      - job: SonarCloud
+        displayName: SonarCloud analysis
+        dependsOn:
+          - Backend
+          - Frontend
+        condition: not(contains(coalesce(variables['Build.RequestedFor'], ''), 'dependabot'))
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: self
+            fetchDepth: 0
+
+          - task: UseNode@1
+            displayName: Use Node $(NODE_VERSION)
+            inputs:
+              version: $(NODE_VERSION)
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download backend coverage
+            inputs:
+              artifact: backend-coverage
+              path: travelmgr-backend/coverage
+
+          - bash: |
+              set -euo pipefail
+              cd travelmgr-backend && npm ci --ignore-scripts
+              cd "$BUILD_SOURCESDIRECTORY/travelmgr-frontend" && npm ci --ignore-scripts
+            displayName: Install dependencies for ESLint reports
+
+          - bash: |
+              set -euo pipefail
+              cd travelmgr-backend && npm run lint:report
+              cd "$BUILD_SOURCESDIRECTORY/travelmgr-frontend" && npm run lint:report
+            displayName: Generate ESLint reports for SonarCloud
+
+          - task: SonarCloudPrepare@3
+            displayName: Prepare SonarCloud
+            inputs:
+              SonarCloud: $(SONAR_SERVICE_CONNECTION)
+              organization: $(SONAR_ORGANIZATION)
+              scannerMode: CLI
+              configMode: file
+              cliProjectKey: $(SONAR_ORGANIZATION)_Travel-manager
+              extraProperties: |
+                sonar.qualitygate.wait=true
+                sonar.qualitygate.timeout=300
+
+          - task: SonarCloudAnalyze@3
+            displayName: Run SonarCloud analysis
+
+          - task: SonarCloudPublish@3
+            displayName: Publish SonarCloud quality gate
+            inputs:
+              pollingTimeoutSec: "300"
