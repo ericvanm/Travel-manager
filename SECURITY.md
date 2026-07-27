@@ -38,3 +38,15 @@ If you deploy Travel Manager yourself:
 ## Default admin account
 
 Migrations seed user `admin` with **no password** until first login forces a password change (`must_set_password`). Treat fresh databases as **compromised until the admin password is set**, especially on internet-exposed deployments.
+
+## Before making the repository public
+
+Use this checklist on the default branch:
+
+- [ ] Secret scan on full git history ([gitleaks](https://github.com/gitleaks/gitleaks) or [trufflehog](https://github.com/trufflesecurity/trufflehog)) — last automated note: 2026-07-22, no leaks reported
+- [ ] GitHub **Private vulnerability reporting** enabled
+- [ ] Repository **About** filled (description, topics, optional demo URL)
+- [ ] Production deployments: `SECRET`, DB credentials, and `OPENAI_API_KEY` only in host secrets
+- [ ] Default **admin** password set on any internet-facing database
+- [ ] `ALLOW_REGISTRATION` reviewed for your deployment model
+- [ ] Dependabot security updates monitored (resolve or document accepted risks)

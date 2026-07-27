@@ -24,23 +24,25 @@ Central documentation for the Travel Manager monorepo. All documents are written
 | 06 | [Deployment](06-deployment.md) | Render, Vercel, Docker, GCP on-demand (Firebase + Cloud Run + Cloud SQL) |
 | 07 | [API reference](07-api-reference.md) | REST endpoints, auth, request/response examples |
 | 08 | [AI integration](08-ai-integration.md) | AI workflows, OpenAI setup, prompt configuration, logging and fallbacks |
+| 09 | [AI document import](09-ai-document-import.md) | Reservation upload, extraction, analyze/execute API |
+| — | [Trip consistency rules](trip-consistency-rules.md) | Health/budget rules, error codes, timezone behavior |
 
 ## Additional artifacts
 
 | Document | Description |
 |----------|-------------|
 | [CHANGELOG.md](CHANGELOG.md) | Notable project changes |
+| [RELEASE-v1.1.0.md](RELEASE-v1.1.0.md) | Draft release notes for the next tagged version |
 | [decisions/](decisions/) | Architecture Decision Records (ADRs) |
+| [archive/](archive/) | Non-English or superseded docs (e.g. French trip rules) |
 | [tools/README.md](../tools/README.md) | PowerShell scripts (DB reset, Docker rebuild, GCP start/stop/deploy) |
+| [../docs/archive/](../docs/archive/) | Legacy diagram exports (not maintained) |
 
 ## Planned documentation (future)
 
-These were scoped but not written in the first batch:
-
 - **03-user-manual.md** — End-user guide (trips, imports, profile)
 - **08-database.md** — ER diagram, migrations, reference data
-- **09-security-and-quality.md** — Security controls, SonarCloud, CI gates
-- **10-contribution-and-conventions.md** — Git workflow, code style, Definition of Done
+- **09-security-and-quality.md** — Expanded security controls and quality gates (see also root [SECURITY.md](../SECURITY.md))
 
 ## Conventions
 

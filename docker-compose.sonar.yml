@@ -1,13 +1,12 @@
-# SonarQube Community Edition — alternative self-hosted à SonarCloud
-# SonarCloud (cloud) : https://sonarcloud.io — voir sonar-project.properties
+# SonarQube Community Edition — optional self-hosted alternative to SonarCloud
+# SonarCloud (cloud): https://sonarcloud.io — see sonar-project.properties
 #
-# Démarrage :
+# Start:
 #   docker compose -f docker-compose.sonar.yml up -d
 #
-# UI : http://localhost:9000  (admin / admin au premier lancement)
+# UI: http://localhost:9000  (admin / admin on first login)
 #
-# Créer le projet avec la clé ericvanm_Travel-manager (case sensitive),
-# puis générer un token et lancer :
+# Create a project with key YOUR_ORG_Travel-manager (case sensitive), then:
 #   docker run --rm -e SONAR_HOST_URL=http://host.docker.internal:9000 \
 #     -e SONAR_TOKEN=<token> -v "${PWD}:/usr/src" sonarsource/sonar-scanner-cli
 

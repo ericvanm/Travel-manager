@@ -30,7 +30,8 @@ flowchart TB
 |-------|----------|---------|--------|
 | Unit | `travelmgr-backend/tests/*.test.js` | Node.js built-in `node --test` | Helpers (`csv-import-helpers`, `ics-import-helpers`, `logger`, etc.) |
 | Integration | Same folder | Supertest + real PostgreSQL | HTTP routes, auth, DB persistence |
-| Frontend | `travelmgr-frontend/` | ESLint, `tsc`, Vite build | No runtime test suite yet |
+| Frontend | `travelmgr-frontend/src/**/*.test.ts` | Vitest | Pure helpers (dates, budget aggregation) |
+| Frontend CI | `travelmgr-frontend/` | ESLint, `tsc`, Vitest, Vite build | Lint, types, unit tests, production bundle |
 | Static analysis | Whole repo | ESLint, SonarCloud | Security, smells, duplication |
 
 ## Backend test runner
@@ -162,17 +163,18 @@ Key settings (`sonar-project.properties`):
 | Code smell | ESLint fix or refactor per Sonar suggestion |
 | Duplication | Extract shared helper (imports, activity updates) |
 
-## Frontend testing (current state)
+## Frontend testing
 
 CI validates:
 
 ```bash
 npm run lint
+npm test
 npm run tsc
 npm run build
 ```
 
-There is **no Vitest/Jest** suite yet. Recommended next step: component tests for critical dialogs (import, merge stages) or Playwright smoke tests against staging.
+Vitest covers selected **pure helpers** under `src/utils/*.test.ts`. Recommended next steps: component tests for critical dialogs (import, merge stages) or Playwright smoke tests against staging.
 
 ## Local pre-push checklist
 
@@ -183,6 +185,7 @@ npm run test:coverage
 
 cd "../travelmgr-frontend"
 npm run lint
+npm test
 npm run tsc
 npm run build
 ```

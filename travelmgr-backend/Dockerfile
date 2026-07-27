@@ -1,6 +1,7 @@
 FROM node:20
 
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV HOME=/usr/src/app
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --gid 1001 nodejs
@@ -24,4 +25,4 @@ USER nodejs
 
 EXPOSE 3001
 
-CMD ["npm", "start"]
+CMD ["node", "index.js"]

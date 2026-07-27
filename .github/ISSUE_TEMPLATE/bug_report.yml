@@ -1,0 +1,38 @@
+name: Bug report
+description: Something is broken or incorrect
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please avoid posting secrets or production URLs with credentials.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Steps to reproduce and expected vs actual behavior.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Backend API
+        - Frontend UI
+        - Import (ICS/CSV/AI)
+        - Deployment / CI
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Branch or release
+      placeholder: main, v1.1.0, etc.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Stack traces or CI links (redact secrets).
