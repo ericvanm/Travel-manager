@@ -3,6 +3,7 @@ import { Box, Button, TextField, Typography, Paper, Alert } from '@mui/material'
 import { register } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { translateApiError } from '../utils/localeHelpers';
 import LanguageSelector from './LanguageSelector';
 
 interface RegisterProps {
@@ -36,9 +37,9 @@ const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
         lastName: data.lastName
       });
       setUser(user);
-    } catch (err: any) {
-      const message = err.response?.data?.error || err.message || 'Registration failed';
-      setError(message);
+    } catch (err: unknown) {
+      const errorCode = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
+      setError(translateApiError(t, errorCode, 'registration_failed'));
     } finally {
       setLoading(false);
     }

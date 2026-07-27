@@ -6,13 +6,14 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton
+  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton, Tooltip
 } from '@mui/material';
 import { Add, Logout } from '@mui/icons-material';
 import { Trip } from '../../types';
 import { getTrips, createTrip, updateTrip, deleteTrip } from '../../services/trips';
 import { logout } from '../../services/auth';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFeatures } from '../../contexts/FeaturesContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import TripDialog from './TripDialog';
 import TripTable from './TripTable';
@@ -50,6 +51,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const [consistencySummaries, setConsistencySummaries] = useState<TripConsistencySummary[]>([]);
   const [profileDialog, setProfileDialog] = useState(false);
   const { user, setUser } = useAuth();
+  const { aiEnabled } = useFeatures();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -158,7 +160,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001/api';
     try {
       const text = await file.text();
-      console.log(`[CSV Import] Sending to trip ${selectedTrip.id}, file size: ${text.length} chars`);
       const response = await fetch(`${backendUrl}/trips/${selectedTrip.id}/import-csv`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +169,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('[CSV Import] Success:', result);
         alert(`CSV imported successfully: ${result.importedStages} stages, ${result.importedActivities} activities`);
       } else {
         const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
@@ -212,9 +212,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
     let trip: Trip | null = null;
     try {
       trip = await createTrip({ name: tripName, description: '' });
-      console.log(`[Import] Created trip id=${trip.id}, name="${tripName}"`);
       const content = await importFile.text();
-      console.log(`[Import] File content length: ${content.length} chars, type: ${importType}`);
 
       if (importType === 'ICS') {
         const response = await fetch(`${backendUrl}/import`, {
@@ -224,8 +222,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           body: JSON.stringify({ icsContent: content, userId: user?.id, tripId: trip.id, tripName })
         });
         if (response.ok) {
-          const result = await response.json();
-          console.log('[Import] ICS success:', result);
+          await response.json();
           await loadTrips();
           setImportDialog(false);
           setImportFile(null);
@@ -237,7 +234,6 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           setImportDetails(details);
         }
       } else {
-        console.log(`[Import] Sending CSV to trip ${trip.id}`);
         const response = await fetch(`${backendUrl}/trips/${trip.id}/import-csv`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -245,8 +241,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           body: JSON.stringify({ csvContent: content })
         });
         if (response.ok) {
-          const result = await response.json();
-          console.log('[Import] CSV success:', result);
+          await response.json();
           await loadTrips();
           setImportDialog(false);
           setImportFile(null);
@@ -288,16 +283,22 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
             <ImportMenu
               onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
               onCSVImport={() => document.getElementById('new-csv-file-input')?.click()}
-              onAIImport={() => setAiImportDialog(true)}
-              onAIPlanning={() => setAiPlanningDialog(true)}
+              onAIImport={() => aiEnabled && setAiImportDialog(true)}
+              onAIPlanning={() => aiEnabled && setAiPlanningDialog(true)}
+              aiEnabled={aiEnabled}
             />
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setAiPlanningDialog(true)}
-            >
-              {t('plan_trip_ai')}
-            </Button>
+            <Tooltip title={!aiEnabled ? t('ai_features_disabled') : ''}>
+              <span>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  disabled={!aiEnabled}
+                  onClick={() => aiEnabled && setAiPlanningDialog(true)}
+                >
+                  {t('plan_trip_ai')}
+                </Button>
+              </span>
+            </Tooltip>
             <Button
               variant="contained"
               startIcon={<Add />}
@@ -317,6 +318,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           onImportCsv={handleImportCsvClick}
           onDelete={handleDeleteTrip}
           onAdaptAi={handleAdaptAi}
+          aiEnabled={aiEnabled}
         />
 
         <Fab

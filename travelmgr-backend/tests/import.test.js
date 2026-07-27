@@ -4,7 +4,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const supertest = require('supertest')
 const { connectToDatabase } = require('../utils/db')
-const { resetDatabase, createTrip } = require('./setup')
+const { resetDatabase, createTrip, createTripForUser, createAuthenticatedAgent } = require('./setup')
 
 let app
 let api
@@ -82,18 +82,20 @@ describe('import API', () => {
   })
 
   test('imports CSV into an existing trip', async () => {
-    const trip = await createTrip({ name: 'CSV Trip' })
+    const { agent, user } = await createAuthenticatedAgent(app, { username: 'csvuser' })
+    const trip = await createTripForUser(user.id, { name: 'CSV Trip' })
     const csvContent = loadSampleCsv()
 
-    const response = await api.post(`/api/trips/${trip.id}/import-csv`).send({ csvContent })
+    const response = await agent.post(`/api/trips/${trip.id}/import-csv`).send({ csvContent })
     assert.strictEqual(response.status, 200)
     assert.ok(response.body.importedStages >= 1)
     assert.ok(response.body.importedActivities >= 1)
   })
 
   test('rejects CSV import without content', async () => {
-    const trip = await createTrip({ name: 'Empty CSV Trip' })
-    const response = await api.post(`/api/trips/${trip.id}/import-csv`).send({})
+    const { agent, user } = await createAuthenticatedAgent(app, { username: 'emptycsv' })
+    const trip = await createTripForUser(user.id, { name: 'Empty CSV Trip' })
+    const response = await agent.post(`/api/trips/${trip.id}/import-csv`).send({})
     assert.strictEqual(response.status, 400)
   })
 })

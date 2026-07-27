@@ -30,7 +30,7 @@ const runMigrations = async () => {
   })
   
   const migrations = await migrator.up()
-  console.log('Migrations up to date', {
+  logger.infoWithContext('migrations up to date', {
     files: migrations.map((mig) => mig.name),
   })
 }
@@ -43,11 +43,10 @@ const connectToDatabase = () => {
       try {
         await sequelize.authenticate()
         await runMigrations()
-        console.log('connected to the database')
+        logger.info('connected to the database')
       } catch (err) {
         connectionPromise = null
-        console.log('failed to connect to the database')
-        console.log(err)
+        logger.error('failed to connect to the database', err)
         if (config.ENVIR === 'test') {
           throw err
         }

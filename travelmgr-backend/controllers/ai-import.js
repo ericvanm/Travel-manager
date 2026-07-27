@@ -1,6 +1,9 @@
 const router = require('express').Router()
 const multer = require('multer')
+const { requireAiEnabled } = require('../utils/ai-config')
 const { Trip, Stage, Activity, ActivityType, Country } = require('../models/DBmodels')
+
+router.use(requireAiEnabled)
 
 // Configuration upload
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024

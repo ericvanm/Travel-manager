@@ -1,12 +1,13 @@
 const { test, before, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const { connectToDatabase } = require('../utils/db')
-const { User, TripPlanningSession } = require('../models/DBmodels')
+const { User, TripPlanningSession, AiInteractionLog } = require('../models/DBmodels')
 const {
   resetDatabase,
   createTrip,
   createTripForUser,
-  createAuthenticatedAgent
+  createAuthenticatedAgent,
+  TEST_PASSWORD
 } = require('./setup')
 
 let app
@@ -41,7 +42,7 @@ describe('GET /api/admin/trips', () => {
       name: 'Admin Login'
     })
     await User.update({ role: 'admin' }, { where: { username: 'adminlogin' } })
-    await adminAgent.post('/api/auth/login').send({ username: 'adminlogin', password: 'secret' })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminlogin', password: TEST_PASSWORD })
 
     const filtered = await adminAgent.get('/api/admin/trips').query({ userId: owner.id })
     assert.strictEqual(filtered.status, 200)
@@ -59,7 +60,7 @@ describe('GET /api/admin/users and ai-logs', () => {
     const { user } = await createAuthenticatedAgent(app, { username: 'loggeduser' })
     const { agent: adminAgent } = await createAuthenticatedAgent(app, { username: 'adminlogs' })
     await User.update({ role: 'admin' }, { where: { username: 'adminlogs' } })
-    await adminAgent.post('/api/auth/login').send({ username: 'adminlogs', password: 'secret' })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminlogs', password: TEST_PASSWORD })
 
     const { logAiInteraction } = require('../utils/ai-interaction-logger')
     const log = await logAiInteraction({
@@ -86,17 +87,71 @@ describe('GET /api/admin/users and ai-logs', () => {
 
     const badUserId = await adminAgent.get('/api/admin/trips').query({ userId: 'abc' })
     assert.strictEqual(badUserId.status, 400)
+
+    const badLogsUserId = await adminAgent.get('/api/admin/ai-logs').query({ userId: 'abc' })
+    assert.strictEqual(badLogsUserId.status, 400)
+
+    const filteredLogs = await adminAgent.get('/api/admin/ai-logs').query({
+      userId: user.id,
+      feature: 'planning',
+      operation: 'synthesis',
+      status: 'success',
+      limit: 5,
+      offset: 0
+    })
+    assert.strictEqual(filteredLogs.status, 200)
+    assert.ok(filteredLogs.body.logs.some((entry) => entry.id === log.id))
+
+    await AiInteractionLog.update(
+      { requestPayload: '{"source":"test"}', parsedResponse: 'not-json' },
+      { where: { id: log.id } }
+    )
+    const parsedDetail = await adminAgent.get(`/api/admin/ai-logs/${log.id}`)
+    assert.strictEqual(parsedDetail.status, 200)
+    const parsedBody = JSON.parse(parsedDetail.text)
+    assert.deepStrictEqual(parsedBody.requestPayload, { source: 'test' })
+    assert.deepStrictEqual(parsedBody.parsedResponse, { raw: 'not-json' })
+
+    await AiInteractionLog.update(
+      { requestPayload: 'plain-text', parsedResponse: null },
+      { where: { id: log.id } }
+    )
+    const rawDetail = await adminAgent.get(`/api/admin/ai-logs/${log.id}`)
+    const rawBody = JSON.parse(rawDetail.text)
+    assert.deepStrictEqual(rawBody.requestPayload, { raw: 'plain-text' })
+    assert.strictEqual(rawBody.parsedResponse, null)
   })
 })
 
 describe('GET /api/trips regression', () => {
-  test('returns all trips for authenticated users', async () => {
-    const { agent } = await createAuthenticatedAgent(app, { username: 'viewer' })
-    await createTrip({ name: 'Trip A' })
-    await createTrip({ name: 'Trip B' })
+  test('returns only trips owned by the authenticated user', async () => {
+    const { agent, user } = await createAuthenticatedAgent(app, { username: 'viewer' })
+    await createTripForUser(user.id, { name: 'Owned Trip' })
+    await createTrip({ name: 'Other Trip' })
 
     const response = await agent.get('/api/trips')
     assert.strictEqual(response.status, 200)
-    assert.strictEqual(response.body.length, 2)
+    assert.strictEqual(response.body.length, 1)
+    assert.strictEqual(response.body[0].name, 'Owned Trip')
+  })
+})
+
+describe('admin read-only trip inspection', () => {
+  test('admin can read trip data via user routes but not mutate', async () => {
+    const { user } = await createAuthenticatedAgent(app, { username: 'tripowner' })
+    const trip = await createTripForUser(user.id, { name: 'Admin Inspect Trip' })
+    const { agent: adminAgent } = await createAuthenticatedAgent(app, { username: 'adminread' })
+    await User.update({ role: 'admin' }, { where: { username: 'adminread' } })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminread', password: TEST_PASSWORD })
+
+    const getTrip = await adminAgent.get(`/api/trips/${trip.id}`)
+    assert.strictEqual(getTrip.status, 200)
+    assert.strictEqual(getTrip.body.name, 'Admin Inspect Trip')
+
+    const stages = await adminAgent.get(`/api/stages/trip/${trip.id}`)
+    assert.strictEqual(stages.status, 200)
+
+    const mutate = await adminAgent.put(`/api/trips/${trip.id}`).send({ name: 'Hacked Name' })
+    assert.strictEqual(mutate.status, 403)
   })
 })

@@ -3,7 +3,7 @@ const assert = require('node:assert')
 const supertest = require('supertest')
 const { connectToDatabase } = require('../utils/db')
 const { User } = require('../models/DBmodels')
-const { resetDatabase } = require('./setup')
+const { resetDatabase, TEST_PASSWORD } = require('./setup')
 
 let app
 
@@ -17,8 +17,8 @@ beforeEach(async () => {
 })
 
 const registerAndLogin = async (agent, username) => {
-  await agent.post('/api/auth/register').send({ username, password: 'secret', name: `${username} Name` })
-  await agent.post('/api/auth/login').send({ username, password: 'secret' })
+  await agent.post('/api/auth/register').send({ username, password: TEST_PASSWORD, name: `${username} Name` })
+  await agent.post('/api/auth/login').send({ username, password: TEST_PASSWORD })
 }
 
 describe('users profile API', () => {
@@ -42,15 +42,15 @@ describe('users profile API', () => {
     await registerAndLogin(agent, 'passuser')
 
     const response = await agent.put('/api/auth/change-password').send({
-      currentPassword: 'secret',
-      newPassword: 'newsecret'
+      currentPassword: TEST_PASSWORD,
+      newPassword: 'newsecret8'
     })
 
     assert.strictEqual(response.status, 200)
 
     const relogin = await agent.post('/api/auth/login').send({
       username: 'passuser',
-      password: 'newsecret'
+      password: 'newsecret8'
     })
     assert.strictEqual(relogin.status, 200)
   })
@@ -59,7 +59,7 @@ describe('users profile API', () => {
     const adminAgent = supertest.agent(app)
     await registerAndLogin(adminAgent, 'adminuser')
     await User.update({ role: 'admin' }, { where: { username: 'adminuser' } })
-    await adminAgent.post('/api/auth/login').send({ username: 'adminuser', password: 'secret' })
+    await adminAgent.post('/api/auth/login').send({ username: 'adminuser', password: TEST_PASSWORD })
 
     const listedAgent = supertest.agent(app)
     await registerAndLogin(listedAgent, 'listeduser')

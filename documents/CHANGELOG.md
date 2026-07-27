@@ -8,16 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-<<<<<<< Updated upstream
-=======
-- **Open-source governance:** `CODE_OF_CONDUCT.md`, GitHub issue templates, pre-public checklist in `SECURITY.md`.
-- **Documentation:** English trip consistency rules; `documents/09-ai-document-import.md`; archived legacy `docs/` artifacts.
-- **Frontend tests:** Vitest unit tests for date/budget helpers; `npm test` in CI (GitHub Actions and Azure Pipelines).
 - **Trip access control:** authentication required on trip/stage/activity routes; users only access owned trips (`utils/trip-access.js`). Admins use `/api/admin/*`.
 - **Auth hardening:** rate limiting on `/api/auth/*`, minimum 8-character passwords on register/change-password, `ALLOW_REGISTRATION` env flag (off by default in production).
 - **Health check:** `/api/health` reports database connectivity.
 - **`CONTRIBUTING.md`** and CI badge in root README.
->>>>>>> Stashed changes
+=======
+
 - **GCP on-demand environment:** Firebase Hosting + Cloud Run + Cloud SQL as a second deployment target beside Vercel+Render. Workflow [`.github/workflows/deploy-gcp.yml`](../.github/workflows/deploy-gcp.yml) (`workflow_dispatch`: start/deploy/stop), PowerShell tools `gcp-start` / `gcp-stop` / `gcp-deploy` / `gcp-setup-autostop`, and daily FinOps auto-stop at 22:00 Europe/Paris. See [06-deployment.md](06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql). Workload Identity Federation setup documents both **Cloud Console** steps and **`gcloud`** commands.
 - **Developer tools:** PowerShell scripts in `tools/` — `reset-database.ps1` (empty DB) and `rebuild-docker.ps1` (Docker rebuild). See [tools/README.md](../tools/README.md).
 - **AI trip planning:** form-based wizard (zone, duration, style, transport, accommodation, budget) with validation, synthesis, itinerary generation, revision, and trip creation. Sessions persisted in `trip_planning_sessions`. See [07-api-reference.md](07-api-reference.md#ai-trip-planning--ai-planning).

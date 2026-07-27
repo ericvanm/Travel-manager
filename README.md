@@ -1,5 +1,7 @@
 # Travel Manager
 
+[![CI](https://github.com/ericvanm/Travel-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/ericvanm/Travel-manager/actions/workflows/ci.yml)
+
 Full-stack web application for planning trips: stages, activities, calendar imports (ICS/CSV), optional AI document import, and **AI-assisted trip planning** from user preferences.
 
 ## Quick links
@@ -15,30 +17,9 @@ Full-stack web application for planning trips: stages, activities, calendar impo
 | API reference | [`documents/07-api-reference.md`](documents/07-api-reference.md) |
 | Changelog | [`documents/CHANGELOG.md`](documents/CHANGELOG.md) |
 | Security | [`SECURITY.md`](SECURITY.md) |
-<<<<<<< Updated upstream
 =======
 | Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| Code of Conduct | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) |
 
-## GitHub repository metadata (suggested)
-
-When publishing or refreshing the repo **About** section:
-
-- **Description:** Full-stack trip planner — React, Node, PostgreSQL, ICS/CSV import, optional OpenAI planning.
-- **Topics:** `travel`, `trip-planner`, `react`, `typescript`, `nodejs`, `express`, `postgresql`, `sequelize`, `openai`, `material-ui`
-- **Website:** your Vercel or demo URL (optional)
-
-## Demo / live instance
-
-Replace with your deployment URLs when available:
-
-| Component | URL |
-|-----------|-----|
-| Frontend (example) | `https://YOUR_APP.vercel.app` |
-| API (example) | `https://YOUR_API.onrender.com/api/health` |
-
-Self-hosters: follow [deployment](documents/06-deployment.md). Any fresh database ships with user `admin` and **no password** until first login — set credentials before exposing the app.
->>>>>>> Stashed changes
 
 ## Stack
 
@@ -91,6 +72,10 @@ npm test
 ```
 
 Backend tests need `TEST_DATABASE_URL` (see `.env.example`).
+
+## Default admin account
+
+After migrations on an **empty** database, user **`admin`** exists with **no password** until you set one at first login (`must_set_password`). Do this immediately on any shared or internet-facing deployment. Details: [SECURITY.md](SECURITY.md).
 
 ## Default admin account
 

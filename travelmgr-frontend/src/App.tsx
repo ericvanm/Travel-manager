@@ -12,6 +12,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { appTheme } from './theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { FeaturesProvider } from './contexts/FeaturesContext';
 import { CountriesProvider } from './contexts/CountriesContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import Login from './components/Login';
@@ -131,11 +132,13 @@ const App: React.FC = () => {
     <ThemeProvider theme={appTheme}>
       <CssBaseline enableColorScheme />
       <LanguageProvider>
-        <AuthProvider>
-          <CountriesProvider>
-            <AppContent />
-          </CountriesProvider>
-        </AuthProvider>
+        <FeaturesProvider>
+          <AuthProvider>
+            <CountriesProvider>
+              <AppContent />
+            </CountriesProvider>
+          </AuthProvider>
+        </FeaturesProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

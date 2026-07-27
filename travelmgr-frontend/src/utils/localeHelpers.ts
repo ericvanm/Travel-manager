@@ -70,3 +70,18 @@ export const formatCurrencyAmount = (amount: number, currency: string, language:
     return `${amount} ${currency}`
   }
 }
+
+type TranslateFn = (key: string, params?: Record<string, unknown>) => string
+
+/** Resolves an API error code through i18n, with a translated fallback. */
+export const translateApiError = (
+  t: TranslateFn,
+  error: string | undefined,
+  fallbackKey: string
+): string => {
+  if (!error) {
+    return t(fallbackKey)
+  }
+  const message = t(error)
+  return message !== error ? message : t(fallbackKey)
+}
