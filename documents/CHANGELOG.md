@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Auth hardening:** rate limiting on `/api/auth/*`, minimum 8-character passwords on register/change-password, `ALLOW_REGISTRATION` env flag (off by default in production).
 - **Health check:** `/api/health` reports database connectivity.
 - **`CONTRIBUTING.md`** and CI badge in root README.
+=======
 
 - **GCP on-demand environment:** Firebase Hosting + Cloud Run + Cloud SQL as a second deployment target beside Vercel+Render. Workflow [`.github/workflows/deploy-gcp.yml`](../.github/workflows/deploy-gcp.yml) (`workflow_dispatch`: start/deploy/stop), PowerShell tools `gcp-start` / `gcp-stop` / `gcp-deploy` / `gcp-setup-autostop`, and daily FinOps auto-stop at 22:00 Europe/Paris. See [06-deployment.md](06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql). Workload Identity Federation setup documents both **Cloud Console** steps and **`gcloud`** commands.
 - **Developer tools:** PowerShell scripts in `tools/` — `reset-database.ps1` (empty DB) and `rebuild-docker.ps1` (Docker rebuild). See [tools/README.md](../tools/README.md).
@@ -27,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Root README: suggested GitHub About metadata, demo URL placeholders, frontend test commands.
+- Sonar/docker-compose comments translated to English; `sonar-project.properties` uses placeholder org keys for forks.
 - Production DB SSL is skipped when `DATABASE_URL` uses a Cloud SQL Unix socket (`/cloudsql/...`) so Cloud Run + Cloud SQL connector works; Render / public Postgres still use SSL.
 - Backend `test` and `test:coverage` scripts run all files under `tests/`.
 - Dockerfiles: non-root `nodejs` user (UID/GID 1001); fixed Render build (`--gid 1001`).
@@ -42,8 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI frontend build uses placeholder `VITE_BACKEND_URL=http://localhost:3001/api` (no hardcoded Render URL).
 - Anonymized GCP examples in docs/tests (placeholders instead of a real project id).
 - Removed MongoDB-specific error handling from Express middleware.
-- Backend dependency audit: `uuid` 11, `express-rate-limit`; password-reset emails no longer log message body when SMTP is unset.
-- Removed debug `console.log` from frontend import components.
 
 ### Security
 

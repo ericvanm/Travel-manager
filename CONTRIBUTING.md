@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing. This project is maintained in the open; small, focused pull requests are easiest to review.
 
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Before you start
 
 1. Read the [developer guide](documents/05-developer-guide.md) for local setup.
@@ -22,10 +24,11 @@ npm test
 cd travelmgr-frontend
 npm ci
 npm run lint
+npm test
 npm run build
 ```
 
-Tests require PostgreSQL and `TEST_DATABASE_URL` (see `.env.example`).
+Backend tests require PostgreSQL and `TEST_DATABASE_URL` (see `.env.example`). Frontend unit tests use Vitest and do not need a database.
 
 ## Pull request guidelines
 

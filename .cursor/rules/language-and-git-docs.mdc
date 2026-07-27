@@ -1,0 +1,24 @@
+---
+description: Language split (FR chat / EN repo), markdown for commits & PRs, proactive title+body proposals
+alwaysApply: true
+---
+
+# Language
+
+- **With the user in chat:** French.
+- **In the repository and system artifacts:** English only — source code, comments, README/docs, ADRs, pipeline YAML comments, commit messages, PR/MR titles and bodies.
+
+# Commits and pull/merge requests
+
+- Write **commit message bodies** and **PR/MR descriptions** in **Markdown** (headings, lists, checklists where useful).
+- Keep the **commit subject line** one line, conventional (`type(scope): summary`), English, no markdown heading syntax on the subject line itself.
+- PR/MR bodies should use sections such as `## Summary`, `## Test plan`, `## Notes` when appropriate.
+
+# Proactive proposals
+
+Whenever your work will or should result in a **git commit** or **PR/MR**, **before or right after** the change, spontaneously provide in chat (French prose around it is fine):
+
+1. **Proposed commit** — subject + markdown body in a fenced block, ready to paste.
+2. **Proposed PR/MR** — markdown **title** (plain line) + full markdown **description** in a fenced block.
+
+Do not wait for the user to ask for title/description if a commit or PR is the natural next step.

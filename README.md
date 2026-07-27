@@ -17,7 +17,9 @@ Full-stack web application for planning trips: stages, activities, calendar impo
 | API reference | [`documents/07-api-reference.md`](documents/07-api-reference.md) |
 | Changelog | [`documents/CHANGELOG.md`](documents/CHANGELOG.md) |
 | Security | [`SECURITY.md`](SECURITY.md) |
+=======
 | Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+
 
 ## Stack
 
@@ -59,12 +61,21 @@ See [`tools/README.md`](tools/README.md) for script options.
 ## Tests
 
 ```bash
+# Backend (PostgreSQL required)
 cd "travelmgr-backend"
 npm test
 npm run test:coverage
+
+# Frontend (Vitest, no database)
+cd "travelmgr-frontend"
+npm test
 ```
 
-Requires a running PostgreSQL instance and `TEST_DATABASE_URL` (see `.env.example`).
+Backend tests need `TEST_DATABASE_URL` (see `.env.example`).
+
+## Default admin account
+
+After migrations on an **empty** database, user **`admin`** exists with **no password** until you set one at first login (`must_set_password`). Do this immediately on any shared or internet-facing deployment. Details: [SECURITY.md](SECURITY.md).
 
 ## Default admin account
 

@@ -22,12 +22,9 @@ updates:
       day: monday
     open-pull-requests-limit: 10
     ignore:
-      # @typescript-eslint v8 supports TypeScript <6.1 only — block major bumps (6.x, 7.x).
+      # @typescript-eslint v8 supports TypeScript <6.1 only (no TS 6/7 yet).
       - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
-      # eslint-plugin-react-refresh 0.5.x requires ESLint 9+; stay on 0.4.x until ESLint upgrade.
-      - dependency-name: "eslint-plugin-react-refresh"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+        versions: [">=6"]
     groups:
       minor-and-patch:
         patterns:

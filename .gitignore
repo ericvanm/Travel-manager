@@ -142,6 +142,3 @@ vite.config.ts.timestamp-*
 
 # Scancode result files
 scancode_result.json
-
-# Rules
-.cursor/*
