@@ -43,7 +43,7 @@ Migrations seed user `admin` with **no password** until first login forces a pas
 
 Use this checklist on the default branch:
 
-- [ ] Secret scan on full git history ([gitleaks](https://github.com/gitleaks/gitleaks) or [trufflehog](https://github.com/trufflesecurity/trufflehog)) — last automated note: 2026-07-22, no leaks reported
+* [ ] Secret scan on full git history ([gitleaks](https://github.com/gitleaks/gitleaks) or [trufflehog](https://github.com/trufflesecurity/trufflehog)) — last automated note: 2026-07-27, no leaks reported
 - [ ] GitHub **Private vulnerability reporting** enabled
 - [ ] Repository **About** filled (description, topics, optional demo URL)
 - [ ] Production deployments: `SECRET`, DB credentials, and `OPENAI_API_KEY` only in host secrets

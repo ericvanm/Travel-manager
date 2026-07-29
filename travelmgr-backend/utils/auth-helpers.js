@@ -19,7 +19,8 @@ const buildUserPayload = (user) => ({
   language: user.language || 'en',
   defaultDepartureLocation: user.defaultDepartureLocation || null,
   role: user.role || 'user',
-  mustSetPassword: Boolean(user.mustSetPassword)
+  mustSetPassword: Boolean(user.mustSetPassword),
+  readOnly: Boolean(user.readOnly)
 })
 
 const optionalAuth = (req, _res, next) => {

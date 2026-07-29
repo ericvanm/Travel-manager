@@ -105,6 +105,8 @@ app.use(session({
 
 app.use(middleware.requestLogger)
 app.use(middleware.tokenExtractor)
+const { blockReadOnlyWrites } = require('./utils/read-only-guard')
+app.use('/api', blockReadOnlyWrites)
 
 app.get('/api/health', async (_req, res) => {
   try {

@@ -106,6 +106,18 @@ User.init({
     allowNull: false,
     defaultValue: false
   },
+  readOnly: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'read_only'
+  },
+  allowPasswordReset: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'allow_password_reset'
+  },
   language: {
     type: DataTypes.STRING(5),
     allowNull: true,

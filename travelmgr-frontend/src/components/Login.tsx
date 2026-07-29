@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, TextField, Typography, Paper, Alert,
+  Box, Button, TextField, Typography, Paper, Alert, Tooltip,
 } from '@mui/material';
-import { login, PasswordSetupRequiredError } from '../services/auth';
+import { login, PasswordSetupRequiredError, getPublicConfig } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LoginCredentials } from '../types';
@@ -19,8 +19,15 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onForgotPassword }) =
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordSetupUsername, setPasswordSetupUsername] = useState<string | null>(null);
+  const [allowRegistration, setAllowRegistration] = useState(true);
   const { setUser } = useAuth();
   const { t, setLanguage } = useLanguage();
+
+  useEffect(() => {
+    getPublicConfig()
+      .then((config) => setAllowRegistration(config.allowRegistration))
+      .catch(() => setAllowRegistration(false));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,9 +100,19 @@ const Login: React.FC<LoginProps> = ({ onSwitchToRegister, onForgotPassword }) =
             {t('forgot_password')}
           </Button>
         )}
-        <Button fullWidth variant="text" onClick={onSwitchToRegister}>
-          {t('no_account')}
-        </Button>
+        <Tooltip title={!allowRegistration ? t('registration_disabled_hint') : ''}>
+          <span>
+            <Button
+              fullWidth
+              variant="text"
+              onClick={onSwitchToRegister}
+              disabled={!allowRegistration}
+              sx={!allowRegistration ? { color: 'text.disabled' } : undefined}
+            >
+              {t('no_account')}
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
     </Paper>
   );

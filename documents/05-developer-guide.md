@@ -83,13 +83,6 @@ CREATE DATABASE travel_mgr_test;
 
 User trip lists return all trips (same behaviour as before admin work). New trips created while logged in are also linked in `trip_lists` for admin filtering. Admin ownership is resolved from `trip_lists`, AI planning sessions, and AI adaptation sessions.
 
-3. Optional manual migration:
-
-```bash
-cd "travelmgr-backend"
-node run-migration.js
-```
-
 ### Reset database (empty)
 
 PowerShell scripts in [`tools/`](../tools/README.md):

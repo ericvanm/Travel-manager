@@ -6,7 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton, Tooltip
+  Box, Button, Typography, Fab, AppBar, Toolbar, IconButton, Tooltip, Alert
 } from '@mui/material';
 import { Add, Logout } from '@mui/icons-material';
 import { Trip } from '../../types';
@@ -53,6 +53,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
   const { user, setUser } = useAuth();
   const { aiEnabled } = useFeatures();
   const { t } = useLanguage();
+  const readOnly = Boolean(user?.readOnly);
 
   useEffect(() => {
     loadTrips();
@@ -277,8 +278,14 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
       </AppBar>
 
       <Box sx={{ p: 3 }}>
+        {readOnly && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {t('read_only_mode_banner')}
+          </Alert>
+        )}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4">{t('my_trips')}</Typography>
+          {!readOnly && (
           <Box sx={{ display: 'flex', gap: 2 }}>
             <ImportMenu
               onICSImport={() => document.getElementById('new-ics-file-input')?.click()}
@@ -307,6 +314,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
               {t('create_trip')}
             </Button>
           </Box>
+          )}
         </Box>
 
         <TripTable
@@ -319,8 +327,10 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
           onDelete={handleDeleteTrip}
           onAdaptAi={handleAdaptAi}
           aiEnabled={aiEnabled}
+          readOnly={readOnly}
         />
 
+        {!readOnly && (
         <Fab
           color="primary"
           aria-label="add"
@@ -329,6 +339,7 @@ const TripList: React.FC<TripListProps> = ({ onTripSelect }) => {
         >
           <Add />
         </Fab>
+        )}
 
         <TripDialog
           open={open}

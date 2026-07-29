@@ -116,6 +116,7 @@ const AppContent: React.FC = () => {
       <TripDetail
         tripId={selectedTrip.id}
         onBack={() => setSelectedTrip(null)}
+        readOnly={Boolean(user.readOnly)}
       />
     );
   }

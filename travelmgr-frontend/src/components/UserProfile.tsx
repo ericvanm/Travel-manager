@@ -28,6 +28,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
   const { user, setUser } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const readOnly = Boolean(user?.readOnly);
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,10 +145,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        {readOnly && (
+          <Alert severity="info" sx={{ mb: 2 }}>{t('read_only_mode_banner')}</Alert>
+        )}
         
         <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
           <Tab label={t('profile')} />
-          <Tab label={t('change_password')} />
+          {!readOnly && <Tab label={t('change_password')} />}
         </Tabs>
 
         <TabPanel value={tabValue} index={0}>
@@ -157,12 +161,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
               fullWidth
               value={profile.firstName}
               onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+              disabled={readOnly}
             />
             <TextField
               label={t('last_name')}
               fullWidth
               value={profile.lastName}
               onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+              disabled={readOnly}
             />
           </Box>
           
@@ -172,6 +178,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
             margin="dense"
             value={profile.username}
             onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+            disabled={readOnly}
           />
           
           <TextField
@@ -181,9 +188,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
             type="email"
             value={profile.email}
             onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+            disabled={readOnly}
           />
           
-          <FormControl fullWidth margin="dense">
+          <FormControl fullWidth margin="dense" disabled={readOnly}>
             <InputLabel>{t('language')}</InputLabel>
             <Select
               value={language}
@@ -205,6 +213,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
             value={profile.defaultDepartureLocation}
             onChange={(e) => setProfile({ ...profile, defaultDepartureLocation: e.target.value })}
             helperText={t('default_departure_location_help')}
+            disabled={readOnly}
           />
         </TabPanel>
 
@@ -240,6 +249,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
       
       <DialogActions>
         <Button onClick={handleClose}>{t('cancel')}</Button>
+        {!readOnly && (
         <Button 
           onClick={tabValue === 0 ? handleProfileSave : handlePasswordChange}
           variant="contained"
@@ -247,6 +257,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ open, onClose }) => {
         >
           {t('save')}
         </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
