@@ -32,6 +32,7 @@ import {
 } from '@mui/material';
 import { Logout } from '@mui/icons-material';
 import { useLanguage } from '../../contexts/LanguageContext';
+import AdminUsersTab from './AdminUsersTab';
 import {
   getAdminAiLogDetail,
   getAdminAiLogs,
@@ -109,6 +110,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
     if (tab === 1) loadLogs();
   }, [tab, loadTrips, loadLogs]);
 
+  const reloadUserOptions = useCallback(() => {
+    getAdminUsers()
+      .then(setUsers)
+      .catch(() => setError(t('admin_load_error')));
+  }, [t]);
+
   const openLogDetail = async (logId: number) => {
     setLogDialogOpen(true);
     setLogLoading(true);
@@ -166,14 +173,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
         <Tabs value={tab} onChange={(_, value) => setTab(value)} sx={{ mb: 2 }}>
           <Tab label={t('admin_trips_tab')} />
           <Tab label={t('admin_ai_logs_tab')} />
+          <Tab label={t('admin_users_tab')} />
         </Tabs>
 
+        {(tab === 0 || tab === 1) && (
         <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
           {userFilter}
           <Button variant="outlined" onClick={() => (tab === 0 ? loadTrips() : loadLogs())}>
             {t('refresh')}
           </Button>
         </Box>
+        )}
 
         {tab === 0 && (
           <Paper>
@@ -285,6 +295,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onTripSelect }) => {
               </Table>
             )}
           </Paper>
+        )}
+
+        {tab === 2 && (
+          <AdminUsersTab onUsersChanged={reloadUserOptions} />
         )}
       </Box>
 

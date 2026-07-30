@@ -20,7 +20,6 @@ Travel-manager/
 travelmgr-backend/
 ├── index.js              # HTTP server entry (listen on PORT)
 ├── app.js                # Express app: middleware, routes, DB connect
-├── run-migration.js      # Standalone migration runner
 ├── Dockerfile            # Production container (non-root user)
 ├── dev.Dockerfile        # Development container
 ├── package.json

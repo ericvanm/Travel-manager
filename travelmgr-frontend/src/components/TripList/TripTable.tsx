@@ -16,6 +16,7 @@ interface TripTableProps {
   onDelete: (tripId: number) => void;
   onAdaptAi: (trip: Trip) => void;
   aiEnabled?: boolean;
+  readOnly?: boolean;
 }
 
 const TripTable: React.FC<TripTableProps> = ({
@@ -28,6 +29,7 @@ const TripTable: React.FC<TripTableProps> = ({
   onDelete,
   onAdaptAi,
   aiEnabled = true,
+  readOnly = false,
 }) => {
   const { t } = useLanguage();
 
@@ -75,12 +77,12 @@ const TripTable: React.FC<TripTableProps> = ({
               <td style={{ padding: '8px', borderBottom: '1px solid #eee', textAlign: 'center' }}>
                 <Box onClick={stop}>
                   <TripActionsToolbar
-                    onEdit={() => onEdit(trip)}
+                    onEdit={readOnly ? undefined : () => onEdit(trip)}
                     onExport={() => onExport(trip)}
-                    onImportCsv={() => onImportCsv(trip)}
-                    onAdaptAi={() => onAdaptAi(trip)}
+                    onImportCsv={readOnly ? undefined : () => onImportCsv(trip)}
+                    onAdaptAi={readOnly ? undefined : () => onAdaptAi(trip)}
                     aiEnabled={aiEnabled}
-                    onDelete={() => {
+                    onDelete={readOnly ? undefined : () => {
                       if (window.confirm(t('delete_trip_confirm', { name: trip.name }))) onDelete(trip.id);
                     }}
                   />

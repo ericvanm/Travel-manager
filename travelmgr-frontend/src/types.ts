@@ -9,6 +9,7 @@ export interface User {
   defaultDepartureLocation?: string | null;
   role?: 'user' | 'admin';
   mustSetPassword?: boolean;
+  readOnly?: boolean;
 }
 
 export interface LoginCredentials {
@@ -253,6 +254,34 @@ export interface AdminUserOption {
   username: string;
   name: string;
   role?: string;
+}
+
+export interface AdminUserRecord extends AdminUserOption {
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  readOnly?: boolean;
+  disabled?: boolean;
+  allowPasswordReset?: boolean;
+}
+
+export interface AdminCreateUserPayload {
+  username: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  readOnly?: boolean;
+  role?: 'user' | 'admin';
+}
+
+export interface AdminUpdateUserPayload {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  readOnly?: boolean;
+  disabled?: boolean;
+  role?: 'user' | 'admin';
 }
 
 export interface AiInteractionLogSummary {

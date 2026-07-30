@@ -8,11 +8,12 @@ COPY package*.json ./
 
 RUN npm ci --ignore-scripts
 
-COPY index.js app.js run-migration.js ./
+COPY index.js app.js ./
 COPY controllers ./controllers
 COPY models ./models
 COPY migrations ./migrations
 COPY utils ./utils
+COPY config ./config
 
 EXPOSE 3001
 

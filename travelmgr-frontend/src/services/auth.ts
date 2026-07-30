@@ -91,4 +91,9 @@ export const verifySession = async (): Promise<User | null> => {
   }
 };
 
+export const getPublicConfig = async (): Promise<{ allowRegistration: boolean }> => {
+  const response = await api.get('/auth/public-config');
+  return response.data;
+};
+
 export default api;

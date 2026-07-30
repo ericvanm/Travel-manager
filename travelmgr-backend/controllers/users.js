@@ -19,6 +19,10 @@ const { authRateLimit } = require('../utils/auth-rate-limit')
 
 router.use(authRateLimit)
 
+router.get('/public-config', (_req, res) => {
+  res.json({ allowRegistration: ALLOW_REGISTRATION })
+})
+
 const hashResetToken = (token) => crypto.createHash('sha256').update(String(token)).digest('hex')
 
 /**
@@ -32,7 +36,8 @@ const signInUser = (req, user) => {
   const userForToken = {
     username: user.username,
     id: user.id,
-    role: user.role || 'user'
+    role: user.role || 'user',
+    readOnly: Boolean(user.readOnly)
   }
   const token = jwt.sign(userForToken, SECRET || process.env.SECRET)
   req.session.token = token
@@ -133,7 +138,9 @@ router.post('/register', async (req, res) => {
       email: normalizedEmail,
       language: 'en',
       role: 'user',
-      mustSetPassword: false
+      mustSetPassword: false,
+      readOnly: false,
+      allowPasswordReset: true
     })
 
     res.status(201).json(signInUser(req, user))
@@ -157,7 +164,7 @@ router.post('/forgot-password', async (req, res) => {
       where: { email: normalizedEmail, disabled: false }
     })
 
-    if (!user || user.role === 'admin' || !user.passwordHash) {
+    if (!user || user.role === 'admin' || !user.passwordHash || !user.allowPasswordReset) {
       return res.json(genericResponse)
     }
 
@@ -243,6 +250,10 @@ router.put('/profile', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
+    if (user.readOnly) {
+      return res.status(403).json({ error: 'read_only_user' })
+    }
+
     if (username && username !== user.username) {
       const existingUser = await User.findOne({ where: { username } })
       if (existingUser) {
@@ -277,6 +288,10 @@ router.put('/change-password', requireAuth, async (req, res) => {
     const user = await User.findByPk(req.user.id)
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
+    }
+
+    if (user.readOnly) {
+      return res.status(403).json({ error: 'read_only_user' })
     }
 
     const passwordCorrect = await bcrypt.compare(currentPassword, user.passwordHash || '')
