@@ -3,7 +3,6 @@ const config = require('../utils/config')
 const logger = require('../utils/logger')
 
 const { Umzug, SequelizeStorage } = require('umzug')
-// eslint-disable-next-line no-undef
 const url = config.DB_URI
 
 logger.infoWithContext('connecting to database', config.DB_LOG_CONTEXT)
