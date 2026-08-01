@@ -97,7 +97,7 @@ jobs:
         with:
           node-version: 20
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: backend-coverage
           path: travelmgr-backend/coverage
