@@ -22,7 +22,7 @@ Travel Manager is a full-stack trip-planning application. Users create **trips**
 | Layer | Technology |
 |-------|------------|
 | Frontend | React 18, TypeScript, Vite, Material UI, Axios |
-| Backend | Node.js 18+, Express 4, express-session |
+| Backend | Node.js 20+, Express 4, express-session |
 | Database | PostgreSQL 15 |
 | ORM / migrations | Sequelize 6, Umzug |
 | Auth | bcrypt password hashing, server-side sessions (PostgreSQL store in production) |

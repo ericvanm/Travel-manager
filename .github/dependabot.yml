@@ -1,6 +1,13 @@
 version: 2
 
 updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+
   - package-ecosystem: npm
     directory: "/travelmgr-backend"
     schedule:
@@ -25,6 +32,9 @@ updates:
       # @typescript-eslint v8 supports TypeScript <6.1 only (no TS 6/7 yet).
       - dependency-name: "typescript"
         versions: [">=6"]
+      # Stay on MUI X v8 until @mui/material is upgraded past v5.
+      - dependency-name: "@mui/x-date-pickers"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         patterns:

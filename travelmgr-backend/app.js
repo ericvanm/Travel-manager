@@ -32,7 +32,7 @@ const expenseCategoriesRouter = require('./controllers/expenseCategories')
 const notificationTypesRouter = require('./controllers/notificationTypes')
 
 const { connectToDatabase } = require('./utils/db')
-const { SECRET, ENVIR, DB_URI, DB_SSL } = require('./utils/config')
+const { SECRET, ENVIR, DB_URI, DB_SSL, CORS_ALLOW_HOSTED_SUFFIXES } = require('./utils/config')
 const { isOpenAIEnabled } = require('./utils/ai-config')
 
 const isProduction = ENVIR === 'production'
@@ -60,7 +60,9 @@ app.use(cors({
       callback(null, true)
       return
     }
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
+    const hostedSuffixAllowed = CORS_ALLOW_HOSTED_SUFFIXES
+      && (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com'))
+    if (allowedOrigins.includes(origin) || hostedSuffixAllowed) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))

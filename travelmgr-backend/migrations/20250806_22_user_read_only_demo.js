@@ -3,6 +3,23 @@ const { DataTypes } = require('sequelize')
 const { addColumnIfNotExists, removeColumnIfExists } = require('../utils/migration-helpers')
 
 const DEMO_USERNAME = 'demo'
+const DEV_DEFAULT_DEMO_PASSWORD = 'DemoUser1!'
+
+/**
+ * Resolve demo password:
+ * - Explicit DEMO_USER_PASSWORD always wins
+ * - Production without DEMO_USER_PASSWORD: skip seed (no hardcoded public default)
+ * - Non-production: fall back to DEV_DEFAULT_DEMO_PASSWORD for local DX
+ */
+const resolveDemoPassword = () => {
+  if (process.env.DEMO_USER_PASSWORD) {
+    return String(process.env.DEMO_USER_PASSWORD)
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return null
+  }
+  return DEV_DEFAULT_DEMO_PASSWORD
+}
 
 module.exports = {
   up: async ({ context: queryInterface }) => {
@@ -27,7 +44,13 @@ module.exports = {
     )
 
     if (existingDemo.length === 0) {
-      const plainPassword = process.env.DEMO_USER_PASSWORD || 'DemoUser1!'
+      const plainPassword = resolveDemoPassword()
+      if (!plainPassword) {
+        console.warn(
+          '[migration] Skipping demo user seed in production: set DEMO_USER_PASSWORD to create the account.'
+        )
+        return
+      }
       const passwordHash = await bcrypt.hash(plainPassword, 10)
       await queryInterface.bulkInsert('users', [{
         username: DEMO_USERNAME,

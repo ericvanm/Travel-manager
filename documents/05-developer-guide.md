@@ -37,12 +37,18 @@ cp .env.example .env
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `SECRET` | Yes | Session signing secret (long random string) |
+| `SECRET` | Yes | Session signing secret (min. 16 chars in production) |
 | `PORT` | No | Default `3001` |
 | `CORS_ORIGINS` | Production | Comma-separated frontend URLs |
+| `CORS_ALLOW_HOSTED_SUFFIXES` | No | Default `true`; set `false` to disallow `*.vercel.app` / `*.onrender.com` |
+| `ALLOW_REGISTRATION` | No | Public self-registration (default off in production) |
+| `DEMO_USER_PASSWORD` | Production (to seed demo) | Password for read-only `demo` user; required in production to create the account |
+| `FRONTEND_URL` | Password reset | Base URL for reset links in emails |
 | `TEST_DATABASE_URL` | Tests | Separate DB for `npm test` |
+| `TEST_USER_PASSWORD` | Tests | Fixture password for integration tests |
 | `USE_OPENAI` | No | `true` to enable OpenAI parsing and trip planning |
 | `OPENAI_API_KEY` | If OpenAI | API key from [platform.openai.com](https://platform.openai.com) |
+| `SMTP_*` / `EMAIL_FROM` | No | Optional SMTP for password-reset emails |
 | `OPENAI_MODEL` | No | Model for trip planning (default `gpt-4o-mini`) |
 
 Example local `.env`:
@@ -125,7 +131,7 @@ Use **Register** in the UI or:
 ```bash
 curl -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo","password":"demo1234","name":"Demo User"}'
+  -d '{"username":"sampleuser","password":"SamplePass1!","name":"Sample User"}'
 ```
 
 ## AI trip planning (local)

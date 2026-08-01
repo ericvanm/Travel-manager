@@ -17,9 +17,23 @@ const parseBooleanEnv = (value, defaultValue) => {
   return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase())
 }
 
+if (ENVIR === 'production') {
+  if (!SECRET || String(SECRET).trim().length < 16) {
+    throw new Error(
+      'SECRET must be set to a strong value of at least 16 characters when NODE_ENV=production'
+    )
+  }
+}
+
 const ALLOW_REGISTRATION = parseBooleanEnv(
   process.env.ALLOW_REGISTRATION,
   ENVIR !== 'production'
+)
+
+/** When true, also allow Origin suffixes *.vercel.app and *.onrender.com (default: on). */
+const CORS_ALLOW_HOSTED_SUFFIXES = parseBooleanEnv(
+  process.env.CORS_ALLOW_HOSTED_SUFFIXES,
+  true
 )
 
 let DB_URI = rawDbUri
@@ -48,5 +62,6 @@ module.exports = {
   PORT,
   ENVIR,
   SECRET,
-  ALLOW_REGISTRATION
+  ALLOW_REGISTRATION,
+  CORS_ALLOW_HOSTED_SUFFIXES
 }

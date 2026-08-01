@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Public-readiness hardening:** `CORS_ALLOW_HOSTED_SUFFIXES`, production `SECRET` fail-fast, PR template, Dependabot for GitHub Actions, demo user production seed requires `DEMO_USER_PASSWORD`.
 - **Trip access control:** authentication required on trip/stage/activity routes; users only access owned trips (`utils/trip-access.js`). Admins use `/api/admin/*`.
 - **Auth hardening:** rate limiting on `/api/auth/*`, minimum 8-character passwords on register/change-password, `ALLOW_REGISTRATION` env flag (off by default in production).
 - **Health check:** `/api/health` reports database connectivity.
 - **`CONTRIBUTING.md`** and CI badge in root README.
-=======
-
+- **Demo read-only user** and admin user management (create/update/delete users, set passwords, toggle read-only).
 - **GCP on-demand environment:** Firebase Hosting + Cloud Run + Cloud SQL as a second deployment target beside Vercel+Render. Workflow [`.github/workflows/deploy-gcp.yml`](../.github/workflows/deploy-gcp.yml) (`workflow_dispatch`: start/deploy/stop), PowerShell tools `gcp-start` / `gcp-stop` / `gcp-deploy` / `gcp-setup-autostop`, and daily FinOps auto-stop at 22:00 Europe/Paris. See [06-deployment.md](06-deployment.md#gcp-on-demand-firebase-hosting--cloud-run--cloud-sql). Workload Identity Federation setup documents both **Cloud Console** steps and **`gcloud`** commands.
 - **Developer tools:** PowerShell scripts in `tools/` — `reset-database.ps1` (empty DB) and `rebuild-docker.ps1` (Docker rebuild). See [tools/README.md](../tools/README.md).
 - **AI trip planning:** form-based wizard (zone, duration, style, transport, accommodation, budget) with validation, synthesis, itinerary generation, revision, and trip creation. Sessions persisted in `trip_planning_sessions`. See [07-api-reference.md](07-api-reference.md#ai-trip-planning--ai-planning).

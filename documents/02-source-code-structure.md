@@ -5,10 +5,15 @@
 ```
 Travel-manager/
 ├── README.md                 # Project overview (links to documents/)
-├── documents/                # Project documentation (this folder)
+├── documents/                # Maintained project documentation
+├── tools/                    # PowerShell DX scripts (DB reset, Docker, GCP)
+├── infra/                    # Optional cloud templates (e.g. Azure Bicep)
+├── docs/                     # Legacy / archive (not primary docs)
 ├── render.yaml               # Render Blueprint (API + PostgreSQL)
+├── docker-compose*.yml       # Local / Sonar stacks
+├── azure-pipelines.yml       # Optional Azure DevOps CI
 ├── sonar-project.properties  # SonarCloud analysis config
-├── .github/workflows/ci.yml  # CI: backend tests, frontend build, SonarCloud
+├── .github/                  # Actions, Dependabot, issue/PR templates
 ├── tests/                    # Shared test fixtures (e.g. sample CSV)
 ├── travelmgr-backend/        # Node.js / Express API
 └── travelmgr-frontend/       # React / Vite SPA
@@ -52,6 +57,8 @@ Mounted in `app.js`:
 | `import.js` | `/api/import` | ICS trip import |
 | `ai-import.js` | `/api/ai-import` | Document upload + AI/pattern analysis |
 | `ai-planning.js` | `/api/ai-planning` | AI trip planning wizard (form → synthesis → itinerary → create trip) |
+| `ai-adapt.js` | `/api/ai-adapt` | AI trip adaptation sessions |
+| `admin.js` | `/api/admin` | Admin trips, AI logs, user management (admin role) |
 
 Standalone `login.js` exists for historical tests only; production auth is in `users.js` (`/api/auth`).
 
@@ -70,28 +77,13 @@ Standalone `login.js` exists for historical tests only; production auth is in `u
 | `ai-service.js` | Pattern-based and optional OpenAI reservation parsing |
 | `ai-planning-service.js` | Form validation, synthesis, itinerary generation (OpenAI + fallback) |
 | `database-url.js` | Postgres URL normalization (Cloud SQL socket paths) |
+| `trip-ownership.js` / `trip-access.js` | Unified trip ownership and access checks |
+| `read-only-guard.js` | Block mutating API calls for read-only JWT sessions |
+| `auth-helpers.js` | `requireAuth`, `requireAdmin`, user payload |
 
 ### Tests
 
-```
-tests/
-├── setup.js                    # DB reset, factories (user, trip, stage, activity)
-├── auth.test.js                # Auth API integration
-├── trips.test.js               # Trips API integration
-├── stages.test.js              # Stages + merge
-├── activities.test.js          # Activities + timeline
-├── import.test.js              # ICS + CSV import
-├── users-profile.test.js       # Profile + password
-├── login.test.js               # Legacy login router (isolated)
-├── ai-service.test.js          # Unit
-├── ai-planning-service.test.js # Unit (form validation, synthesis)
-├── csv-import-helpers.test.js  # Unit
-├── ics-import-helpers.test.js  # Unit
-├── activity-update-helpers.test.js
-├── log-sanitizer.test.js
-├── logger.test.js
-└── middleware.test.js
-```
+Backend tests live under `travelmgr-backend/tests/` (~50 `*.test.js` files): auth, trips, stages, activities, import, admin, read-only users, AI planning/adapt, consistency, middleware, and helpers. See [04-testing-strategy.md](04-testing-strategy.md). Frontend Vitest tests are under `travelmgr-frontend/src/**/*.test.ts`.
 
 ## Frontend (`travelmgr-frontend/`)
 

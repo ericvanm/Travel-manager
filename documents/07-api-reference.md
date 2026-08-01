@@ -792,12 +792,12 @@ Methods: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`.
 # Register
 curl -c cookies.txt -X POST http://localhost:3001/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo","password":"demo1234","name":"Demo"}'
+  -d '{"username":"sampleuser","password":"SamplePass1!","name":"Sample User"}'
 
 # Login
 curl -b cookies.txt -c cookies.txt -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo","password":"demo1234"}'
+  -d '{"username":"sampleuser","password":"SamplePass1!"}'
 
 # List trips
 curl -b cookies.txt http://localhost:3001/api/trips

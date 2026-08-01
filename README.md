@@ -17,9 +17,7 @@ Full-stack web application for planning trips: stages, activities, calendar impo
 | API reference | [`documents/07-api-reference.md`](documents/07-api-reference.md) |
 | Changelog | [`documents/CHANGELOG.md`](documents/CHANGELOG.md) |
 | Security | [`SECURITY.md`](SECURITY.md) |
-=======
 | Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-
 
 ## Stack
 
@@ -73,13 +71,22 @@ npm test
 
 Backend tests need `TEST_DATABASE_URL` (see `.env.example`).
 
-## Default admin account
+## Default accounts
+
+### Admin
 
 After migrations on an **empty** database, user **`admin`** exists with **no password** until you set one at first login (`must_set_password`). Do this immediately on any shared or internet-facing deployment. Details: [SECURITY.md](SECURITY.md).
 
-## Default admin account
+### Demo (read-only)
 
-After migrations on an **empty** database, user **`admin`** exists with **no password** until you set one at first login (`must_set_password`). Do this immediately on any shared or internet-facing deployment. Details: [SECURITY.md](SECURITY.md).
+Migrations also ensure a **`demo`** user (first name `user`, last name `demo`, empty email, read-only, password reset disabled).
+
+| Environment | Password |
+|-------------|----------|
+| Local / test | Default `DemoUser1!` unless `DEMO_USER_PASSWORD` is set |
+| Production | **Required:** set `DEMO_USER_PASSWORD` or the demo account is **not** created |
+
+Public registration is controlled by `ALLOW_REGISTRATION` (off by default when `NODE_ENV=production`). See [SECURITY.md](SECURITY.md).
 
 ## License
 

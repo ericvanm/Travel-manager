@@ -58,7 +58,7 @@ services:
       context: ./travelmgr-frontend
       dockerfile: ./dev.Dockerfile
     environment:
-      # Appel direct du backend (évite CORS nginx + 502 masqué). Accès UI : http://localhost:8080 ou :5173
+      # Call backend directly (avoids nginx CORS/502 masking). UI: http://localhost:8080 or :5173
       VITE_BACKEND_URL: http://localhost:3001/api
     volumes:
       - ./travelmgr-frontend:/usr/src/app
