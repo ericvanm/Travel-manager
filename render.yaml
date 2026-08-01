@@ -1,10 +1,11 @@
 # Render Blueprint — backend + PostgreSQL
 # https://render.com/docs/blueprint-spec
 #
-# Déploiement :
-#   1. Connecter le repo GitHub sur https://dashboard.render.com/blueprints
-#   2. Après déploiement Vercel, ajouter l'URL frontend dans CORS_ORIGINS
-#      (ex. https://travel-manager.vercel.app)
+# Deploy:
+#   1. Connect the GitHub repo at https://dashboard.render.com/blueprints
+#   2. After Vercel deploy, set CORS_ORIGINS to the frontend URL
+#      (e.g. https://travel-manager.vercel.app)
+#   3. Optionally set DEMO_USER_PASSWORD and ALLOW_REGISTRATION in the dashboard
 
 databases:
   - name: travel-mgr-db
@@ -31,6 +32,12 @@ services:
       - key: SECRET
         generateValue: true
       - key: CORS_ORIGINS
+        sync: false
+      - key: CORS_ALLOW_HOSTED_SUFFIXES
+        value: "true"
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: DEMO_USER_PASSWORD
         sync: false
       - key: USE_OPENAI
         value: "false"

@@ -41,8 +41,8 @@ Central documentation for the Travel Manager monorepo. All documents are written
 ## Planned documentation (future)
 
 - **03-user-manual.md** — End-user guide (trips, imports, profile)
-- **08-database.md** — ER diagram, migrations, reference data
-- **09-security-and-quality.md** — Expanded security controls and quality gates (see also root [SECURITY.md](../SECURITY.md))
+- **10-database.md** — ER diagram, migrations, reference data
+- **11-security-and-quality.md** — Expanded security controls and quality gates (see also root [SECURITY.md](../SECURITY.md))
 
 ## Conventions
 
