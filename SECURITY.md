@@ -54,15 +54,20 @@ Migrations ensure user `demo` (read-only, no password reset, empty email) when a
 
 Rotate the demo password on any internet-facing demo database.
 
-## Before making the repository public
+## Repository security checklist
 
-Use this checklist on the default branch:
+Status as of **2026-08-02** (repository is **public**):
 
 - [x] Secret scan on full git history ([gitleaks](https://gitleaks.io/) or [trufflehog](https://github.com/trufflesecurity/trufflehog)) — 2026-08-01, gitleaks: no leaks found
-- [ ] GitHub **Private vulnerability reporting** enabled (Settings → Code security → Private vulnerability reporting)
-- [ ] Repository **About** filled (description, topics, optional demo URL)
+- [x] GitHub **Private vulnerability reporting** enabled
+- [x] **Security policy** and **Security advisories** enabled
+- [x] **Secret scanning** alerts enabled
+- [x] **Dependabot alerts** enabled
+- [x] Repository **About** filled (description, topics, demo URL)
+- [ ] **Code scanning** (GitHub Advanced Security) — optional; [SonarCloud](https://sonarcloud.io) already runs on CI
+- [ ] **Secret scanning push protection** — recommended (Settings → Code security)
 - [ ] Production deployments: `SECRET`, DB credentials, and `OPENAI_API_KEY` only in host secrets
 - [ ] Default **admin** password set on any internet-facing database
 - [ ] `ALLOW_REGISTRATION` reviewed for your deployment model
 - [ ] `DEMO_USER_PASSWORD` set (or demo intentionally omitted) on production
-- [ ] Dependabot security updates monitored (resolve or document accepted risks)
+- [ ] Open Dependabot alerts resolved or documented (see GitHub Security tab)
