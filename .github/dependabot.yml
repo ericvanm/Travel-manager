@@ -14,6 +14,13 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    ignore:
+      # ESLint 9 flat config — @eslint/js v10 requires ESLint 10 migration.
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # OpenAI SDK v7 may break existing AI integration — upgrade manually with tests.
+      - dependency-name: "openai"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         patterns:
@@ -35,6 +42,15 @@ updates:
       # Stay on MUI X v8 until @mui/material is upgraded past v5.
       - dependency-name: "@mui/x-date-pickers"
         update-types: ["version-update:semver-major"]
+      # ESLint 9 flat config — @eslint/js v10 requires ESLint 10 migration.
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # Vitest v4 — major bump; upgrade manually with test suite review.
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      # Removed: navigation is state-based in App.tsx (no React Router).
+      - dependency-name: "react-router-dom"
+      - dependency-name: "react-router"
     groups:
       minor-and-patch:
         patterns:
