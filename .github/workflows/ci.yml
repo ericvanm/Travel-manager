@@ -83,7 +83,10 @@ jobs:
     name: SonarCloud analysis
     runs-on: ubuntu-latest
     needs: [backend, frontend]
-    # Dependabot PRs do not receive repository secrets (SONAR_TOKEN, SONAR_ORGANIZATION).
+    # Dependabot PRs cannot use repository secrets (SONAR_TOKEN). The SonarCloud
+    # GitHub App check ("SonarCloud Code Analysis") is therefore not reported on
+    # those PRs — do not add it as a required ruleset check unless Dependabot is
+    # granted secret access or added as a ruleset bypass actor.
     if: github.actor != 'dependabot[bot]'
     permissions:
       contents: read
