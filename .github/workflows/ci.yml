@@ -79,52 +79,62 @@ jobs:
         env:
           VITE_BACKEND_URL: http://localhost:3001/api
 
-  # SonarCloud quality gate — required for developer PRs to main
+  # SonarCloud quality gate — full scan for developer PRs; skipped for Dependabot
   #
-  # The repository ruleset requires the GitHub status "SonarCloud Code Analysis"
-  # (posted by SonarCloud after this job). Quality gate must pass
-  # (sonar.qualitygate.wait=true) before the check turns green.
+  # Ruleset required checks (all PRs):
+  #   - Backend lint & test
+  #   - Frontend lint, typecheck & build
+  #   - SonarCloud analysis (this job — GitHub Actions)
   #
-  # Dependabot PRs cannot use repository secrets (SONAR_TOKEN), so this job is
-  # skipped for dependabot[bot]. Dependabot is a ruleset bypass actor; human PRs
-  # and non-Dependabot pushes to main still require Sonar.
+  # Developer PRs: Sonar scan + quality gate (sonar.qualitygate.wait=true).
+  # Dependabot PRs: no SONAR_TOKEN — job succeeds after a no-op step (no scan).
+  # Backend and frontend remain required for every PR including Dependabot.
   sonarcloud:
     name: SonarCloud analysis
     runs-on: ubuntu-latest
     needs: [backend, frontend]
-    if: github.actor != 'dependabot[bot]'
     permissions:
       contents: read
       pull-requests: write
     steps:
+      - name: Sonar not applicable (Dependabot)
+        if: github.actor == 'dependabot[bot]'
+        run: echo "Dependabot PR — Sonar quality gate skipped. Backend and frontend checks still apply."
+
       - uses: actions/checkout@v5
+        if: github.actor != 'dependabot[bot]'
         with:
           fetch-depth: 0
 
       - uses: actions/setup-node@v7
+        if: github.actor != 'dependabot[bot]'
         with:
           node-version: 20
 
       - uses: actions/download-artifact@v8
+        if: github.actor != 'dependabot[bot]'
         with:
           name: backend-coverage
           path: travelmgr-backend/coverage
 
       - name: Install backend dependencies
+        if: github.actor != 'dependabot[bot]'
         working-directory: travelmgr-backend
         run: npm ci --ignore-scripts
 
       - name: Install frontend dependencies
+        if: github.actor != 'dependabot[bot]'
         working-directory: travelmgr-frontend
         run: npm ci --ignore-scripts
 
       - name: Generate ESLint reports for SonarCloud
+        if: github.actor != 'dependabot[bot]'
         run: |
           cd "$GITHUB_WORKSPACE/travelmgr-backend" && npm run lint:report
           cd "$GITHUB_WORKSPACE/travelmgr-frontend" && npm run lint:report
 
       - name: SonarCloud scan
-        # sonarcloud-github-action (Docker/Java 17) is deprecated on SonarCloud since Jul 2026; use CLI + JRE auto-provisioning (Java 21+).
+        if: github.actor != 'dependabot[bot]'
         uses: SonarSource/sonarqube-scan-action@v8.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
