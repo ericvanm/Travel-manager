@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Checkout
         if: inputs.action == 'deploy'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
